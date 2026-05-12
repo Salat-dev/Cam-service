@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trouver un Service — CamServices</title>
+    <link href="https://fonts.googleapis.com/css2?family=Allison&family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --ink: #1A1714; --ink-2: #2E2A25; --muted: #8A8279; --faint: #C9C2B8;
+            --rule: #E8E2DA; --cream: #FAF8F5; --white: #FFFFFF;
+            --gold: #C4943E; --gold-light: #D4A94E; --gold-dim: rgba(196,148,62,.08);
+            --green: #3D8B5E; --red: #DC2626;
+            --ff-body: 'Outfit', sans-serif; --ff-script: 'Allison', cursive;
+            --ease: cubic-bezier(.22,1,.36,1);
+            --radius: 10px; --radius-lg: 16px; --radius-xl: 20px;
+            --shadow: 0 4px 20px rgba(26,23,20,.06);
+            --shadow-lg: 0 12px 40px rgba(26,23,20,.1);
+            --max: 1200px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: var(--ff-body); background: var(--cream); color: var(--ink);
+            min-height: 100vh; -webkit-font-smoothing: antialiased; line-height: 1.6;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+        /* ═══ NAVBAR ═══ */
+        .navbar {
+            position: sticky; top:0; z-index:50;
+            background: rgba(250,248,245,.92); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--rule); padding: 0 32px;
+        }
+        .navbar-inner {
+            max-width: var(--max); margin:0 auto; height:64px;
+            display:flex; align-items:center; justify-content:space-between;
+        }
+        .nav-logo { font-weight:700; font-size:1.1rem; color:var(--ink); text-decoration:none; letter-spacing:-.02em; }
+        .nav-logo .script { font-family:var(--ff-script); font-size:1.9rem; color:var(--gold); position:relative; top:3px; }
+        .nav-links { display:flex; align-items:center; gap:20px; }
+        .nav-links a { font-size:.85rem; font-weight:500; color:var(--muted); text-decoration:none; transition:color .2s; }
+        .nav-links a:hover { color:var(--ink); }
+        .nav-links a.active { color:var(--ink); font-weight:600; }
+        .btn-nav { background:var(--ink); color:var(--white)!important; padding:8px 18px; border-radius:var(--radius); font-weight:600!important; }
+        .btn-nav:hover { background:var(--ink-2)!important; }
+
+        /* ═══ HERO ═══ */
+        .hero {
+            background: var(--white); border-bottom: 1px solid var(--rule);
+            padding: 56px 32px; position: relative; overflow: hidden;
+        }
+        .hero::before {
+            content:''; position:absolute; top:-80px; right:-60px; width:350px; height:350px;
+            border-radius:50%; background:radial-gradient(circle, var(--gold-dim) 0%, transparent 70%); pointer-events:none;
+        }
+        .hero-inner { max-width:var(--max); margin:0 auto; position:relative; z-index:1; }
+        .hero-eyebrow {
+            display:inline-flex; align-items:center; gap:8px;
+            font-size:.7rem; font-weight:600; text-transform:uppercase;
+            letter-spacing:.12em; color:var(--gold); margin-bottom:16px;
+        }
+        .hero-eyebrow .dot { width:6px; height:6px; background:var(--green); border-radius:50%; animation:pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4;transform:scale(1.5)} }
+        .hero h1 { font-weight:800; font-size:clamp(2rem,4vw,2.8rem); letter-spacing:-.04em; margin-bottom:12px; }
+        .hero h1 .script { font-family:var(--ff-script); font-size:1.6em; color:var(--gold); font-weight:400; }
+        .hero p { font-size:.95rem; color:var(--muted); max-width:480px; }
+
+        /* ═══ SEARCH ═══ */
+        .search-section { max-width:var(--max); margin:-28px auto 0; padding:0 32px; position:relative; z-index:10; }
+        .search-card {
+            background:var(--white); border:1px solid var(--rule);
+            border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); padding:24px;
+        }
+        .search-row { display:flex; gap:12px; flex-wrap:wrap; }
+        .search-input-wrap { flex:1; min-width:200px; position:relative; }
+        .search-input-wrap input {
+            width:100%; padding:12px 14px 12px 40px; border:1.5px solid var(--rule);
+            border-radius:var(--radius); font-family:var(--ff-body); font-size:.88rem;
+            color:var(--ink); outline:none; transition:all .2s; background:var(--white);
+        }
+        .search-input-wrap input:focus { border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-dim); }
+        .search-input-wrap input::placeholder { color:var(--faint); }
+        .search-input-wrap .search-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--faint); }
+        .search-select {
+            padding:12px 40px 12px 14px; border:1.5px solid var(--rule); border-radius:var(--radius);
+            font-family:var(--ff-body); font-size:.85rem; color:var(--muted); outline:none;
+            cursor:pointer; background:var(--white); min-width:160px; appearance:none;
+            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238A8279' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat:no-repeat; background-position:right 14px center;
+        }
+        .search-select:focus { border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-dim); }
+        .results-info { display:flex; align-items:center; justify-content:space-between; margin-top:16px; flex-wrap:wrap; gap:8px; }
+        .results-count { font-size:.82rem; color:var(--muted); }
+        .results-count strong { color:var(--ink); }
+        .sort-btn {
+            padding:6px 14px; border:1px solid var(--rule); border-radius:20px;
+            font-family:var(--ff-body); font-size:.75rem; font-weight:500; color:var(--muted);
+            cursor:pointer; background:var(--white); transition:all .2s;
+        }
+        .sort-btn:hover, .sort-btn.active { border-color:var(--ink); color:var(--ink); }
+        .sort-btn.active { background:var(--ink); color:var(--white); }
+
+        /* ═══ SERVICES GRID ═══ */
+        .main-content { max-width:var(--max); margin:0 auto; padding:32px; }
+        .services-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap:20px; }
+        .service-card {
+            background:var(--white); border:1px solid var(--rule); border-radius:var(--radius-lg);
+            overflow:hidden; transition:all .3s var(--ease); display:flex; flex-direction:column;
+            text-decoration:none; color:inherit; animation:fadeUp .5s var(--ease);
+        }
+        .service-card:hover { border-color:var(--gold); box-shadow:var(--shadow-lg); transform:translateY(-3px); }
+        .card-image {
+            height:160px; background:linear-gradient(135deg, var(--ink-2), var(--ink));
+            display:flex; align-items:center; justify-content:center; position:relative;
+        }
+        .card-image .cat-emoji { font-size:4rem; opacity:.15; }
+        .card-category {
+            position:absolute; top:12px; left:12px; padding:5px 12px; border-radius:20px;
+            font-size:.68rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em;
+            background:rgba(255,255,255,.9); color:var(--ink); backdrop-filter:blur(8px);
+        }
+        .card-price {
+            position:absolute; top:12px; right:12px; background:var(--gold); color:var(--white);
+            padding:7px 14px; border-radius:20px; font-weight:700; font-size:.85rem;
+            box-shadow:0 4px 12px rgba(196,148,62,.3);
+        }
+        .card-body { padding:20px 22px; flex:1; }
+        .card-title { font-weight:700; font-size:1.05rem; letter-spacing:-.02em; margin-bottom:6px; }
+        .card-desc {
+            font-size:.82rem; color:var(--muted); line-height:1.6;
+            display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+        }
+        .card-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+        .card-tag { font-size:.68rem; padding:3px 8px; border-radius:4px; background:var(--cream); color:var(--muted); }
+        .card-footer {
+            display:flex; align-items:center; justify-content:space-between;
+            padding:14px 22px; border-top:1px solid var(--rule);
+        }
+        .card-provider { display:flex; align-items:center; gap:10px; }
+        .card-avatar {
+            width:34px; height:34px; border-radius:50%; background:var(--cream);
+            overflow:hidden; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+            font-weight:700; font-size:.7rem; color:var(--muted); border:1.5px solid var(--rule);
+        }
+        .card-avatar img { width:100%; height:100%; object-fit:cover; }
+        .card-provider-name { font-weight:600; font-size:.82rem; }
+        .card-provider-city { font-size:.7rem; color:var(--muted); display:flex; align-items:center; gap:4px; }
+        .verified-pin {
+            width:18px; height:18px; border-radius:50%; background:var(--gold);
+            color:var(--white); display:flex; align-items:center; justify-content:center;
+            flex-shrink:0; margin-left:2px;
+        }
+        .empty-state { text-align:center; padding:80px 20px; color:var(--muted); grid-column:1/-1; }
+        .empty-state i { margin-bottom:12px; color:var(--faint); }
+        .empty-state h3 { font-weight:600; font-size:1.1rem; color:var(--ink); margin-bottom:6px; }
+        .loading-state { text-align:center; padding:80px; color:var(--muted); grid-column:1/-1; }
+        .spinner { width:32px; height:32px; border:2.5px solid var(--rule); border-top-color:var(--gold); border-radius:50%; animation:spin .7s linear infinite; margin:0 auto 16px; }
+
+        @media (max-width:700px) {
+            .hero { padding:40px 20px; }
+            .search-section { padding:0 20px; }
+            .main-content { padding:24px 20px; }
+            .services-grid { grid-template-columns:1fr; }
+            .search-row { flex-direction:column; }
+            .search-select { width:100%; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══ NAVBAR ═══ -->
+<nav class="navbar">
+    <div class="navbar-inner">
+        <a href="landing.html" class="nav-logo">Cam<span class="script">S</span>ervices</a>
+        <div class="nav-links">
+    <a href="landing.html">Accueil</a>
+    <a href="services.html" class="active">Services</a>
+    <a href="../cart.html" style="position:relative;display:flex;align-items:center;gap:6px">
+        <i data-lucide="shopping-cart" style="width:1rem;height:1rem"></i> Panier
+        <span id="cartCountNav" style="background:var(--gold);color:white;font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:10px;display:none">0</span>
+    </a>
+    <a href="login-client.html" class="btn-nav">Connexion</a>
+</div>
+    </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+    <div class="hero-inner">
+        <div class="hero-eyebrow"><span class="dot"></span> Marketplace Cameroun</div>
+        <h1>Trouvez le <span class="script">service</span> idéal</h1>
+        <p>Des professionnels vérifiés dans votre ville, prêts à vous aider.</p>
+    </div>
+</section>
+
+<!-- ═══ SEARCH ═══ -->
+<div class="search-section">
+    <div class="search-card">
+        <div class="search-row">
+            <div class="search-input-wrap">
+                <i data-lucide="search" class="search-icon" style="width:1.1rem;height:1.1rem"></i>
+                <input type="text" id="searchInput" placeholder="Plombier, photographe, développeur...">
+            </div>
+            <select class="search-select" id="cityFilter">
+                <option value="">Toutes les villes</option>
+                <option>Yaoundé</option><option>Douala</option><option>Bafoussam</option>
+                <option>Bamenda</option><option>Maroua</option><option>Garoua</option>
+                <option>Kribi</option><option>Limbe</option><option>Buea</option>
+            </select>
+            <select class="search-select" id="categoryFilter">
+                <option value="">Toutes catégories</option>
+                <option>Plomberie</option><option>Électricité</option><option>Ménage</option>
+                <option>Photographie</option><option>Développement web</option>
+                <option>Cours particuliers</option><option>Transport</option>
+                <option>Design</option><option>Beauté</option><option>Bâtiment</option>
+            </select>
+        </div>
+        <div class="results-info">
+            <span class="results-count" id="resultsText"><strong>0</strong> service(s) trouvé(s)</span>
+            <div style="display:flex;gap:6px">
+                <button class="sort-btn active" data-sort="recent">Récents</button>
+                <button class="sort-btn" data-sort="price_low">Prix ↑</button>
+                <button class="sort-btn" data-sort="price_high">Prix ↓</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ SERVICES GRID ═══ -->
+<main class="main-content">
+    <div class="services-grid" id="servicesGrid">
+        <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Chargement des services...</p>
+        </div>
+    </div>
+</main>
+
+<script src="config.js"></script>
+<script src="js/services.js"></script>
+<script src="../js/client-auth.js"></script>
+</body>
+</html>

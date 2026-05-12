@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistiques — CamServices Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Allison&family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+<button class="menu-toggle" onclick="toggleSidebar()">
+    <i data-lucide="menu"></i>
+</button>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar" id="sidebar">
+    <a href="index.html" class="sidebar-logo">Cam<span class="script">S</span>ervices</a>
+    
+    <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sidebarAvatar"></div>
+        <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebarName">Chargement...</div>
+            <div class="sidebar-user-role" id="sidebarRole">Prestataire</div>
+            <span class="verify-badge" id="verifyBadge" style="display:none">
+                <i data-lucide="shield-check" style="width:.7rem;height:.7rem"></i> Vérifié
+            </span>
+        </div>
+    </div>
+    
+    <ul class="sidebar-nav">
+        <li><a href="index.html" id="nav-overview"><i data-lucide="layout-dashboard"></i> Vue d'ensemble</a></li>
+        <li><a href="services.html" id="nav-services"><i data-lucide="briefcase"></i> Mes services <span class="badge" id="serviceBadge">0</span></a></li>
+        <li><a href="orders.html" id="nav-orders"><i data-lucide="shopping-bag"></i> Commandes <span class="badge" id="orderBadge">0</span></a></li>
+        <li><a href="pricing.html" id="nav-pricing"><i data-lucide="tags"></i> Grille tarifaire</a></li>
+        <li><a href="portfolio.html" id="nav-portfolio"><i data-lucide="image"></i> Portfolio</a></li>
+        <li><a href="activities.html" id="nav-activities"><i data-lucide="award"></i> Activités</a></li>
+    </ul>
+    
+    <hr class="sidebar-divider">
+    
+    <ul class="sidebar-nav">
+        <li><a href="profile.html" id="nav-profile"><i data-lucide="user-circle"></i> Mon profil</a></li>
+        <li><a href="analytics.html" class="active" id="nav-analytics"><i data-lucide="bar-chart-3"></i> Statistiques</a></li>
+    </ul>
+    
+    <div class="sidebar-footer">
+        <a href="../landing.html" onclick="logout();return false"><i data-lucide="log-out"></i> Déconnexion</a>
+    </div>
+</aside>
+
+<!-- ═══ MAIN CONTENT ═══ -->
+<main class="main-content">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title"><span class="script">Statistiques</span></h1>
+            <p class="page-subtitle">Analysez vos performances et suivez votre croissance</p>
+        </div>
+        <div class="page-actions" style="display:flex;gap:8px">
+            <button class="btn btn-secondary btn-sm period-btn active" data-period="7">7 jours</button>
+            <button class="btn btn-secondary btn-sm period-btn" data-period="30">30 jours</button>
+            <button class="btn btn-secondary btn-sm period-btn" data-period="90">3 mois</button>
+            <button class="btn btn-secondary btn-sm period-btn" data-period="all">Tout</button>
+        </div>
+    </div>
+    
+    <!-- KPI Principaux -->
+    <div class="stats-grid" id="kpiGrid">
+        <div class="stat-card stat-card-loading">
+            <div class="stat-card-header"><div class="stat-icon gold"><i data-lucide="banknote"></i></div></div>
+            <div class="stat-value skeleton">—</div>
+            <div class="stat-label">Chiffre d'affaires</div>
+        </div>
+        <div class="stat-card stat-card-loading">
+            <div class="stat-card-header"><div class="stat-icon green"><i data-lucide="shopping-bag"></i></div></div>
+            <div class="stat-value skeleton">—</div>
+            <div class="stat-label">Commandes</div>
+        </div>
+        <div class="stat-card stat-card-loading">
+            <div class="stat-card-header"><div class="stat-icon blue"><i data-lucide="eye"></i></div></div>
+            <div class="stat-value skeleton">—</div>
+            <div class="stat-label">Vues profil</div>
+        </div>
+        <div class="stat-card stat-card-loading">
+            <div class="stat-card-header"><div class="stat-icon purple"><i data-lucide="message-circle"></i></div></div>
+            <div class="stat-value skeleton">—</div>
+            <div class="stat-label">Taux de réponse</div>
+        </div>
+    </div>
+    
+    <!-- Graphiques -->
+    <div class="dashboard-grid">
+        <!-- Revenus sur la période -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Évolution du chiffre d'affaires</h3>
+                <span style="font-size:.78rem;color:var(--muted)" id="revenuePeriod">7 derniers jours</span>
+            </div>
+            <div class="chart-container" id="revenueChart">
+                <div class="loading-spinner"><div class="spinner"></div></div>
+            </div>
+        </div>
+        
+        <!-- Commandes sur la période -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Répartition des commandes</h3>
+            </div>
+            <div class="chart-container" id="ordersChart">
+                <div class="loading-spinner"><div class="spinner"></div></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tableau détaillé + Visiteurs -->
+    <div class="dashboard-grid">
+        <!-- Commandes détaillées -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Détail des commandes</h3>
+            </div>
+            <div class="table-wrapper" id="ordersDetailTable">
+                <div class="loading-spinner"><div class="spinner"></div></div>
+            </div>
+        </div>
+        
+        <!-- Visiteurs récents -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Visiteurs récents du profil</h3>
+                <span style="font-size:.78rem;color:var(--muted)" id="visitorsCount">0 visiteur(s)</span>
+            </div>
+            <div id="visitorsList">
+                <div class="loading-spinner"><div class="spinner"></div></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top services -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Performance par service</h3>
+        </div>
+        <div class="table-wrapper" id="topServicesTable">
+            <div class="loading-spinner"><div class="spinner"></div></div>
+        </div>
+    </div>
+</main>
+
+<div id="modalContainer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../config.js"></script>
+<script src="js/dashboard-auth.js"></script>
+<script src="js/dashboard-common.js"></script>
+<script>
+    let currentPeriod = 7;
+    let allOrders = [];
+    let allViews = [];
+    
+    async function loadAnalytics() {
+        await initDashboard();
+        setActiveNav('analytics');
+        
+        // Charger toutes les données
+        const [orders, views, services] = await Promise.all([
+            getAllOrders(),
+            getProfileViews(365),
+            getMyServices()
+        ]);
+        
+        allOrders = orders;
+        allViews = views;
+        
+        // Boutons de période
+        document.querySelectorAll('.period-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentPeriod = parseInt(this.dataset.period) || 'all';
+                updateAllCharts();
+            });
+        });
+        
+        updateAllCharts();
+    }
+    
+    function updateAllCharts() {
+        const since = currentPeriod === 'all' 
+            ? new Date(0) 
+            : new Date(Date.now() - currentPeriod * 24 * 60 * 60 * 1000);
+        
+        const periodOrders = allOrders.filter(o => new Date(o.created_at) >= since);
+        const periodViews = allViews.filter(v => new Date(v.viewed_at) >= since);
+        
+        updateKPIs(periodOrders, periodViews);
+        renderRevenueChart(periodOrders);
+        renderOrdersChart(periodOrders);
+        renderOrdersDetail(periodOrders);
+        renderVisitorsList(periodViews);
+        renderTopServices(periodOrders);
+        
+        // Mettre à jour le label de période
+        const periodLabels = {
+            7: '7 derniers jours',
+            30: '30 derniers jours',
+            90: '3 derniers mois',
+            'all': 'Depuis le début'
+        };
+        document.getElementById('revenuePeriod').textContent = periodLabels[currentPeriod] || '';
+        document.getElementById('visitorsCount').textContent = `${periodViews.length} visiteur(s)`;
+        
+        lucide.createIcons();
+    }
+    
+    function updateKPIs(orders, views) {
+        const revenue = orders
+            .filter(o => o.status === 'completed')
+            .reduce((sum, o) => sum + (parseFloat(o.total_amount) || 0), 0);
+        
+        const completedOrders = orders.filter(o => o.status === 'completed').length;
+        const totalOrders = orders.length;
+        
+        // Taux de réponse : commandes confirmées / total (hors annulées)
+        const actionableOrders = orders.filter(o => o.status !== 'cancelled' && o.status !== 'deleted');
+        const responseRate = actionableOrders.length > 0 
+            ? Math.round((actionableOrders.filter(o => o.status !== 'pending').length / actionableOrders.length) * 100)
+            : 100;
+        
+        const grid = document.getElementById('kpiGrid');
+        grid.innerHTML = `
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-icon gold"><i data-lucide="banknote"></i></div>
+                    <i data-lucide="trending-up" style="color:var(--green);width:1.2rem;height:1.2rem"></i>
+                </div>
+                <div class="stat-value">${formatPrice(revenue)}</div>
+                <div class="stat-label">Chiffre d'affaires</div>
+                <div class="stat-trend up">${completedOrders} commandes complétées</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-icon green"><i data-lucide="shopping-bag"></i></div>
+                </div>
+                <div class="stat-value">${totalOrders}</div>
+                <div class="stat-label">Commandes totales</div>
+                <div class="stat-trend up">${completedOrders} terminées</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-icon blue"><i data-lucide="eye"></i></div>
+                </div>
+                <div class="stat-value">${views.length}</div>
+                <div class="stat-label">Vues du profil</div>
+                <div class="stat-trend ${views.length > 0 ? 'up' : ''}">${views.length > 0 ? 'Visibilité active' : 'Aucune vue'}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-icon purple"><i data-lucide="message-circle"></i></div>
+                </div>
+                <div class="stat-value">${responseRate}%</div>
+                <div class="stat-label">Taux de réponse</div>
+                <div class="stat-trend ${responseRate >= 80 ? 'up' : responseRate >= 50 ? '' : 'down'}">
+                    ${responseRate >= 80 ? 'Excellent' : responseRate >= 50 ? 'Correct' : 'À améliorer'}
+                </div>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+    
+    function renderRevenueChart(orders) {
+        const container = document.getElementById('revenueChart');
+        const completedOrders = orders.filter(o => o.status === 'completed');
+        
+        if (completedOrders.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i data-lucide="bar-chart-3" class="empty-icon" style="width:3rem;height:3rem"></i>
+                    <p style="font-size:.85rem">Aucune commande complétée sur cette période</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Grouper par jour
+        const byDay = {};
+        completedOrders.forEach(o => {
+            const day = new Date(o.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+            byDay[day] = (byDay[day] || 0) + parseFloat(o.total_amount || 0);
+        });
+        
+        const days = Object.keys(byDay);
+        const values = Object.values(byDay);
+        const maxValue = Math.max(...values, 1);
+        
+        container.innerHTML = `
+            <div class="bar-chart">
+                ${days.map((day, i) => `
+                    <div class="bar-item">
+                        <div class="bar-wrapper">
+                            <div class="bar" style="height:${(values[i] / maxValue) * 100}%">
+                                <span class="bar-tooltip">${formatPrice(values[i])}</span>
+                            </div>
+                        </div>
+                        <span class="bar-label">${day}</span>
+                    </div>
+                `).join('')}
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:.72rem;color:var(--muted)">
+                <span>Total: ${formatPrice(values.reduce((a,b) => a+b, 0))}</span>
+                <span>Moy: ${formatPrice(Math.round(values.reduce((a,b) => a+b, 0) / values.length))}/jour</span>
+            </div>
+        `;
+    }
+    
+    function renderOrdersChart(orders) {
+        const container = document.getElementById('ordersChart');
+        
+        if (orders.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i data-lucide="pie-chart" class="empty-icon" style="width:3rem;height:3rem"></i>
+                    <p style="font-size:.85rem">Aucune commande sur cette période</p>
+                </div>
+            `;
+            return;
+        }
+        
+        const statusCounts = {};
+        orders.forEach(o => {
+            statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
+        });
+        
+        const total = orders.length;
+        const colors = {
+            pending: '#F59E0B',
+            confirmed: '#3B82F6',
+            in_progress: '#7C3AED',
+            completed: '#3D8B5E',
+            cancelled: '#DC2626',
+            deleted: '#6B7280'
+        };
+        
+        let cumulativePercent = 0;
+        const segments = Object.entries(statusCounts).map(([status, count]) => {
+            const percent = (count / total) * 100;
+            const startPercent = cumulativePercent;
+            cumulativePercent += percent;
+            
+            const color = colors[status] || '#C9C2B8';
+            
+            return {
+                status,
+                count,
+                percent,
+                color,
+                startPercent
+            };
+        });
+        
+        const gradientParts = segments.map(s => 
+            `${s.color} ${s.startPercent}% ${s.startPercent + s.percent}%`
+        ).join(', ');
+        
+        container.innerHTML = `
+            <div style="display:flex;align-items:center;gap:32px;padding:20px">
+                <div class="donut-chart" style="background:conic-gradient(${gradientParts})">
+                    <div class="donut-center">
+                        <span class="donut-value">${total}</span>
+                        <span class="donut-label">Total</span>
+                    </div>
+                </div>
+                <div class="legend">
+                    ${segments.map(s => `
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:${s.color}"></span>
+                            <span class="legend-label">${formatStatus(s.status)}</span>
+                            <span class="legend-value">${s.count} (${Math.round(s.percent)}%)</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    function renderOrdersDetail(orders) {
+        const container = document.getElementById('ordersDetailTable');
+        
+        if (orders.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i data-lucide="inbox" class="empty-icon" style="width:2rem;height:2rem"></i>
+                    <p style="font-size:.85rem">Aucune commande</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = `
+            <table>
+                <thead>
+                    <tr><th>Client</th><th>Montant</th><th>Date</th><th>Statut</th></tr>
+                </thead>
+                <tbody>
+                    ${orders.slice(0, 10).map(o => `
+                        <tr>
+                            <td><strong>${o.client_name || 'Client'}</strong></td>
+                            <td class="price-cell">${formatPrice(o.total_amount)}</td>
+                            <td>${formatDate(o.created_at)}</td>
+                            <td><span class="status-badge status-${o.status}">${formatStatus(o.status)}</span></td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+    
+    function renderVisitorsList(views) {
+        const container = document.getElementById('visitorsList');
+        
+        if (views.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i data-lucide="users" class="empty-icon" style="width:2rem;height:2rem"></i>
+                    <p style="font-size:.85rem">Aucun visiteur récent</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = `
+            <div class="visitors-feed">
+                ${views.slice(0, 15).map(v => `
+                    <div class="visitor-item">
+                        <div class="visitor-avatar">
+                            ${(v.viewer_name || 'A')[0].toUpperCase()}
+                        </div>
+                        <div class="visitor-info">
+                            <strong>${v.viewer_name || 'Visiteur anonyme'}</strong>
+                            <span>${formatTimeAgo(v.viewed_at)}</span>
+                        </div>
+                        <i data-lucide="eye" style="width:.9rem;height:.9rem;color:var(--faint)"></i>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    function renderTopServices(orders) {
+        const container = document.getElementById('topServicesTable');
+        
+        if (orders.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <p style="font-size:.85rem">Aucune donnée disponible</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Grouper par service
+        const byService = {};
+        orders.forEach(o => {
+            const key = o.service_title || 'Service supprimé';
+            if (!byService[key]) {
+                byService[key] = { count: 0, revenue: 0, completed: 0 };
+            }
+            byService[key].count++;
+            byService[key].revenue += parseFloat(o.total_amount || 0);
+            if (o.status === 'completed') byService[key].completed++;
+        });
+        
+        const sorted = Object.entries(byService)
+            .sort((a, b) => b[1].revenue - a[1].revenue);
+        
+        container.innerHTML = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th>Commandes</th>
+                        <th>Terminées</th>
+                        <th>Revenus</th>
+                        <th>Performance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${sorted.map(([name, data]) => {
+                        const completionRate = data.count > 0 
+                            ? Math.round((data.completed / data.count) * 100) 
+                            : 0;
+                        return `
+                            <tr>
+                                <td><strong>${name}</strong></td>
+                                <td>${data.count}</td>
+                                <td>${data.completed}</td>
+                                <td class="price-cell">${formatPrice(data.revenue)}</td>
+                                <td>
+                                    <div class="performance-bar">
+                                        <div class="performance-fill" style="width:${completionRate}%;background:${completionRate >= 80 ? 'var(--green)' : completionRate >= 50 ? 'var(--orange)' : 'var(--red)'}"></div>
+                                    </div>
+                                    <span style="font-size:.7rem;color:var(--muted)">${completionRate}%</span>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+    
+    // Démarrer
+    loadAnalytics();
+</script>
+</body>
+</html>

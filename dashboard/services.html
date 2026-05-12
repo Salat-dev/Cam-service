@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Services — CamServices Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Allison&family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/dashboard.css">
+    <style>
+        /* ═══ MODAL STYLES ═══ */
+        .modal-overlay {
+            position: fixed; inset: 0; z-index: 9000;
+            background: rgba(26,23,20,.45); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            padding: 24px; animation: modalFadeIn .25s ease;
+        }
+        .modal-content {
+            background: var(--white, #fff); border-radius: var(--radius-xl, 16px);
+            box-shadow: 0 20px 60px rgba(26,23,20,.18);
+            width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto;
+            animation: modalSlideUp .3s cubic-bezier(.22,1,.36,1);
+        }
+        .modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 24px 24px 16px; border-bottom: 1px solid var(--rule, #E8E2DA);
+        }
+        .modal-title { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: 700; }
+        .modal-close {
+            background: none; border: none; cursor: pointer; color: var(--muted, #8A8279);
+            padding: 6px; border-radius: 8px; transition: background .2s;
+        }
+        .modal-close:hover { background: var(--cream, #FAF8F5); }
+        .modal-content form { padding: 24px; }
+        .modal-content .form-group { margin-bottom: 16px; }
+        .modal-content .form-group label {
+            display: block; font-size: .8rem; font-weight: 600;
+            margin-bottom: 6px; color: var(--ink, #1A1714);
+        }
+        .modal-content .form-group input,
+        .modal-content .form-group select,
+        .modal-content .form-group textarea {
+            width: 100%; padding: 10px 14px;
+            border: 1.5px solid var(--rule, #E8E2DA); border-radius: var(--radius, 10px);
+            font-family: var(--ff-body, 'Outfit', sans-serif); font-size: .88rem;
+            color: var(--ink, #1A1714); background: var(--white, #fff);
+            outline: none; transition: border-color .2s;
+        }
+        .modal-content .form-group input:focus,
+        .modal-content .form-group select:focus,
+        .modal-content .form-group textarea:focus {
+            border-color: var(--gold, #C4943E);
+            box-shadow: 0 0 0 3px rgba(196,148,62,.08);
+        }
+        .modal-content .form-group textarea { min-height: 80px; resize: vertical; }
+        .modal-content .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .modal-content .form-actions { display: flex; gap: 12px; padding-top: 8px; justify-content: flex-end; }
+        @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes modalSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 600px) {
+            .modal-content { max-width: 100%; margin: 12px; }
+            .modal-content .form-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<button class="menu-toggle" onclick="toggleSidebar()">
+    <i data-lucide="menu"></i>
+</button>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar" id="sidebar">
+    <a href="index.html" class="sidebar-logo">Cam<span class="script">S</span>ervices</a>
+    <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sidebarAvatar"></div>
+        <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebarName">Chargement...</div>
+            <div class="sidebar-user-role" id="sidebarRole">Prestataire</div>
+            <span class="verify-badge" id="verifyBadge" style="display:none">
+                <i data-lucide="shield-check" style="width:.7rem;height:.7rem"></i> Vérifié
+            </span>
+        </div>
+    </div>
+    <ul class="sidebar-nav">
+        <li><a href="index.html" id="nav-overview"><i data-lucide="layout-dashboard"></i> Vue d'ensemble</a></li>
+        <li><a href="services.html" class="active" id="nav-services"><i data-lucide="briefcase"></i> Mes services <span class="badge" id="serviceBadge">0</span></a></li>
+        <li><a href="orders.html" id="nav-orders"><i data-lucide="shopping-bag"></i> Commandes <span class="badge" id="orderBadge">0</span></a></li>
+        <li><a href="pricing.html" id="nav-pricing"><i data-lucide="tags"></i> Grille tarifaire</a></li>
+        <li><a href="portfolio.html" id="nav-portfolio"><i data-lucide="image"></i> Portfolio</a></li>
+        <li><a href="activities.html" id="nav-activities"><i data-lucide="award"></i> Activités</a></li>
+    </ul>
+    <hr class="sidebar-divider">
+    <ul class="sidebar-nav">
+        <li><a href="profile.html" id="nav-profile"><i data-lucide="user-circle"></i> Mon profil</a></li>
+        <li><a href="analytics.html" id="nav-analytics"><i data-lucide="bar-chart-3"></i> Statistiques</a></li>
+    </ul>
+    <div class="sidebar-footer">
+        <a href="../landing.html" onclick="logout();return false"><i data-lucide="log-out"></i> Déconnexion</a>
+    </div>
+</aside>
+
+<!-- ═══ MAIN CONTENT ═══ -->
+<main class="main-content">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Mes <span class="script">services</span></h1>
+            <p class="page-subtitle">Gérez vos offres de services</p>
+        </div>
+        <button class="btn btn-primary" onclick="openServiceModal()">
+            <i data-lucide="plus"></i> Nouveau service
+        </button>
+    </div>
+
+    <div class="card">
+        <div class="table-wrapper" id="servicesTable">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Chargement de vos services...</p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div id="modalContainer" style="display:none"></div>
+
+<!-- ═══ SCRIPTS ═══ -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ============================================================
+//  SERVICES — Script complet et autonome
+//  Table : public.services
+// ============================================================
+
+// ─── A. SUPABASE ─────────────────────────────────────────────
+const SUPABASE_URL  = 'https://cwubxwbzzuigctvgdygv.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dWJ4d2J6enVpZ2N0dmdkeWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzI2MTgsImV4cCI6MjA5MzgwODYxOH0.0mwBNo_S5yItQQjq2at9GNRN74ooZRBJIbZGDH9L2uk';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let currentUser = null;
+let services    = [];
+
+// ─── B. AUTH + SIDEBAR ───────────────────────────────────────
+async function initDashboard() {
+    const { data: { user: authUser } } = await sb.auth.getUser();
+    if (!authUser) { window.location.href = '../login.html'; return; }
+
+    const { data: profile } = await sb.from('users').select('*').eq('id', authUser.id).maybeSingle();
+
+    currentUser = profile || {
+        id: authUser.id, email: authUser.email,
+        full_name: authUser.user_metadata?.full_name || authUser.email.split('@')[0],
+        role: 'prestataire', is_verified: false, profile_photo_url: null
+    };
+
+    const nameEl = document.getElementById('sidebarName');
+    const roleEl = document.getElementById('sidebarRole');
+    const avatarEl = document.getElementById('sidebarAvatar');
+    const badgeEl = document.getElementById('verifyBadge');
+
+    if (nameEl)  nameEl.textContent = currentUser.full_name || currentUser.email;
+    if (roleEl)  roleEl.textContent = ({ client:'Client', prestataire:'Prestataire', admin:'Admin' })[currentUser.role] || 'Prestataire';
+    if (badgeEl) badgeEl.style.display = currentUser.is_verified ? 'inline-flex' : 'none';
+    if (avatarEl) {
+        if (currentUser.profile_photo_url) {
+            avatarEl.style.backgroundImage = `url(${currentUser.profile_photo_url})`;
+            avatarEl.style.backgroundSize = 'cover';
+        } else {
+            avatarEl.textContent = (currentUser.full_name || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+        }
+    }
+    await loadSidebarCounts();
+    lucide.createIcons();
+}
+
+function setActiveNav(page) {
+    document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+    const el = document.getElementById('nav-' + page);
+    if (el) el.classList.add('active');
+}
+function toggleSidebar() { const s = document.getElementById('sidebar'); if (s) s.classList.toggle('open'); }
+async function logout() { await sb.auth.signOut(); window.location.href = '../landing.html'; }
+
+async function loadSidebarCounts() {
+    if (!currentUser) return;
+    const { count: svcCount } = await sb.from('services').select('id', { count:'exact', head:true }).eq('user_id', currentUser.id);
+    const { count: ordCount } = await sb.from('orders').select('id', { count:'exact', head:true }).eq('provider_id', currentUser.id).in('status', ['pending','confirmed','in_progress']);
+    const svcBadge = document.getElementById('serviceBadge');
+    const ordBadge = document.getElementById('orderBadge');
+    if (svcBadge) svcBadge.textContent = svcCount || 0;
+    if (ordBadge) ordBadge.textContent = ordCount || 0;
+}
+
+// ─── C. REQUÊTE SUPABASE — services ─────────────────────────
+async function getMyServices() {
+    if (!currentUser) return [];
+    const { data, error } = await sb
+        .from('services')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false });
+    if (error) { console.error('getMyServices:', error); return []; }
+    return data || [];
+}
+
+// ─── D. HELPERS ──────────────────────────────────────────────
+function escapeHtml(text) {
+    if (!text) return '';
+    const d = document.createElement('div'); d.textContent = text; return d.innerHTML;
+}
+
+function formatPrice(amount) {
+    if (amount == null || isNaN(amount)) return '—';
+    return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleDateString('fr-FR', { day:'numeric', month:'short', year:'numeric' });
+}
+
+function formatPricingType(type) {
+    return ({ fixed:"Prix fixe", hourly:"À l'heure", daily:'À la journée', project:'Par projet' })[type] || type;
+}
+
+function getCategoryIcon(category) {
+    const icons = {
+        'Plomberie':'wrench', 'Électricité':'zap', 'Ménage':'home', 'Photographie':'camera',
+        'Développement web':'monitor', 'Cours particuliers':'book-open', 'Transport':'car',
+        'Design':'palette', 'Beauté':'sparkles', 'Bâtiment':'hard-hat'
+    };
+    return `<i data-lucide="${icons[category] || 'briefcase'}" style="width:1.2rem;height:1.2rem"></i>`;
+}
+
+// ─── E. TOAST ────────────────────────────────────────────────
+(function(){ const s=document.createElement('style'); s.textContent='@keyframes slideInR{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}'; document.head.appendChild(s); })();
+
+function showToast(message, type = 'info') {
+    let w = document.getElementById('_tw');
+    if (!w) { w = document.createElement('div'); w.id = '_tw'; w.style.cssText = 'position:fixed;top:24px;right:24px;z-index:10000;display:flex;flex-direction:column;gap:10px;pointer-events:none;'; document.body.appendChild(w); }
+    const icons = { success:'check-circle', error:'alert-circle', info:'info', warning:'alert-triangle' };
+    const colors = { success:'var(--green)', error:'var(--red)', info:'var(--gold)', warning:'#F59E0B' };
+    const t = document.createElement('div');
+    t.style.cssText = `display:flex;align-items:center;gap:10px;padding:14px 20px;background:var(--white);border:1px solid var(--rule);border-radius:var(--radius);box-shadow:var(--shadow-lg);font-size:.85rem;font-family:var(--ff-body);color:var(--ink);pointer-events:auto;min-width:280px;animation:slideInR .3s ease;border-left:4px solid ${colors[type]};`;
+    t.innerHTML = `<i data-lucide="${icons[type]}" style="width:1.1rem;height:1.1rem;color:${colors[type]};flex-shrink:0"></i><span style="flex:1">${message}</span><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:0"><i data-lucide="x" style="width:.9rem;height:.9rem"></i></button>`;
+    w.appendChild(t); lucide.createIcons();
+    setTimeout(() => { t.style.transition='opacity .3s,transform .3s'; t.style.opacity='0'; t.style.transform='translateX(20px)'; setTimeout(()=>t.remove(),300); }, 4000);
+}
+
+// ─── F. MODAL + CONFIRM ─────────────────────────────────────
+function openModal(htmlContent) {
+    const c = document.getElementById('modalContainer'); if (!c) return;
+    c.innerHTML = `<div class="modal-overlay" onclick="closeModal()"><div class="modal-content" onclick="event.stopPropagation()">${htmlContent}</div></div>`;
+    c.style.display = 'block'; document.body.style.overflow = 'hidden'; lucide.createIcons();
+}
+function closeModal() {
+    const c = document.getElementById('modalContainer');
+    if (c) { c.innerHTML = ''; c.style.display = 'none'; } document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+function confirmAction(message) {
+    return new Promise(resolve => {
+        openModal(`
+            <div class="modal-header">
+                <h3 class="modal-title"><i data-lucide="alert-triangle" style="width:1.2rem;height:1.2rem;color:var(--red)"></i> Confirmation</h3>
+                <button class="modal-close" onclick="closeModal()"><i data-lucide="x"></i></button>
+            </div>
+            <p style="padding:20px 24px;font-size:.9rem;color:var(--ink-2)">${message}</p>
+            <div class="form-actions" style="padding:0 24px 24px;gap:12px">
+                <button class="btn btn-secondary" id="confirmNo">Annuler</button>
+                <button class="btn btn-primary" style="background:var(--red)" id="confirmYes"><i data-lucide="trash-2" style="width:.9rem;height:.9rem"></i> Confirmer</button>
+            </div>`);
+        document.getElementById('confirmYes').onclick = () => { closeModal(); resolve(true); };
+        document.getElementById('confirmNo').onclick  = () => { closeModal(); resolve(false); };
+    });
+}
+
+// ─── G. RENDU TABLEAU ────────────────────────────────────────
+function renderServices() {
+    const container = document.getElementById('servicesTable');
+
+    if (services.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i data-lucide="package" class="empty-icon" style="width:4rem;height:4rem"></i>
+                <h3>Aucun service créé</h3>
+                <p>Créez votre premier service pour commencer à recevoir des commandes.</p>
+                <button class="btn btn-primary" onclick="openServiceModal()"><i data-lucide="plus"></i> Créer un service</button>
+            </div>`;
+        lucide.createIcons(); return;
+    }
+
+    container.innerHTML = `
+        <table>
+            <thead><tr>
+                <th>Service</th><th>Catégorie</th><th>Type de prix</th><th>Prix</th><th>Statut</th><th>Créé le</th><th>Actions</th>
+            </tr></thead>
+            <tbody>
+                ${services.map(s => `<tr>
+                    <td>
+                        <div class="service-cell">
+                            <div class="service-icon">${getCategoryIcon(s.category)}</div>
+                            <div>
+                                <strong>${escapeHtml(s.title)}</strong>
+                                <div class="service-desc-preview">${escapeHtml((s.description || '').substring(0, 60))}${s.description && s.description.length > 60 ? '...' : ''}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="category-tag">${escapeHtml(s.category)}</span></td>
+                    <td>${formatPricingType(s.pricing_type)}</td>
+                    <td class="price-cell">${formatPrice(s.price)}</td>
+                    <td><span class="status-badge ${s.is_active ? 'status-completed' : 'status-cancelled'}">${s.is_active ? 'Actif' : 'Inactif'}</span></td>
+                    <td>${formatDate(s.created_at)}</td>
+                    <td>
+                        <div class="action-group">
+                            <button class="btn-icon" onclick="openServiceModal('${s.id}')" title="Modifier"><i data-lucide="pencil" style="width:1rem;height:1rem"></i></button>
+                            <button class="btn-icon" onclick="toggleServiceStatus('${s.id}')" title="${s.is_active ? 'Désactiver' : 'Activer'}"><i data-lucide="${s.is_active ? 'eye-off' : 'eye'}" style="width:1rem;height:1rem"></i></button>
+                            <button class="btn-icon danger" onclick="deleteService('${s.id}')" title="Supprimer"><i data-lucide="trash-2" style="width:1rem;height:1rem"></i></button>
+                        </div>
+                    </td>
+                </tr>`).join('')}
+            </tbody>
+        </table>`;
+    lucide.createIcons();
+}
+
+// ─── H. MODAL CRUD — CRÉER / MODIFIER ───────────────────────
+async function openServiceModal(id = null) {
+    const isEdit = !!id;
+    let service = {
+        title: '', category: 'Plomberie', price: '', pricing_type: 'fixed',
+        description: '', duration_minutes: '', is_active: true, image_url: ''
+    };
+
+    if (isEdit) {
+        const found = services.find(s => s.id === id);
+        if (found) service = { ...service, ...found };
+    }
+
+    const categories = ['Plomberie','Électricité','Ménage','Photographie','Développement web','Cours particuliers','Transport','Design','Beauté','Bâtiment'];
+
+    const html = `
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i data-lucide="${isEdit ? 'pencil' : 'plus'}" style="width:1.2rem;height:1.2rem"></i>
+                ${isEdit ? 'Modifier le service' : 'Nouveau service'}
+            </h3>
+            <button class="modal-close" onclick="closeModal()"><i data-lucide="x"></i></button>
+        </div>
+        <form id="serviceForm">
+            <input type="hidden" name="id" value="${id || ''}">
+            <input type="hidden" name="is_active" value="${service.is_active !== false}">
+
+            <div class="form-group">
+                <label>Titre du service *</label>
+                <input type="text" name="title" value="${escapeHtml(service.title)}" placeholder="Ex: Plombier professionnel" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Catégorie *</label>
+                    <select name="category" required>
+                        ${categories.map(c => `<option value="${c}" ${service.category === c ? 'selected' : ''}>${c}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Type de prix *</label>
+                    <select name="pricing_type" required id="pricingType">
+                        <option value="fixed"   ${service.pricing_type === 'fixed' ? 'selected' : ''}>Prix fixe</option>
+                        <option value="hourly"  ${service.pricing_type === 'hourly' ? 'selected' : ''}>Taux horaire</option>
+                        <option value="daily"   ${service.pricing_type === 'daily' ? 'selected' : ''}>Taux journalier</option>
+                        <option value="project" ${service.pricing_type === 'project' ? 'selected' : ''}>Par projet</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Prix (FCFA) *</label>
+                    <input type="number" name="price" value="${service.price}" placeholder="Ex: 15000" required min="100" step="100">
+                </div>
+                <div class="form-group" id="durationGroup" style="display:${['hourly','daily'].includes(service.pricing_type) ? 'block' : 'none'}">
+                    <label>Durée estimée (minutes)</label>
+                    <input type="number" name="duration_minutes" value="${service.duration_minutes || ''}" placeholder="Ex: 60" min="15" step="15">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" rows="4" placeholder="Décrivez votre service en détail...">${escapeHtml(service.description || '')}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label>URL de l'image <span style="font-weight:400;color:var(--muted)">(optionnel)</span></label>
+                <input type="url" name="image_url" value="${escapeHtml(service.image_url || '')}" placeholder="https://exemple.com/photo.jpg">
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+                <button type="submit" class="btn btn-primary">
+                    <i data-lucide="${isEdit ? 'save' : 'plus'}"></i> ${isEdit ? 'Enregistrer' : 'Créer le service'}
+                </button>
+            </div>
+        </form>`;
+
+    openModal(html);
+
+    // Afficher/masquer durée selon type de prix
+    document.getElementById('pricingType').addEventListener('change', function() {
+        document.getElementById('durationGroup').style.display = ['hourly','daily'].includes(this.value) ? 'block' : 'none';
+    });
+
+    // ── SUBMIT : INSERT ou UPDATE dans services ──────────────
+    document.getElementById('serviceForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const fd   = new FormData(this);
+        const data = Object.fromEntries(fd.entries());
+
+        // Nettoyage pour correspondre au schéma services
+        data.title            = data.title.trim();
+        data.price            = parseFloat(data.price);
+        data.description      = data.description.trim() || null;
+        data.image_url        = data.image_url.trim() || null;
+        data.duration_minutes = data.duration_minutes ? parseInt(data.duration_minutes, 10) : null;
+        data.is_active        = data.is_active !== 'false';
+
+        // Ne pas envoyer duration_minutes si le type ne le justifie pas
+        if (!['hourly','daily'].includes(data.pricing_type)) {
+            data.duration_minutes = null;
+        }
+
+        delete data.id;
+
+        try {
+            if (isEdit) {
+                const { error } = await sb.from('services').update(data).eq('id', id);
+                if (error) throw error;
+                showToast('Service mis à jour avec succès', 'success');
+            } else {
+                data.user_id = currentUser.id;
+                const { error } = await sb.from('services').insert([data]);
+                if (error) throw error;
+                showToast('Service créé avec succès', 'success');
+            }
+            closeModal();
+            services = await getMyServices();
+            renderServices();
+            await loadSidebarCounts();
+        } catch (err) {
+            console.error('Erreur services :', err);
+            if (err.code === '23503') {
+                showToast("Erreur de profil utilisateur. Complétez votre inscription d'abord.", 'error');
+            } else if (err.code === '23514') {
+                showToast('Type de prix invalide. Choisissez parmi les options proposées.', 'error');
+            } else {
+                showToast('Erreur : ' + (err.message || 'Réessayez.'), 'error');
+            }
+        }
+    });
+}
+
+// ─── I. TOGGLE ACTIF / INACTIF ───────────────────────────────
+async function toggleServiceStatus(id) {
+    const service = services.find(s => s.id === id);
+    if (!service) return;
+
+    const newStatus = !service.is_active;
+    try {
+        const { error } = await sb.from('services').update({ is_active: newStatus }).eq('id', id);
+        if (error) throw error;
+        services = await getMyServices();
+        renderServices();
+        await loadSidebarCounts();
+        showToast(newStatus ? 'Service activé' : 'Service désactivé', 'info');
+    } catch (err) {
+        showToast('Erreur : ' + err.message, 'error');
+    }
+}
+
+// ─── J. SUPPRIMER ────────────────────────────────────────────
+async function deleteService(id) {
+    const ok = await confirmAction('Êtes-vous sûr de vouloir supprimer ce service ? Cette action est irréversible.');
+    if (!ok) return;
+
+    try {
+        const { error } = await sb.from('services').delete().eq('id', id);
+        if (error) throw error;
+        services = await getMyServices();
+        renderServices();
+        await loadSidebarCounts();
+        showToast('Service supprimé', 'info');
+    } catch (err) {
+        showToast('Erreur : ' + err.message, 'error');
+    }
+}
+
+// ─── K. DÉMARRAGE ────────────────────────────────────────────
+async function loadServices() {
+    await initDashboard();
+    setActiveNav('services');
+    services = await getMyServices();
+    renderServices();
+}
+
+loadServices();
+</script>
+</body>
+</html>

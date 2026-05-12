@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration — CamServices</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div id="nav"></div>
+    <hr>
+
+    <h1>Panel Administrateur</h1>
+
+    <!-- Statistiques -->
+    <div id="stats"></div>
+    <hr>
+
+    <!-- Prestataires en attente de vérification -->
+    <h2>Prestataires en attente de vérification</h2>
+    <div id="pending-providers">Chargement...</div>
+
+    <hr>
+
+    <!-- Tous les prestataires -->
+    <h2>Tous les prestataires</h2>
+    <div id="all-providers">Chargement...</div>
+
+    <hr>
+
+    <!-- Documents CNI -->
+    <h2>Documents CNI soumis</h2>
+    <div id="cni-documents">Chargement...</div>
+
+    <hr>
+
+    <!-- Tous les utilisateurs -->
+    <h2>Tous les utilisateurs</h2>
+    <div id="all-users">Chargement...</div>
+
+    <script src="config.js"></script>
+    <script>
+        renderNav();
+
+        let currentUser = null;
+
+        /**
+         * Initialisation de la page admin
+         */
+        async function initAdmin() {
+            currentUser = await requireAuth(['admin']);
+            if (!currentUser) return;
+
+            loadStats();
+            loadPendingProviders();
+            loadAllProviders();
+            loadCniDocuments();
+            loadAllUsers();
+        }
+
+        /**
+         * Statistiques générales
+         */
+        async function loadStats() {
+            const container = document.getElementById('stats');
+
+            const { count: totalUsers } = await supabase
+                .from('users').select('*', { count: 'exact', head: true });
+
+            const { count: totalProviders } = await supabase
+                .from('users').select('*', { count: 'exact', head: true })
+                .eq('role', 'prestataire');
+
+            const { count: pendingProviders } = await supabase
+                .from('users').select('*', { count: 'exact', head: true })
+                .eq('role', 'prestataire').eq('status', 'pending');
+
+            const { count: totalServices } = await supabase
+                .from('services').select('*', { count: 'exact', head: true });
+
+            const { count: totalOrders } = await supabase
+                .from('orders').select('*', { count: 'exact', head: true });
+
+            container.innerHTML =
+                '<p><strong>Utilisateurs totaux :</strong> ' + (totalUsers || 0) + '</p>' +
+                '<p><strong>Prestataires :</strong> ' + (totalProviders || 0) +
+                ' (dont ' + (pendingProviders || 0) + ' en attente)</p>' +
+                '<p><strong>Services publiés :</strong> ' + (totalServices || 0) + '</p>' +
+                '<p><strong>Commandes :</strong> ' + (totalOrders || 0) + '</p>';
+        }
+
+        /**
+         * Prestataires en attente de vérification
+         */
+        async function loadPendingProviders() {
+            const container = document.getElementById('pending-providers');
+
+            const { data, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('role', 'prestataire')
+                .eq('status', 'pending')
+                .order('created_at', { ascending: true });
+
+            if (error) {
+                container.innerHTML = '<p>Erreur : ' + error.message + '</p>';
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p>Aucun prestataire en attente.</p>';
+                return;
+            }
+
+            let html = '';
+            data.forEach(user => {
+                html += '<div>';
+                html += '<p><strong>' + user.full_name + '</strong> — ' + user.email + '</p>';
+                html += '<p>Tél: ' + user.phone + ' | Ville: ' + user.city + '</p>';
+                html += '<button onclick="verifyProvider(\'' + user.id + '\')">Valider</button> ';
+                html += '<button onclick="rejectProvider(\'' + user.id + '\')">Refuser</button>';
+                html += '</div><hr>';
+            });
+
+            container.innerHTML = html;
+        }
+
+        /**
+         * Tous les prestataires
+         */
+        async function loadAllProviders() {
+            const container = document.getElementById('all-providers');
+
+            const { data, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('role', 'prestataire')
+                .order('full_name');
+
+            if (error) {
+                container.innerHTML = '<p>Erreur : ' + error.message + '</p>';
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p>Aucun prestataire inscrit.</p>';
+                return;
+            }
+
+            const statusLabels = {
+                'pending': 'En attente',
+                'verified': 'Vérifié',
+                'blocked': 'Bloqué'
+            };
+
+            let html = '';
+            data.forEach(user => {
+                html += '<div>';
+                html += '<p><strong>' + user.full_name + '</strong> — ' + user.email + '</p>';
+                html += '<p>Ville: ' + user.city + ' | Statut: ' + (statusLabels[user.status] || user.status) + '</p>';
+
+                if (user.status !== 'blocked') {
+                    html += '<button onclick="blockUser(\'' + user.id + '\')">Bloquer</button> ';
+                } else {
+                    html += '<button onclick="unblockUser(\'' + user.id + '\')">Débloquer</button> ';
+                }
+
+                if (user.status === 'pending') {
+                    html += '<button onclick="verifyProvider(\'' + user.id + '\')">Valider</button>';
+                }
+
+                html += '</div><hr>';
+            });
+
+            container.innerHTML = html;
+        }
+
+        /**
+         * Documents CNI soumis
+         */
+        async function loadCniDocuments() {
+            const container = document.getElementById('cni-documents');
+
+            const { data, error } = await supabase
+                .from('documents')
+                .select('*, users(full_name, email)')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                container.innerHTML = '<p>Erreur : ' + error.message + '</p>';
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p>Aucun document soumis.</p>';
+                return;
+            }
+
+            const statusLabels = {
+                'pending': 'En attente',
+                'verified': 'Approuvé',
+                'rejected': 'Refusé'
+            };
+
+            let html = '';
+            data.forEach(doc => {
+                const userName = doc.users ? doc.users.full_name : 'Inconnu';
+                html += '<div>';
+                html += '<p><strong>' + userName + '</strong> — Statut: ' +
+                    (statusLabels[doc.verification_status] || doc.verification_status) + '</p>';
+                html += '<p><a href="' + doc.cni_url + '" target="_blank">Voir le document CNI</a></p>';
+
+                if (doc.verification_status === 'pending') {
+                    html += '<button onclick="approveCni(\'' + doc.id + '\', \'' + doc.user_id + '\')">Approuver</button> ';
+                    html += '<button onclick="rejectCni(\'' + doc.id + '\')">Refuser</button>';
+                }
+
+                html += '</div><hr>';
+            });
+
+            container.innerHTML = html;
+        }
+
+        /**
+         * Tous les utilisateurs
+         */
+        async function loadAllUsers() {
+            const container = document.getElementById('all-users');
+
+            const { data, error } = await supabase
+                .from('users')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                container.innerHTML = '<p>Erreur : ' + error.message + '</p>';
+                return;
+            }
+
+            let html = '<table border="1" cellpadding="5">';
+            html += '<tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Ville</th><th>Statut</th><th>Actions</th></tr>';
+
+            (data || []).forEach(user => {
+                html += '<tr>';
+                html += '<td>' + user.full_name + '</td>';
+                html += '<td>' + user.email + '</td>';
+                html += '<td>' + user.role + '</td>';
+                html += '<td>' + user.city + '</td>';
+                html += '<td>' + user.status + '</td>';
+                html += '<td>';
+                if (user.role !== 'admin') {
+                    if (user.status !== 'blocked') {
+                        html += '<button onclick="blockUser(\'' + user.id + '\')">Bloquer</button>';
+                    } else {
+                        html += '<button onclick="unblockUser(\'' + user.id + '\')">Débloquer</button>';
+                    }
+                }
+                html += '</td>';
+                html += '</tr>';
+            });
+
+            html += '</table>';
+            container.innerHTML = html;
+        }
+
+        // ============================================================
+        // Actions admin
+        // ============================================================
+
+        /** Valider un prestataire */
+        async function verifyProvider(userId) {
+            const { error } = await supabase
+                .from('users')
+                .update({ status: 'verified' })
+                .eq('id', userId);
+
+            if (error) { alert('Erreur : ' + error.message); return; }
+            alert('Prestataire vérifié !');
+            loadPendingProviders();
+            loadAllProviders();
+            loadAllUsers();
+            loadStats();
+        }
+
+        /** Refuser un prestataire (le laisser pending ou le bloquer) */
+        async function rejectProvider(userId) {
+            const { error } = await supabase
+                .from('users')
+                .update({ status: 'blocked' })
+                .eq('id', userId);
+
+            if (error) { alert('Erreur : ' + error.message); return; }
+            alert('Prestataire refusé.');
+            loadPendingProviders();
+            loadAllProviders();
+            loadAllUsers();
+            loadStats();
+        }
+
+        /** Bloquer un utilisateur */
+        async function blockUser(userId) {
+            if (!confirm('Bloquer cet utilisateur ?')) return;
+            const { error } = await supabase
+                .from('users')
+                .update({ status: 'blocked' })
+                .eq('id', userId);
+
+            if (error) { alert('Erreur : ' + error.message); return; }
+            alert('Utilisateur bloqué.');
+            loadAllProviders();
+            loadAllUsers();
+        }
+
+        /** Débloquer un utilisateur */
+        async function unblockUser(userId) {
+            const { error } = await supabase
+                .from('users')
+                .update({ status: 'verified' })
+                .eq('id', userId);
+
+            if (error) { alert('Erreur : ' + error.message); return; }
+            alert('Utilisateur débloqué.');
+            loadAllProviders();
+            loadAllUsers();
+        }
+
+        /** Approuver une CNI et valider le prestataire */
+        async function approveCni(docId, userId) {
+            // Mettre à jour le document
+            await supabase.from('documents')
+                .update({ verification_status: 'verified' })
+                .eq('id', docId);
+
+            // Valider le prestataire
+            await supabase.from('users')
+                .update({ status: 'verified' })
+                .eq('id', userId);
+
+            alert('CNI approuvée et prestataire vérifié !');
+            loadCniDocuments();
+            loadPendingProviders();
+            loadAllProviders();
+            loadAllUsers();
+            loadStats();
+        }
+
+        /** Refuser une CNI */
+        async function rejectCni(docId) {
+            await supabase.from('documents')
+                .update({ verification_status: 'rejected' })
+                .eq('id', docId);
+
+            alert('CNI refusée.');
+            loadCniDocuments();
+        }
+
+        initAdmin();
+    </script>
+</body>
+</html>

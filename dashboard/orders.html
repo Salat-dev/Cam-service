@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commandes — CamServices Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Allison&family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+<button class="menu-toggle" onclick="toggleSidebar()">
+    <i data-lucide="menu"></i>
+</button>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar" id="sidebar">
+    <a href="index.html" class="sidebar-logo">Cam<span class="script">S</span>ervices</a>
+    <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sidebarAvatar"></div>
+        <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebarName">Chargement...</div>
+            <div class="sidebar-user-role" id="sidebarRole">Prestataire</div>
+            <span class="verify-badge" id="verifyBadge" style="display:none">
+                <i data-lucide="shield-check" style="width:.7rem;height:.7rem"></i> Vérifié
+            </span>
+        </div>
+    </div>
+    <ul class="sidebar-nav">
+        <li><a href="index.html" id="nav-overview"><i data-lucide="layout-dashboard"></i> Vue d'ensemble</a></li>
+        <li><a href="services.html" id="nav-services"><i data-lucide="briefcase"></i> Mes services <span class="badge" id="serviceBadge">0</span></a></li>
+        <li><a href="orders.html" class="active" id="nav-orders"><i data-lucide="shopping-bag"></i> Commandes <span class="badge" id="orderBadge">0</span></a></li>
+        <li><a href="pricing.html" id="nav-pricing"><i data-lucide="tags"></i> Grille tarifaire</a></li>
+        <li><a href="portfolio.html" id="nav-portfolio"><i data-lucide="image"></i> Portfolio</a></li>
+        <li><a href="activities.html" id="nav-activities"><i data-lucide="award"></i> Activités</a></li>
+    </ul>
+    <hr class="sidebar-divider">
+    <ul class="sidebar-nav">
+        <li><a href="profile.html" id="nav-profile"><i data-lucide="user-circle"></i> Mon profil</a></li>
+        <li><a href="analytics.html" id="nav-analytics"><i data-lucide="bar-chart-3"></i> Statistiques</a></li>
+    </ul>
+    <div class="sidebar-footer">
+        <a href="../landing.html" onclick="logout();return false"><i data-lucide="log-out"></i> Déconnexion</a>
+    </div>
+</aside>
+
+<!-- ═══ MAIN CONTENT ═══ -->
+<main class="main-content">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Mes <span class="script">commandes</span></h1>
+            <p class="page-subtitle">Gérez les demandes de vos clients</p>
+        </div>
+    </div>
+    
+    <!-- Tabs -->
+    <div class="tabs" id="orderTabs">
+        <button class="tab active" data-filter="all">
+            Toutes <span class="count" id="countAll">0</span>
+        </button>
+        <button class="tab" data-filter="pending">
+            En attente <span class="count" id="countPending">0</span>
+        </button>
+        <button class="tab" data-filter="confirmed">
+            Confirmées <span class="count" id="countConfirmed">0</span>
+        </button>
+        <button class="tab" data-filter="in_progress">
+            En cours <span class="count" id="countInProgress">0</span>
+        </button>
+        <button class="tab" data-filter="completed">
+            Terminées <span class="count" id="countCompleted">0</span>
+        </button>
+        <button class="tab" data-filter="cancelled">
+            Annulées <span class="count" id="countCancelled">0</span>
+        </button>
+        <button class="tab" data-filter="deleted">
+            Corbeille <span class="count" id="countDeleted">0</span>
+        </button>
+    </div>
+    
+    <div class="card">
+        <div class="table-wrapper" id="ordersTable">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Chargement des commandes...</p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div id="modalContainer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../config.js"></script>
+<script src="js/dashboard-auth.js"></script>
+<script src="js/dashboard-common.js"></script>
+<script>
+  // ═══════════════════════════════════════════
+// DASHBOARD ORDERS - Récupération infos clients
+// ═══════════════════════════════════════════
+
+let orders = [];
+let currentFilter = 'all';
+
+async function loadOrders() {
+    await initDashboard();
+    setActiveNav('orders');
+    orders = await getAllOrders();
+    updateCounters();
+    renderOrders();
+    setupTabs();
+}
+
+// ═══════════════ RÉCUPÉRER LES COMMANDES AVEC INFOS CLIENTS ═══════════════
+async function getAllOrders() {
+    if (!currentUser) return [];
+
+    // Récupérer les commandes du prestataire
+    const { data, error } = await supabase
+        .from('orders')
+        .select(`
+            *,
+            service:service_id(title),
+            client:users_clients!orders_client_client_id_fkey(full_name, phone, email, city, address)
+        `)
+        .eq('provider_id', currentUser.id)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('❌ Erreur chargement commandes:', error);
+        return [];
+    }
+
+    // Formater les données
+    return (data || []).map(order => ({
+        ...order,
+        service_title: order.service?.title || 'Service supprimé',
+        // ✅ Infos depuis users_clients (si le client est connecté)
+        client_full_name: order.client?.full_name || order.client_name || 'Client',
+        client_phone: order.client?.phone || order.client_phone || '—',
+        client_city: order.client?.city || order.client_address || '—',
+        client_email: order.client?.email || '—',
+        // Message direct de la commande
+        client_message: order.client_message || null
+    }));
+}
+
+function updateCounters() {
+    const counts = {};
+    ['all', 'pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'deleted'].forEach(status => {
+        counts[status] = status === 'all' 
+            ? orders.length 
+            : orders.filter(o => o.status === status).length;
+        const el = document.getElementById(`count${status.charAt(0).toUpperCase() + status.slice(1)}`);
+        if (el) el.textContent = counts[status];
+    });
+}
+
+function renderOrders() {
+    const container = document.getElementById('ordersTable');
+    const filtered = currentFilter === 'all' 
+        ? orders 
+        : orders.filter(o => o.status === currentFilter);
+
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i data-lucide="${getEmptyIcon(currentFilter)}" class="empty-icon" style="width:4rem;height:4rem"></i>
+                <h3>${getEmptyTitle(currentFilter)}</h3>
+                <p>${getEmptyDesc(currentFilter)}</p>
+            </div>
+        `;
+        lucide.createIcons();
+        return;
+    }
+
+    container.innerHTML = `
+        <table>
+            <thead>
+                <tr>
+                    <th>Client</th>
+                    <th>Téléphone</th>
+                    <th>Adresse</th>
+                    <th>Service</th>
+                    <th>Montant</th>
+                    <th>Message</th>
+                    <th>Date</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${filtered.map(o => `
+                    <tr>
+                        <td>
+                            <div class="client-cell">
+                                <div class="client-avatar">${(o.client_full_name || 'C')[0].toUpperCase()}</div>
+                                <div>
+                                    <strong>${o.client_full_name || 'Client'}</strong>
+                                    ${o.client_email !== '—' ? `<div style="font-size:.7rem;color:var(--muted)">${o.client_email}</div>` : ''}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            ${o.client_phone !== '—' ? `
+                                <a href="https://wa.me/${o.client_phone.replace(/[^0-9]/g,'')}" target="_blank" style="color:var(--green);text-decoration:none;display:flex;align-items:center;gap:4px;font-weight:600">
+                                    <i data-lucide="phone" style="width:.8rem;height:.8rem"></i> ${o.client_phone}
+                                </a>
+                            ` : '—'}
+                        </td>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:4px">
+                                <i data-lucide="map-pin" style="width:.8rem;height:.8rem;color:var(--faint)"></i>
+                                ${o.client_city || '—'}
+                            </div>
+                        </td>
+                        <td><strong>${o.service_title || '—'}</strong></td>
+                        <td class="price-cell">${formatPrice(o.total_amount)}</td>
+                        <td>
+                            ${o.client_message ? `
+                                <span style="font-size:.78rem;color:var(--muted);font-style:italic;max-width:150px;display:inline-block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${o.client_message}">
+                                    "${o.client_message}"
+                                </span>
+                            ` : '—'}
+                        </td>
+                        <td>${formatDate(o.created_at)}</td>
+                        <td><span class="status-badge status-${o.status}">${formatStatus(o.status)}</span></td>
+                        <td>
+                            <div class="action-group">
+                                ${getOrderActions(o)}
+                            </div>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+    lucide.createIcons();
+}
+
+function getOrderActions(order) {
+    const actions = [];
+
+    switch(order.status) {
+        case 'pending':
+            actions.push(`
+                <button class="btn-icon success" onclick="updateOrderStatus('${order.id}', 'confirmed')" title="Confirmer">
+                    <i data-lucide="check" style="width:1rem;height:1rem"></i>
+                </button>
+                <button class="btn-icon danger" onclick="updateOrderStatus('${order.id}', 'cancelled')" title="Annuler">
+                    <i data-lucide="x" style="width:1rem;height:1rem"></i>
+                </button>
+            `);
+            break;
+        case 'confirmed':
+            actions.push(`
+                <button class="btn-icon" onclick="updateOrderStatus('${order.id}', 'in_progress')" title="Démarrer">
+                    <i data-lucide="play" style="width:1rem;height:1rem"></i>
+                </button>
+                <button class="btn-icon danger" onclick="updateOrderStatus('${order.id}', 'cancelled')" title="Annuler">
+                    <i data-lucide="x" style="width:1rem;height:1rem"></i>
+                </button>
+            `);
+            break;
+        case 'in_progress':
+            actions.push(`
+                <button class="btn-icon success" onclick="updateOrderStatus('${order.id}', 'completed')" title="Terminer">
+                    <i data-lucide="flag" style="width:1rem;height:1rem"></i>
+                </button>
+            `);
+            break;
+        case 'completed':
+        case 'cancelled':
+            actions.push(`
+                <button class="btn-icon danger" onclick="softDeleteOrder('${order.id}')" title="Mettre à la corbeille">
+                    <i data-lucide="trash-2" style="width:1rem;height:1rem"></i>
+                </button>
+            `);
+            break;
+        case 'deleted':
+            actions.push(`
+                <button class="btn-icon" onclick="restoreOrder('${order.id}')" title="Restaurer">
+                    <i data-lucide="rotate-ccw" style="width:1rem;height:1rem"></i>
+                </button>
+            `);
+            break;
+    }
+
+    return actions.join('');
+}
+
+function setupTabs() {
+    document.querySelectorAll('#orderTabs .tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('#orderTabs .tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            currentFilter = this.dataset.filter;
+            renderOrders();
+        });
+    });
+}
+
+async function updateOrderStatus(orderId, newStatus) {
+    const statusLabels = {
+        confirmed: 'confirmer',
+        in_progress: 'démarrer',
+        completed: 'terminer',
+        cancelled: 'annuler'
+    };
+
+    const action = statusLabels[newStatus] || 'modifier';
+    const confirmed = await confirmAction(`Voulez-vous vraiment ${action} cette commande ?`);
+    if (!confirmed) return;
+
+    const updates = { status: newStatus };
+    if (newStatus === 'completed') updates.completed_at = new Date().toISOString();
+    if (newStatus === 'cancelled') updates.cancelled_at = new Date().toISOString();
+
+    await supabase.from('orders').update(updates).eq('id', orderId);
+    orders = await getAllOrders();
+    updateCounters();
+    renderOrders();
+    loadSidebarCounts();
+    showToast(`Commande ${action}ée avec succès`, 'success');
+}
+
+async function softDeleteOrder(orderId) {
+    const confirmed = await confirmAction('Mettre cette commande à la corbeille ? Vous pourrez la restaurer.');
+    if (!confirmed) return;
+
+    await supabase.from('orders').update({
+        status: 'deleted',
+        deleted_at: new Date().toISOString()
+    }).eq('id', orderId);
+
+    orders = await getAllOrders();
+    updateCounters();
+    renderOrders();
+    showToast('Commande déplacée vers la corbeille', 'info');
+}
+
+async function restoreOrder(orderId) {
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return;
+
+    await supabase.from('orders').update({
+        status: 'cancelled',
+        deleted_at: null
+    }).eq('id', orderId);
+
+    orders = await getAllOrders();
+    updateCounters();
+    renderOrders();
+    showToast('Commande restaurée avec succès', 'success');
+}
+
+function getEmptyIcon(filter) {
+    const icons = {
+        all: 'inbox', pending: 'clock', confirmed: 'thumbs-up',
+        in_progress: 'loader', completed: 'check-circle',
+        cancelled: 'x-circle', deleted: 'trash-2'
+    };
+    return icons[filter] || 'inbox';
+}
+
+function getEmptyTitle(filter) {
+    const titles = {
+        all: 'Aucune commande', pending: 'Aucune commande en attente',
+        confirmed: 'Aucune commande confirmée', in_progress: 'Aucune commande en cours',
+        completed: 'Aucune commande terminée', cancelled: 'Aucune commande annulée',
+        deleted: 'Corbeille vide'
+    };
+    return titles[filter] || 'Aucune commande';
+}
+
+function getEmptyDesc(filter) {
+    const descs = {
+        all: 'Les commandes de vos clients apparaîtront ici.',
+        pending: 'Toutes les nouvelles commandes ont été traitées.',
+        deleted: 'Les commandes supprimées apparaissent ici pendant 30 jours.'
+    };
+    return descs[filter] || '';
+}
+
+// Démarrer
+loadOrders();
+</script>
+</body>
+</html>

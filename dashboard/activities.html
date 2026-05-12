@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activités & Certifications — CamServices Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Allison&family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/dashboard.css">
+    <style>
+        /* ═══ MODAL STYLES ═══ */
+        .modal-overlay {
+            position: fixed; inset: 0; z-index: 9000;
+            background: rgba(26,23,20,.45); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            padding: 24px; animation: modalFadeIn .25s ease;
+        }
+        .modal-content {
+            background: var(--white, #fff); border-radius: var(--radius-xl, 16px);
+            box-shadow: 0 20px 60px rgba(26,23,20,.18);
+            width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto;
+            animation: modalSlideUp .3s cubic-bezier(.22,1,.36,1);
+        }
+        .modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 24px 24px 16px; border-bottom: 1px solid var(--rule, #E8E2DA);
+        }
+        .modal-title { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: 700; }
+        .modal-close {
+            background: none; border: none; cursor: pointer; color: var(--muted, #8A8279);
+            padding: 6px; border-radius: 8px; transition: background .2s;
+        }
+        .modal-close:hover { background: var(--cream, #FAF8F5); }
+        .modal-content form { padding: 24px; }
+        .modal-content .form-group { margin-bottom: 16px; }
+        .modal-content .form-group label {
+            display: block; font-size: .8rem; font-weight: 600;
+            margin-bottom: 6px; color: var(--ink, #1A1714);
+        }
+        .modal-content .form-group input,
+        .modal-content .form-group select,
+        .modal-content .form-group textarea {
+            width: 100%; padding: 10px 14px;
+            border: 1.5px solid var(--rule, #E8E2DA); border-radius: var(--radius, 10px);
+            font-family: var(--ff-body, 'Outfit', sans-serif); font-size: .88rem;
+            color: var(--ink, #1A1714); background: var(--white, #fff);
+            outline: none; transition: border-color .2s;
+        }
+        .modal-content .form-group input:focus,
+        .modal-content .form-group select:focus,
+        .modal-content .form-group textarea:focus {
+            border-color: var(--gold, #C4943E);
+            box-shadow: 0 0 0 3px rgba(196,148,62,.08);
+        }
+        .modal-content .form-group textarea { min-height: 80px; resize: vertical; }
+        .modal-content .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .modal-content .form-actions { display: flex; gap: 12px; padding-top: 8px; justify-content: flex-end; }
+        @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes modalSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 600px) {
+            .modal-content { max-width: 100%; margin: 12px; }
+            .modal-content .form-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<button class="menu-toggle" onclick="toggleSidebar()">
+    <i data-lucide="menu"></i>
+</button>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar" id="sidebar">
+    <a href="index.html" class="sidebar-logo">Cam<span class="script">S</span>ervices</a>
+    <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sidebarAvatar"></div>
+        <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebarName">Chargement...</div>
+            <div class="sidebar-user-role" id="sidebarRole">Prestataire</div>
+            <span class="verify-badge" id="verifyBadge" style="display:none">
+                <i data-lucide="shield-check" style="width:.7rem;height:.7rem"></i> Vérifié
+            </span>
+        </div>
+    </div>
+    <ul class="sidebar-nav">
+        <li><a href="index.html" id="nav-overview"><i data-lucide="layout-dashboard"></i> Vue d'ensemble</a></li>
+        <li><a href="services.html" id="nav-services"><i data-lucide="briefcase"></i> Mes services <span class="badge" id="serviceBadge">0</span></a></li>
+        <li><a href="orders.html" id="nav-orders"><i data-lucide="shopping-bag"></i> Commandes <span class="badge" id="orderBadge">0</span></a></li>
+        <li><a href="pricing.html" id="nav-pricing"><i data-lucide="tags"></i> Grille tarifaire</a></li>
+        <li><a href="portfolio.html" id="nav-portfolio"><i data-lucide="image"></i> Portfolio</a></li>
+        <li><a href="activities.html" class="active" id="nav-activities"><i data-lucide="award"></i> Activités</a></li>
+    </ul>
+    <hr class="sidebar-divider">
+    <ul class="sidebar-nav">
+        <li><a href="profile.html" id="nav-profile"><i data-lucide="user-circle"></i> Mon profil</a></li>
+        <li><a href="analytics.html" id="nav-analytics"><i data-lucide="bar-chart-3"></i> Statistiques</a></li>
+    </ul>
+    <div class="sidebar-footer">
+        <a href="../landing.html" onclick="logout();return false"><i data-lucide="log-out"></i> Déconnexion</a>
+    </div>
+</aside>
+
+<!-- ═══ MAIN CONTENT ═══ -->
+<main class="main-content">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Mes <span class="script">activités</span></h1>
+            <p class="page-subtitle">Certifications, formations, événements et autres accomplissements</p>
+        </div>
+        <div class="page-actions" style="display:flex;gap:12px">
+            <select id="typeFilter" onchange="filterActivities()" style="padding:9px 14px;border:1.5px solid var(--rule);border-radius:var(--radius);font-family:var(--ff-body);font-size:.82rem;color:var(--muted);background:var(--white);cursor:pointer;outline:none">
+                <option value="all">Tous les types</option>
+                <option value="certification">Certifications</option>
+                <option value="training">Formations</option>
+                <option value="event">Événements</option>
+                <option value="collaboration">Collaborations</option>
+                <option value="award">Récompenses</option>
+                <option value="other">Autres</option>
+            </select>
+            <button class="btn btn-primary" onclick="openActivityModal()">
+                <i data-lucide="plus"></i> Ajouter une activité
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats rapides -->
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px">
+        <div class="stat-card">
+            <div class="stat-card-header"><div class="stat-icon gold"><i data-lucide="award"></i></div></div>
+            <div class="stat-value" id="totalActivities">0</div>
+            <div class="stat-label">Activités totales</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-header"><div class="stat-icon green"><i data-lucide="certificate"></i></div></div>
+            <div class="stat-value" id="certificationCount">0</div>
+            <div class="stat-label">Certifications</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-header"><div class="stat-icon blue"><i data-lucide="verified"></i></div></div>
+            <div class="stat-value" id="verifiedCount">0</div>
+            <div class="stat-label">Vérifiées</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-header"><div class="stat-icon purple"><i data-lucide="calendar"></i></div></div>
+            <div class="stat-value" id="thisYearCount">0</div>
+            <div class="stat-label">Cette année</div>
+        </div>
+    </div>
+
+    <!-- Liste des activités -->
+    <div id="activitiesList">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Chargement de vos activités...</p>
+        </div>
+    </div>
+</main>
+
+<div id="modalContainer" style="display:none"></div>
+
+<!-- ═══ SCRIPTS ═══ -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ============================================================
+//  ACTIVITIES — Script complet et autonome
+//  Table : public.provider_activities
+// ============================================================
+
+// ─── A. SUPABASE ─────────────────────────────────────────────
+const SUPABASE_URL  = 'https://cwubxwbzzuigctvgdygv.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dWJ4d2J6enVpZ2N0dmdkeWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzI2MTgsImV4cCI6MjA5MzgwODYxOH0.0mwBNo_S5yItQQjq2at9GNRN74ooZRBJIbZGDH9L2uk';
+
+
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let currentUser   = null;
+let activities    = [];
+let currentFilter = 'all';
+
+// ─── B. AUTH + SIDEBAR ───────────────────────────────────────
+async function initDashboard() {
+    const { data: { user: authUser } } = await sb.auth.getUser();
+    if (!authUser) { window.location.href = '../login.html'; return; }
+
+    const { data: profile } = await sb.from('users').select('*').eq('id', authUser.id).maybeSingle();
+
+    currentUser = profile || {
+        id: authUser.id, email: authUser.email,
+        full_name: authUser.user_metadata?.full_name || authUser.email.split('@')[0],
+        role: 'prestataire', is_verified: false, profile_photo_url: null
+    };
+
+    const nameEl = document.getElementById('sidebarName');
+    const roleEl = document.getElementById('sidebarRole');
+    const avatarEl = document.getElementById('sidebarAvatar');
+    const badgeEl = document.getElementById('verifyBadge');
+
+    if (nameEl)  nameEl.textContent = currentUser.full_name || currentUser.email;
+    if (roleEl)  roleEl.textContent = ({ client:'Client', prestataire:'Prestataire', admin:'Admin' })[currentUser.role] || 'Prestataire';
+    if (badgeEl) badgeEl.style.display = currentUser.is_verified ? 'inline-flex' : 'none';
+    if (avatarEl) {
+        if (currentUser.profile_photo_url) {
+            avatarEl.style.backgroundImage = `url(${currentUser.profile_photo_url})`;
+            avatarEl.style.backgroundSize = 'cover';
+        } else {
+            avatarEl.textContent = (currentUser.full_name || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+        }
+    }
+
+    const { count: svcCount } = await sb.from('services').select('id', { count:'exact', head:true }).eq('user_id', currentUser.id);
+    const { count: ordCount } = await sb.from('orders').select('id', { count:'exact', head:true }).eq('provider_id', currentUser.id).in('status', ['pending','confirmed','in_progress']);
+    const svcBadge = document.getElementById('serviceBadge');
+    const ordBadge = document.getElementById('orderBadge');
+    if (svcBadge) svcBadge.textContent = svcCount || 0;
+    if (ordBadge) ordBadge.textContent = ordCount || 0;
+    lucide.createIcons();
+}
+
+function setActiveNav(page) {
+    document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+    const el = document.getElementById('nav-' + page);
+    if (el) el.classList.add('active');
+}
+function toggleSidebar() { const s = document.getElementById('sidebar'); if (s) s.classList.toggle('open'); }
+async function logout() { await sb.auth.signOut(); window.location.href = '../landing.html'; }
+
+// ─── C. REQUÊTE SUPABASE — provider_activities ───────────────
+async function getActivities() {
+    if (!currentUser) return [];
+    const { data, error } = await sb
+        .from('provider_activities')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('date_start', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false });
+    if (error) { console.error('getActivities:', error); return []; }
+    return data || [];
+}
+
+// ─── D. HELPERS ──────────────────────────────────────────────
+function escapeHtml(text) {
+    if (!text) return '';
+    const d = document.createElement('div'); d.textContent = text; return d.innerHTML;
+}
+
+function formatDateRange(start, end) {
+    if (!start) return '';
+    const s = new Date(start).toLocaleDateString('fr-FR', { month:'short', year:'numeric' });
+    if (!end) return s;
+    const e = new Date(end).toLocaleDateString('fr-FR', { month:'short', year:'numeric' });
+    return `${s} — ${e}`;
+}
+
+function getActivityTypeConfig(type) {
+    const c = {
+        certification:  { icon:'certificate',    label:'Certification',  color:'var(--gold)',  bg:'var(--gold-dim)' },
+        training:       { icon:'graduation-cap', label:'Formation',      color:'var(--blue)',  bg:'var(--blue-light,#EFF6FF)' },
+        event:          { icon:'calendar-check', label:'Événement',      color:'var(--purple,#8B5CF6)', bg:'var(--purple-light,#F5F3FF)' },
+        collaboration:  { icon:'users',          label:'Collaboration',  color:'var(--green)', bg:'var(--green-light,#F0FDF4)' },
+        award:          { icon:'trophy',         label:'Récompense',     color:'#F59E0B',      bg:'#FFFBEB' },
+        other:          { icon:'star',           label:'Autre',          color:'var(--muted)', bg:'var(--cream)' }
+    };
+    return c[type] || c.other;
+}
+
+// ─── E. TOAST ────────────────────────────────────────────────
+(function(){ const s=document.createElement('style'); s.textContent='@keyframes slideInR{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}'; document.head.appendChild(s); })();
+
+function showToast(message, type = 'info') {
+    let w = document.getElementById('_tw');
+    if (!w) { w = document.createElement('div'); w.id = '_tw'; w.style.cssText = 'position:fixed;top:24px;right:24px;z-index:10000;display:flex;flex-direction:column;gap:10px;pointer-events:none;'; document.body.appendChild(w); }
+    const icons = { success:'check-circle', error:'alert-circle', info:'info', warning:'alert-triangle' };
+    const colors = { success:'var(--green)', error:'var(--red)', info:'var(--gold)', warning:'#F59E0B' };
+    const t = document.createElement('div');
+    t.style.cssText = `display:flex;align-items:center;gap:10px;padding:14px 20px;background:var(--white);border:1px solid var(--rule);border-radius:var(--radius);box-shadow:var(--shadow-lg);font-size:.85rem;font-family:var(--ff-body);color:var(--ink);pointer-events:auto;min-width:280px;animation:slideInR .3s ease;border-left:4px solid ${colors[type]};`;
+    t.innerHTML = `<i data-lucide="${icons[type]}" style="width:1.1rem;height:1.1rem;color:${colors[type]};flex-shrink:0"></i><span style="flex:1">${message}</span><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:0"><i data-lucide="x" style="width:.9rem;height:.9rem"></i></button>`;
+    w.appendChild(t); lucide.createIcons();
+    setTimeout(() => { t.style.transition='opacity .3s,transform .3s'; t.style.opacity='0'; t.style.transform='translateX(20px)'; setTimeout(()=>t.remove(),300); }, 4000);
+}
+
+// ─── F. MODAL + CONFIRM ─────────────────────────────────────
+function openModal(htmlContent) {
+    const c = document.getElementById('modalContainer'); if (!c) return;
+    c.innerHTML = `<div class="modal-overlay" onclick="closeModal()"><div class="modal-content" onclick="event.stopPropagation()">${htmlContent}</div></div>`;
+    c.style.display = 'block'; document.body.style.overflow = 'hidden'; lucide.createIcons();
+}
+function closeModal() {
+    const c = document.getElementById('modalContainer');
+    if (c) { c.innerHTML = ''; c.style.display = 'none'; } document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+function confirmAction(message) {
+    return new Promise(resolve => {
+        openModal(`
+            <div class="modal-header">
+                <h3 class="modal-title"><i data-lucide="alert-triangle" style="width:1.2rem;height:1.2rem;color:var(--red)"></i> Confirmation</h3>
+                <button class="modal-close" onclick="closeModal()"><i data-lucide="x"></i></button>
+            </div>
+            <p style="padding:20px 24px;font-size:.9rem;color:var(--ink-2)">${message}</p>
+            <div class="form-actions" style="padding:0 24px 24px;gap:12px">
+                <button class="btn btn-secondary" id="confirmNo">Annuler</button>
+                <button class="btn btn-primary" style="background:var(--red)" id="confirmYes"><i data-lucide="trash-2" style="width:.9rem;height:.9rem"></i> Confirmer</button>
+            </div>`);
+        document.getElementById('confirmYes').onclick = () => { closeModal(); resolve(true); };
+        document.getElementById('confirmNo').onclick  = () => { closeModal(); resolve(false); };
+    });
+}
+
+// ─── G. STATS + FILTRE ──────────────────────────────────────
+function updateStats() {
+    const now = new Date();
+    document.getElementById('totalActivities').textContent   = activities.length;
+    document.getElementById('certificationCount').textContent = activities.filter(a => a.activity_type === 'certification').length;
+    document.getElementById('verifiedCount').textContent      = activities.filter(a => a.is_verified).length;
+    document.getElementById('thisYearCount').textContent      = activities.filter(a => new Date(a.created_at).getFullYear() === now.getFullYear()).length;
+}
+
+function filterActivities() {
+    currentFilter = document.getElementById('typeFilter').value;
+    renderActivities();
+}
+
+// ─── H. RENDU ────────────────────────────────────────────────
+function renderActivities() {
+    const container = document.getElementById('activitiesList');
+    const filtered = currentFilter === 'all' ? activities : activities.filter(a => a.activity_type === currentFilter);
+
+    if (activities.length === 0) {
+        container.innerHTML = `
+            <div class="card">
+                <div class="empty-state">
+                    <i data-lucide="award" class="empty-icon" style="width:5rem;height:5rem"></i>
+                    <h3>Aucune activité enregistrée</h3>
+                    <p>Ajoutez vos certifications, formations et accomplissements pour renforcer votre crédibilité auprès des clients.</p>
+                    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:20px">
+                        <div style="text-align:center"><div style="width:48px;height:48px;border-radius:50%;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;margin:0 auto 8px"><i data-lucide="certificate" style="color:var(--gold)"></i></div><span style="font-size:.75rem;color:var(--muted)">Certification</span></div>
+                        <div style="text-align:center"><div style="width:48px;height:48px;border-radius:50%;background:var(--blue-light,#EFF6FF);display:flex;align-items:center;justify-content:center;margin:0 auto 8px"><i data-lucide="graduation-cap" style="color:var(--blue,#3B82F6)"></i></div><span style="font-size:.75rem;color:var(--muted)">Formation</span></div>
+                        <div style="text-align:center"><div style="width:48px;height:48px;border-radius:50%;background:var(--purple-light,#F5F3FF);display:flex;align-items:center;justify-content:center;margin:0 auto 8px"><i data-lucide="trophy" style="color:var(--purple,#8B5CF6)"></i></div><span style="font-size:.75rem;color:var(--muted)">Récompense</span></div>
+                        <div style="text-align:center"><div style="width:48px;height:48px;border-radius:50%;background:var(--green-light,#F0FDF4);display:flex;align-items:center;justify-content:center;margin:0 auto 8px"><i data-lucide="users" style="color:var(--green)"></i></div><span style="font-size:.75rem;color:var(--muted)">Collaboration</span></div>
+                    </div>
+                    <button class="btn btn-primary" onclick="openActivityModal()"><i data-lucide="plus"></i> Ajouter ma première activité</button>
+                </div>
+            </div>`;
+        lucide.createIcons(); return;
+    }
+
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div class="card"><div class="empty-state">
+                <i data-lucide="filter" class="empty-icon" style="width:3rem;height:3rem"></i>
+                <h3>Aucune activité trouvée</h3>
+                <p>Aucune activité ne correspond au filtre sélectionné.</p>
+                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('typeFilter').value='all';filterActivities()">Afficher tout</button>
+            </div></div>`;
+        lucide.createIcons(); return;
+    }
+
+    // Grouper par année
+    const grouped = {};
+    filtered.forEach(a => {
+        const year = new Date(a.date_start || a.created_at).getFullYear();
+        if (!grouped[year]) grouped[year] = [];
+        grouped[year].push(a);
+    });
+
+    let html = '';
+    Object.keys(grouped).sort((a,b) => b - a).forEach(year => {
+        html += `<div style="margin-bottom:32px">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+                <h3 style="font-weight:700;font-size:1rem;color:var(--ink)">${year}</h3>
+                <span style="font-size:.75rem;color:var(--muted);background:var(--cream);padding:2px 10px;border-radius:10px">${grouped[year].length} activité(s)</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+                ${grouped[year].map(a => renderActivityCard(a)).join('')}
+            </div>
+        </div>`;
+    });
+
+    container.innerHTML = html;
+    lucide.createIcons();
+}
+
+function renderActivityCard(a) {
+    const tc = getActivityTypeConfig(a.activity_type);
+    return `
+        <div class="card" style="margin-bottom:0">
+            <div style="display:flex;gap:16px;align-items:flex-start">
+                <div style="width:48px;height:48px;border-radius:var(--radius);background:${tc.bg};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                    <i data-lucide="${tc.icon}" style="width:1.3rem;height:1.3rem;color:${tc.color}"></i>
+                </div>
+                <div style="flex:1;min-width:0">
+                    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                        <div>
+                            <h4 style="font-weight:700;font-size:.95rem;color:var(--ink);margin-bottom:2px">${escapeHtml(a.title)}</h4>
+                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                                <span style="font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:6px;background:${tc.bg};color:${tc.color}">${tc.label}</span>
+                                ${a.organization ? `<span style="font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:4px"><i data-lucide="building-2" style="width:.8rem;height:.8rem"></i> ${escapeHtml(a.organization)}</span>` : ''}
+                                ${a.date_start ? `<span style="font-size:.78rem;color:var(--muted);display:flex;align-items:center;gap:4px"><i data-lucide="calendar" style="width:.8rem;height:.8rem"></i> ${formatDateRange(a.date_start, a.date_end)}</span>` : ''}
+                                ${a.is_verified ? `<span style="font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--green-light,#F0FDF4);color:var(--green);display:flex;align-items:center;gap:4px"><i data-lucide="check-circle" style="width:.7rem;height:.7rem"></i> Vérifié</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="action-group">
+                            <button class="btn-icon" onclick="openActivityModal('${a.id}')" title="Modifier"><i data-lucide="pencil" style="width:.9rem;height:.9rem"></i></button>
+                            <button class="btn-icon danger" onclick="deleteActivity('${a.id}')" title="Supprimer"><i data-lucide="trash-2" style="width:.9rem;height:.9rem"></i></button>
+                        </div>
+                    </div>
+                    ${a.description ? `<p style="font-size:.82rem;color:var(--muted);line-height:1.6;margin-top:10px">${escapeHtml(a.description)}</p>` : ''}
+                    ${a.document_url ? `<a href="${escapeHtml(a.document_url)}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:.78rem;color:var(--blue,#3B82F6);font-weight:500;text-decoration:none"><i data-lucide="file-text" style="width:.9rem;height:.9rem"></i> Voir le document <i data-lucide="external-link" style="width:.7rem;height:.7rem"></i></a>` : ''}
+                </div>
+            </div>
+        </div>`;
+}
+
+// ─── I. MODAL CRUD — CRÉER / MODIFIER ────────────────────────
+async function openActivityModal(id = null) {
+    const isEdit = !!id;
+    let activity = {
+        title: '', activity_type: 'certification', description: '',
+        organization: '', date_start: '', date_end: '', document_url: ''
+    };
+
+    if (isEdit) {
+        const found = activities.find(a => a.id === id);
+        if (found) activity = { ...activity, ...found };
+    }
+
+    const activityTypes = [
+        { value:'certification', label:'Certification', icon:'certificate' },
+        { value:'training',      label:'Formation',     icon:'graduation-cap' },
+        { value:'event',         label:'Événement',     icon:'calendar-check' },
+        { value:'collaboration', label:'Collaboration', icon:'users' },
+        { value:'award',         label:'Récompense',    icon:'trophy' },
+        { value:'other',         label:'Autre',         icon:'star' }
+    ];
+
+    const html = `
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i data-lucide="${isEdit ? 'pencil' : 'plus'}" style="width:1.2rem;height:1.2rem"></i>
+                ${isEdit ? "Modifier l'activité" : 'Nouvelle activité'}
+            </h3>
+            <button class="modal-close" onclick="closeModal()"><i data-lucide="x"></i></button>
+        </div>
+        <form id="activityForm">
+            <input type="hidden" name="id" value="${id || ''}">
+
+            <div class="form-group">
+                <label>Titre de l'activité *</label>
+                <input type="text" name="title" value="${escapeHtml(activity.title)}" placeholder="Ex: Certification en plomberie professionnelle" required>
+            </div>
+
+            <div class="form-group">
+                <label>Type d'activité *</label>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px" id="typeSelector">
+                    ${activityTypes.map(t => `
+                        <label style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;border:1.5px solid ${activity.activity_type === t.value ? 'var(--gold)' : 'var(--rule)'};border-radius:var(--radius);cursor:pointer;transition:all .2s;background:${activity.activity_type === t.value ? 'var(--gold-dim)' : 'var(--white)'}">
+                            <input type="radio" name="activity_type" value="${t.value}" ${activity.activity_type === t.value ? 'checked' : ''} style="display:none">
+                            <i data-lucide="${t.icon}" style="width:1.2rem;height:1.2rem;color:${activity.activity_type === t.value ? 'var(--gold)' : 'var(--muted)'}"></i>
+                            <span style="font-size:.7rem;font-weight:600;color:${activity.activity_type === t.value ? 'var(--ink)' : 'var(--muted)'}">${t.label}</span>
+                        </label>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Organisation / Institution</label>
+                <input type="text" name="organization" value="${escapeHtml(activity.organization || '')}" placeholder="Ex: Centre de Formation Professionnelle de Yaoundé">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Date de début</label>
+                    <input type="date" name="date_start" value="${activity.date_start || ''}">
+                </div>
+                <div class="form-group">
+                    <label>Date de fin <span style="font-weight:400;color:var(--muted)">(optionnel)</span></label>
+                    <input type="date" name="date_end" value="${activity.date_end || ''}">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" rows="4" placeholder="Décrivez cette activité, ce que vous avez appris ou accompli...">${escapeHtml(activity.description || '')}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Lien du document / certificat <span style="font-weight:400;color:var(--muted)">(optionnel)</span></label>
+                <input type="url" name="document_url" value="${escapeHtml(activity.document_url || '')}" placeholder="https://...">
+                <span style="font-size:.7rem;color:var(--muted);margin-top:4px;display:block">Ajoutez un lien vers votre certificat ou document justificatif</span>
+            </div>
+
+            <div style="background:var(--blue-light,#EFF6FF);border-radius:var(--radius);padding:14px 16px;margin-bottom:20px;display:flex;align-items:flex-start;gap:10px">
+                <i data-lucide="info" style="width:1.1rem;height:1.1rem;color:var(--blue,#3B82F6);flex-shrink:0;margin-top:1px"></i>
+                <div>
+                    <div style="font-weight:600;font-size:.8rem;color:var(--blue,#3B82F6);margin-bottom:2px">Pourquoi ajouter vos activités ?</div>
+                    <p style="font-size:.75rem;color:var(--muted);line-height:1.5">Les prestataires qui documentent leurs certifications et formations reçoivent <strong>3x plus de demandes</strong> de clients.</p>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+                <button type="submit" class="btn btn-primary">
+                    <i data-lucide="save"></i> ${isEdit ? 'Enregistrer' : "Ajouter l'activité"}
+                </button>
+            </div>
+        </form>`;
+
+    openModal(html);
+
+    // Type selector UX
+    document.querySelectorAll('#typeSelector label').forEach(label => {
+        label.addEventListener('click', function() {
+            this.querySelector('input').checked = true;
+            document.querySelectorAll('#typeSelector label').forEach(l => {
+                l.style.borderColor = 'var(--rule)'; l.style.background = 'var(--white)';
+                l.querySelector('i').style.color = 'var(--muted)';
+                l.querySelector('span').style.color = 'var(--muted)';
+            });
+            this.style.borderColor = 'var(--gold)'; this.style.background = 'var(--gold-dim)';
+            this.querySelector('i').style.color = 'var(--gold)';
+            this.querySelector('span').style.color = 'var(--ink)';
+        });
+    });
+
+    // ── SUBMIT : INSERT ou UPDATE dans provider_activities ────
+    document.getElementById('activityForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const fd   = new FormData(this);
+        const data = Object.fromEntries(fd.entries());
+
+        // Nettoyage pour correspondre au schéma provider_activities
+        data.title        = data.title.trim();
+        data.description  = data.description.trim() || null;
+        data.organization = data.organization.trim() || null;
+        data.date_start   = data.date_start || null;
+        data.date_end     = data.date_end   || null;
+        data.document_url = data.document_url.trim() || null;
+
+        delete data.id;
+
+        try {
+            if (isEdit) {
+                const { error } = await sb.from('provider_activities').update(data).eq('id', id);
+                if (error) throw error;
+                showToast('Activité mise à jour avec succès', 'success');
+            } else {
+                data.user_id = currentUser.id;
+                const { error } = await sb.from('provider_activities').insert([data]);
+                if (error) throw error;
+                showToast('Activité ajoutée avec succès', 'success');
+            }
+            closeModal();
+            activities = await getActivities();
+            updateStats();
+            renderActivities();
+        } catch (err) {
+            console.error('Erreur provider_activities :', err);
+            if (err.code === '23503') {
+                showToast("Erreur de profil utilisateur. Complétez votre inscription d'abord.", 'error');
+            } else if (err.code === '23514') {
+                showToast('Type d\'activité invalide. Choisissez parmi les options proposées.', 'error');
+            } else {
+                showToast('Erreur : ' + (err.message || 'Réessayez.'), 'error');
+            }
+        }
+    });
+}
+
+// ─── J. SUPPRIMER ────────────────────────────────────────────
+async function deleteActivity(id) {
+    const a = activities.find(x => x.id === id);
+    if (!a) return;
+    const ok = await confirmAction(`Supprimer définitivement l'activité "${a.title}" ? Cette action est irréversible.`);
+    if (!ok) return;
+    try {
+        const { error } = await sb.from('provider_activities').delete().eq('id', id);
+        if (error) throw error;
+        activities = await getActivities();
+        updateStats();
+        renderActivities();
+        showToast('Activité supprimée', 'info');
+    } catch (err) {
+        showToast('Erreur : ' + err.message, 'error');
+    }
+}
+
+// ─── K. DÉMARRAGE ────────────────────────────────────────────
+async function loadActivities() {
+    await initDashboard();
+    setActiveNav('activities');
+    activities = await getActivities();
+    updateStats();
+    renderActivities();
+}
+
+loadActivities();
+</script>
+</body>
+</html>

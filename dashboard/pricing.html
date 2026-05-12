@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grille Tarifaire — CamServices Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Allison&family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/dashboard.css">
+    <style>
+        /* ═══ MODAL STYLES (fallback si absent du dashboard.css) ═══ */
+        .modal-overlay {
+            position: fixed; inset: 0; z-index: 9000;
+            background: rgba(26,23,20,.45); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            padding: 24px;
+            animation: modalFadeIn .25s ease;
+        }
+        .modal-content {
+            background: var(--white, #fff); border-radius: var(--radius-xl, 16px);
+            box-shadow: 0 20px 60px rgba(26,23,20,.18);
+            width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto;
+            animation: modalSlideUp .3s cubic-bezier(.22,1,.36,1);
+        }
+        .modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 24px 24px 16px; border-bottom: 1px solid var(--rule, #E8E2DA);
+        }
+        .modal-title {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 1.1rem; font-weight: 700;
+        }
+        .modal-close {
+            background: none; border: none; cursor: pointer; color: var(--muted, #8A8279);
+            padding: 6px; border-radius: 8px; transition: background .2s;
+        }
+        .modal-close:hover { background: var(--cream, #FAF8F5); }
+        .modal-content form { padding: 24px; }
+        .modal-content .form-group { margin-bottom: 16px; }
+        .modal-content .form-group label {
+            display: block; font-size: .8rem; font-weight: 600;
+            margin-bottom: 6px; color: var(--ink, #1A1714);
+        }
+        .modal-content .form-group input,
+        .modal-content .form-group select,
+        .modal-content .form-group textarea {
+            width: 100%; padding: 10px 14px;
+            border: 1.5px solid var(--rule, #E8E2DA); border-radius: var(--radius, 10px);
+            font-family: var(--ff-body, 'Outfit', sans-serif); font-size: .88rem;
+            color: var(--ink, #1A1714); background: var(--white, #fff);
+            outline: none; transition: border-color .2s;
+        }
+        .modal-content .form-group input:focus,
+        .modal-content .form-group select:focus,
+        .modal-content .form-group textarea:focus {
+            border-color: var(--gold, #C4943E);
+            box-shadow: 0 0 0 3px rgba(196,148,62,.08);
+        }
+        .modal-content .form-group textarea { min-height: 80px; resize: vertical; }
+        .modal-content .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .modal-content .form-actions {
+            display: flex; gap: 12px; padding-top: 8px; justify-content: flex-end;
+        }
+        @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes modalSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 600px) {
+            .modal-content { max-width: 100%; margin: 12px; }
+            .modal-content .form-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<button class="menu-toggle" onclick="toggleSidebar()">
+    <i data-lucide="menu"></i>
+</button>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar" id="sidebar">
+    <a href="index.html" class="sidebar-logo">Cam<span class="script">S</span>ervices</a>
+    
+    <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sidebarAvatar"></div>
+        <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebarName">Chargement...</div>
+            <div class="sidebar-user-role" id="sidebarRole">Prestataire</div>
+            <span class="verify-badge" id="verifyBadge" style="display:none">
+                <i data-lucide="shield-check" style="width:.7rem;height:.7rem"></i> Vérifié
+            </span>
+        </div>
+    </div>
+    
+    <ul class="sidebar-nav">
+        <li><a href="index.html" id="nav-overview"><i data-lucide="layout-dashboard"></i> Vue d'ensemble</a></li>
+        <li><a href="services.html" id="nav-services"><i data-lucide="briefcase"></i> Mes services <span class="badge" id="serviceBadge">0</span></a></li>
+        <li><a href="orders.html" id="nav-orders"><i data-lucide="shopping-bag"></i> Commandes <span class="badge" id="orderBadge">0</span></a></li>
+        <li><a href="pricing.html" class="active" id="nav-pricing"><i data-lucide="tags"></i> Grille tarifaire</a></li>
+        <li><a href="portfolio.html" id="nav-portfolio"><i data-lucide="image"></i> Portfolio</a></li>
+        <li><a href="activities.html" id="nav-activities"><i data-lucide="award"></i> Activités</a></li>
+    </ul>
+    
+    <hr class="sidebar-divider">
+    
+    <ul class="sidebar-nav">
+        <li><a href="profile.html" id="nav-profile"><i data-lucide="user-circle"></i> Mon profil</a></li>
+        <li><a href="analytics.html" id="nav-analytics"><i data-lucide="bar-chart-3"></i> Statistiques</a></li>
+    </ul>
+    
+    <div class="sidebar-footer">
+        <a href="../landing.html" onclick="logout();return false"><i data-lucide="log-out"></i> Déconnexion</a>
+    </div>
+</aside>
+
+<!-- ═══ MAIN CONTENT ═══ -->
+<main class="main-content">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Grille <span class="script">tarifaire</span></h1>
+            <p class="page-subtitle">Définissez vos tarifs pour plus de transparence avec vos clients</p>
+        </div>
+        <div class="page-actions" style="display:flex;gap:12px">
+            <button class="btn btn-secondary btn-sm" id="toggleViewBtn" onclick="toggleView()">
+                <i data-lucide="layout-grid"></i> Vue grille
+            </button>
+            <button class="btn btn-primary" onclick="openPricingModal()">
+                <i data-lucide="plus"></i> Nouveau tarif
+            </button>
+        </div>
+    </div>
+    
+    <!-- Vue Tableau -->
+    <div class="card" id="tableView">
+        <div class="card-header">
+            <h3 class="card-title">Tous les tarifs</h3>
+            <span style="font-size:.8rem;color:var(--muted)" id="pricingCount">0 tarif(s)</span>
+        </div>
+        <div class="table-wrapper" id="pricingTable">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Chargement de votre grille tarifaire...</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Vue Grille (cachée par défaut) -->
+    <div class="pricing-grid" id="gridView" style="display:none"></div>
+</main>
+
+<div id="modalContainer" style="display:none"></div>
+
+<!-- ═══ SCRIPTS ═══ -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ============================================================
+//  PRICING — Script complet et autonome
+//  Table : public.pricing_grid
+// ============================================================
+
+// ─────────────────────────────────────────────────────────────
+//  A. SUPABASE INIT
+// ─────────────────────────────────────────────────────────────
+const SUPABASE_URL  = 'https://cwubxwbzzuigctvgdygv.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dWJ4d2J6enVpZ2N0dmdkeWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzI2MTgsImV4cCI6MjA5MzgwODYxOH0.0mwBNo_S5yItQQjq2at9GNRN74ooZRBJIbZGDH9L2uk';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let currentUser  = null;
+let pricingItems = [];
+let services     = [];
+let viewMode     = 'table';
+
+// ─────────────────────────────────────────────────────────────
+//  B. AUTH + SIDEBAR
+// ─────────────────────────────────────────────────────────────
+async function initDashboard() {
+    const { data: { user: authUser } } = await sb.auth.getUser();
+    if (!authUser) { window.location.href = '../login.html'; return; }
+
+    const { data: profile } = await sb
+        .from('users')
+        .select('*')
+        .eq('id', authUser.id)
+        .maybeSingle();
+
+    currentUser = profile || {
+        id: authUser.id,
+        email: authUser.email,
+        full_name: authUser.user_metadata?.full_name || authUser.email.split('@')[0],
+        role: 'prestataire',
+        is_verified: false,
+        profile_photo_url: null
+    };
+
+    // Sidebar
+    const nameEl   = document.getElementById('sidebarName');
+    const roleEl   = document.getElementById('sidebarRole');
+    const avatarEl = document.getElementById('sidebarAvatar');
+    const badgeEl  = document.getElementById('verifyBadge');
+
+    if (nameEl)  nameEl.textContent = currentUser.full_name || currentUser.email;
+    if (roleEl)  roleEl.textContent = ({ client:'Client', prestataire:'Prestataire', admin:'Admin' })[currentUser.role] || 'Prestataire';
+    if (badgeEl) badgeEl.style.display = currentUser.is_verified ? 'inline-flex' : 'none';
+    if (avatarEl) {
+        if (currentUser.profile_photo_url) {
+            avatarEl.style.backgroundImage = `url(${currentUser.profile_photo_url})`;
+            avatarEl.style.backgroundSize  = 'cover';
+        } else {
+            avatarEl.textContent = (currentUser.full_name || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+        }
+    }
+
+    // Badges sidebar
+    const { count: svcCount } = await sb.from('services').select('id', { count:'exact', head:true }).eq('user_id', currentUser.id);
+    const { count: ordCount } = await sb.from('orders').select('id', { count:'exact', head:true }).eq('provider_id', currentUser.id).in('status', ['pending','confirmed','in_progress']);
+    const svcBadge = document.getElementById('serviceBadge');
+    const ordBadge = document.getElementById('orderBadge');
+    if (svcBadge) svcBadge.textContent = svcCount || 0;
+    if (ordBadge) ordBadge.textContent = ordCount || 0;
+
+    lucide.createIcons();
+}
+
+function setActiveNav(page) {
+    document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+    const el = document.getElementById('nav-' + page);
+    if (el) el.classList.add('active');
+}
+
+function toggleSidebar() {
+    const s = document.getElementById('sidebar');
+    if (s) s.classList.toggle('open');
+}
+
+async function logout() {
+    await sb.auth.signOut();
+    window.location.href = '../landing.html';
+}
+
+// ─────────────────────────────────────────────────────────────
+//  C. REQUÊTES SUPABASE
+// ─────────────────────────────────────────────────────────────
+
+// Lire les tarifs de l'utilisateur (JOIN services pour le titre)
+async function getPricingItems() {
+    if (!currentUser) return [];
+    const { data, error } = await sb
+        .from('pricing_grid')
+        .select('*, services(title)')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false });
+
+    if (error) { console.error('getPricingItems:', error); return []; }
+
+    return (data || []).map(row => {
+        const copy = { ...row };
+        copy.service_title = row.services ? row.services.title : null;
+        delete copy.services;
+        return copy;
+    });
+}
+
+// Lire les services actifs de l'utilisateur (pour le select du modal)
+async function getMyServices() {
+    if (!currentUser) return [];
+    const { data, error } = await sb
+        .from('services')
+        .select('id, title, price, category')
+        .eq('user_id', currentUser.id)
+        .eq('is_active', true)
+        .order('title');
+
+    if (error) { console.error('getMyServices:', error); return []; }
+    return data || [];
+}
+
+// ─────────────────────────────────────────────────────────────
+//  D. HELPERS
+// ─────────────────────────────────────────────────────────────
+function formatPrice(amount) {
+    if (amount == null || isNaN(amount)) return '—';
+    return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
+}
+
+function formatPricingTypeLabel(type) {
+    return ({ fixed:'Forfait', hourly:'Taux horaire', half_day:'Demi-journée', full_day:'Journée', per_person:'Par personne', custom:'Sur mesure' })[type] || type;
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// ─────────────────────────────────────────────────────────────
+//  E. TOAST
+// ─────────────────────────────────────────────────────────────
+(function(){
+    const s = document.createElement('style');
+    s.textContent = '@keyframes slideInR{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}';
+    document.head.appendChild(s);
+})();
+
+function showToast(message, type = 'info') {
+    let w = document.getElementById('_tw');
+    if (!w) {
+        w = document.createElement('div');
+        w.id = '_tw';
+        w.style.cssText = 'position:fixed;top:24px;right:24px;z-index:10000;display:flex;flex-direction:column;gap:10px;pointer-events:none;';
+        document.body.appendChild(w);
+    }
+    const icons  = { success:'check-circle', error:'alert-circle', info:'info', warning:'alert-triangle' };
+    const colors = { success:'var(--green)', error:'var(--red)', info:'var(--gold)', warning:'#F59E0B' };
+    const t = document.createElement('div');
+    t.style.cssText = `display:flex;align-items:center;gap:10px;padding:14px 20px;background:var(--white);border:1px solid var(--rule);border-radius:var(--radius);box-shadow:var(--shadow-lg);font-size:.85rem;font-family:var(--ff-body);color:var(--ink);pointer-events:auto;min-width:280px;animation:slideInR .3s ease;border-left:4px solid ${colors[type]};`;
+    t.innerHTML = `<i data-lucide="${icons[type]}" style="width:1.1rem;height:1.1rem;color:${colors[type]};flex-shrink:0"></i><span style="flex:1">${message}</span><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:0"><i data-lucide="x" style="width:.9rem;height:.9rem"></i></button>`;
+    w.appendChild(t);
+    lucide.createIcons();
+    setTimeout(() => { t.style.transition='opacity .3s,transform .3s'; t.style.opacity='0'; t.style.transform='translateX(20px)'; setTimeout(()=>t.remove(),300); }, 4000);
+}
+
+// ─────────────────────────────────────────────────────────────
+//  F. MODAL + CONFIRM
+// ─────────────────────────────────────────────────────────────
+function openModal(htmlContent) {
+    const c = document.getElementById('modalContainer');
+    if (!c) return;
+    c.innerHTML = `<div class="modal-overlay" onclick="closeModal()"><div class="modal-content" onclick="event.stopPropagation()">${htmlContent}</div></div>`;
+    c.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    lucide.createIcons();
+}
+
+function closeModal() {
+    const c = document.getElementById('modalContainer');
+    if (c) { c.innerHTML = ''; c.style.display = 'none'; }
+    document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+function confirmAction(message) {
+    return new Promise(resolve => {
+        openModal(`
+            <div class="modal-header">
+                <h3 class="modal-title"><i data-lucide="alert-triangle" style="width:1.2rem;height:1.2rem;color:var(--red)"></i> Confirmation</h3>
+                <button class="modal-close" onclick="closeModal()"><i data-lucide="x"></i></button>
+            </div>
+            <p style="padding:20px 24px;font-size:.9rem;color:var(--ink-2)">${message}</p>
+            <div class="form-actions" style="padding:0 24px 24px;gap:12px">
+                <button class="btn btn-secondary" id="confirmNo">Annuler</button>
+                <button class="btn btn-primary" style="background:var(--red)" id="confirmYes"><i data-lucide="trash-2" style="width:.9rem;height:.9rem"></i> Confirmer</button>
+            </div>
+        `);
+        document.getElementById('confirmYes').onclick = () => { closeModal(); resolve(true); };
+        document.getElementById('confirmNo').onclick  = () => { closeModal(); resolve(false); };
+    });
+}
+
+// ─────────────────────────────────────────────────────────────
+//  G. VUES : TABLEAU + GRILLE
+// ─────────────────────────────────────────────────────────────
+function toggleView() {
+    viewMode = viewMode === 'table' ? 'grid' : 'table';
+    const btn = document.getElementById('toggleViewBtn');
+    document.getElementById('tableView').style.display = viewMode === 'table' ? 'block' : 'none';
+    document.getElementById('gridView').style.display  = viewMode === 'grid'  ? 'grid'  : 'none';
+    btn.innerHTML = viewMode === 'grid'
+        ? '<i data-lucide="list"></i> Vue liste'
+        : '<i data-lucide="layout-grid"></i> Vue grille';
+    renderPricing();
+    lucide.createIcons();
+}
+
+function renderPricing() {
+    viewMode === 'table' ? renderTableView() : renderGridView();
+}
+
+function renderTableView() {
+    const container = document.getElementById('pricingTable');
+    if (pricingItems.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i data-lucide="tags" class="empty-icon" style="width:4rem;height:4rem"></i>
+                <h3>Aucun tarif défini</h3>
+                <p>Définissez votre grille tarifaire pour que les clients connaissent vos prix à l'avance.</p>
+                <button class="btn btn-primary" onclick="openPricingModal()">
+                    <i data-lucide="plus"></i> Créer mon premier tarif
+                </button>
+            </div>`;
+        lucide.createIcons();
+        return;
+    }
+    container.innerHTML = `
+        <table>
+            <thead><tr>
+                <th>Prestation</th><th>Service associé</th><th>Type</th><th>Prix</th><th>Détails</th><th>Statut</th><th>Actions</th>
+            </tr></thead>
+            <tbody>
+                ${pricingItems.map(p => `<tr>
+                    <td><div class="service-cell"><div class="service-icon"><i data-lucide="tag" style="width:1rem;height:1rem"></i></div><strong>${escapeHtml(p.name)}</strong></div></td>
+                    <td>${p.service_title ? `<span style="font-size:.82rem;color:var(--muted)">${escapeHtml(p.service_title)}</span>` : '<span style="font-size:.78rem;color:var(--faint);font-style:italic">Non lié</span>'}</td>
+                    <td><span class="type-tag ${p.pricing_type}">${formatPricingTypeLabel(p.pricing_type)}</span></td>
+                    <td class="price-cell">${formatPrice(p.base_price)}${p.pricing_type==='hourly'?'<span class="price-unit">/h</span>':''}${p.pricing_type==='half_day'?'<span class="price-unit">/demi-j.</span>':''}${p.pricing_type==='full_day'?'<span class="price-unit">/jour</span>':''}</td>
+                    <td style="max-width:200px"><span style="font-size:.82rem;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${escapeHtml(p.description) || '—'}</span></td>
+                    <td><span class="status-badge ${p.is_active?'status-completed':'status-cancelled'}">${p.is_active?'Actif':'Inactif'}</span></td>
+                    <td><div class="action-group">
+                        <button class="btn-icon" onclick="openPricingModal('${p.id}')" title="Modifier"><i data-lucide="pencil" style="width:1rem;height:1rem"></i></button>
+                        <button class="btn-icon" onclick="duplicatePricingItem('${p.id}')" title="Dupliquer"><i data-lucide="copy" style="width:1rem;height:1rem"></i></button>
+                        <button class="btn-icon danger" onclick="deletePricingItem('${p.id}')" title="Supprimer"><i data-lucide="trash-2" style="width:1rem;height:1rem"></i></button>
+                    </div></td>
+                </tr>`).join('')}
+            </tbody>
+        </table>`;
+    lucide.createIcons();
+}
+
+function renderGridView() {
+    const container = document.getElementById('gridView');
+    if (pricingItems.length === 0) {
+        container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i data-lucide="tags" class="empty-icon" style="width:4rem;height:4rem"></i><h3>Aucun tarif défini</h3><p>Définissez votre grille tarifaire.</p></div>`;
+        lucide.createIcons();
+        return;
+    }
+    container.innerHTML = pricingItems.map((p, i) => `
+        <div class="pricing-card ${i===0?'featured':''}">
+            <div class="pricing-card-header">
+                <div class="pricing-card-name">${escapeHtml(p.name)}</div>
+                ${p.service_title ? `<div class="pricing-card-service"><i data-lucide="link" style="width:.8rem;height:.8rem"></i> ${escapeHtml(p.service_title)}</div>` : ''}
+            </div>
+            <div class="pricing-card-price">
+                <span class="currency">FCFA</span> ${new Intl.NumberFormat('fr-FR').format(p.base_price)}
+                <span class="unit">${p.pricing_type==='hourly'?'/ heure':''}${p.pricing_type==='half_day'?'/ demi-journée':''}${p.pricing_type==='full_day'?'/ journée':''}</span>
+            </div>
+            <span class="type-tag ${p.pricing_type}" style="margin-bottom:12px;display:inline-flex">${formatPricingTypeLabel(p.pricing_type)}</span>
+            ${p.description ? `<p class="pricing-card-desc">${escapeHtml(p.description)}</p>` : ''}
+            ${p.includes && p.includes.length ? `<ul class="pricing-card-includes">${p.includes.map(inc => `<li><i data-lucide="check" style="width:.9rem;height:.9rem"></i> ${escapeHtml(inc)}</li>`).join('')}</ul>` : ''}
+            <div class="pricing-card-actions">
+                <button class="btn-icon" onclick="openPricingModal('${p.id}')"><i data-lucide="pencil" style="width:.9rem;height:.9rem"></i></button>
+                <button class="btn-icon" onclick="duplicatePricingItem('${p.id}')"><i data-lucide="copy" style="width:.9rem;height:.9rem"></i></button>
+                <button class="btn-icon danger" onclick="deletePricingItem('${p.id}')"><i data-lucide="trash-2" style="width:.9rem;height:.9rem"></i></button>
+                <span style="margin-left:auto;font-size:.7rem;color:${p.is_active?'var(--green)':'var(--muted)'}">${p.is_active?'● Actif':'○ Inactif'}</span>
+            </div>
+        </div>`).join('');
+    lucide.createIcons();
+}
+
+// ─────────────────────────────────────────────────────────────
+//  H. MODAL CRUD — CRÉER / MODIFIER un tarif
+// ─────────────────────────────────────────────────────────────
+async function openPricingModal(id = null) {
+    const isEdit = !!id;
+    let item = { name:'', service_id:'', base_price:'', pricing_type:'fixed', description:'', duration_hours:'', max_people:'', includes:[], is_active:true };
+
+    if (isEdit) {
+        const found = pricingItems.find(p => p.id === id);
+        if (found) item = { ...item, ...found };
+    }
+
+    const includeString = (item.includes || []).join(', ');
+
+    const html = `
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i data-lucide="${isEdit ? 'pencil' : 'plus'}" style="width:1.2rem;height:1.2rem"></i>
+                ${isEdit ? 'Modifier le tarif' : 'Nouveau tarif'}
+            </h3>
+            <button class="modal-close" onclick="closeModal()"><i data-lucide="x"></i></button>
+        </div>
+        <form id="pricingForm">
+            <input type="hidden" name="id" value="${id || ''}">
+            <input type="hidden" name="is_active" value="${item.is_active}">
+
+            <div class="form-group">
+                <label>Nom de la prestation *</label>
+                <input type="text" name="name" value="${escapeHtml(item.name)}" placeholder="Ex: Maquillage mariée complet" required>
+            </div>
+
+            <div class="form-group">
+                <label>Service associé</label>
+                <select name="service_id">
+                    <option value="">— Aucun (tarif indépendant) —</option>
+                    ${services.map(s => `<option value="${s.id}" ${item.service_id===s.id?'selected':''}>${escapeHtml(s.title)} (${formatPrice(s.price)})</option>`).join('')}
+                </select>
+                <span style="font-size:.7rem;color:var(--muted);margin-top:4px;display:block">Lier ce tarif à un service existant est optionnel</span>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Prix (FCFA) *</label>
+                    <input type="number" name="base_price" value="${item.base_price}" placeholder="Ex: 25000" required min="100" step="100">
+                </div>
+                <div class="form-group">
+                    <label>Type de tarification *</label>
+                    <select name="pricing_type" required>
+                        <option value="fixed"      ${item.pricing_type==='fixed'?'selected':''}>Forfait (prix fixe)</option>
+                        <option value="hourly"     ${item.pricing_type==='hourly'?'selected':''}>Taux horaire</option>
+                        <option value="half_day"   ${item.pricing_type==='half_day'?'selected':''}>Demi-journée</option>
+                        <option value="full_day"   ${item.pricing_type==='full_day'?'selected':''}>Journée complète</option>
+                        <option value="per_person" ${item.pricing_type==='per_person'?'selected':''}>Par personne</option>
+                        <option value="custom"     ${item.pricing_type==='custom'?'selected':''}>Sur mesure</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Durée (heures) <span style="font-weight:400;color:var(--muted);font-size:.7rem">(optionnel)</span></label>
+                    <input type="number" name="duration_hours" value="${item.duration_hours || ''}" placeholder="Ex: 2" min="0.5" step="0.5">
+                </div>
+                <div class="form-group">
+                    <label>Max personnes <span style="font-weight:400;color:var(--muted);font-size:.7rem">(optionnel)</span></label>
+                    <input type="number" name="max_people" value="${item.max_people || ''}" placeholder="Ex: 10" min="1" step="1">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" rows="3" placeholder="Décrivez ce qui est inclus dans ce tarif...">${escapeHtml(item.description || '')}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Éléments inclus <span style="font-weight:400;color:var(--muted);font-size:.7rem">(séparés par des virgules)</span></label>
+                <input type="text" name="includes" value="${escapeHtml(includeString)}" placeholder="Ex: Maquillage, Coiffure, Déplacement, Retouches">
+            </div>
+
+            <div style="background:var(--blue-light,#EFF6FF);border-radius:var(--radius);padding:14px 16px;margin-bottom:20px;display:flex;align-items:flex-start;gap:10px">
+                <i data-lucide="info" style="width:1.1rem;height:1.1rem;color:var(--blue,#3B82F6);flex-shrink:0;margin-top:1px"></i>
+                <div>
+                    <div style="font-weight:600;font-size:.8rem;color:var(--blue,#3B82F6);margin-bottom:2px">Conseil</div>
+                    <p style="font-size:.75rem;color:var(--muted);line-height:1.5">Une grille tarifaire claire augmente la confiance des clients. Détaillez vos prestations pour éviter les malentendus.</p>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+                <button type="submit" class="btn btn-primary">
+                    <i data-lucide="save"></i> ${isEdit ? 'Enregistrer les modifications' : 'Créer le tarif'}
+                </button>
+            </div>
+        </form>
+    `;
+
+    openModal(html);
+
+    // ── SUBMIT : INSERT ou UPDATE dans pricing_grid ──────────
+    document.getElementById('pricingForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const fd   = new FormData(this);
+        const data = Object.fromEntries(fd.entries());
+
+        // Nettoyage des champs pour correspondre au schéma pricing_grid
+        data.includes = data.includes
+            ? data.includes.split(',').map(i => i.trim()).filter(i => i)
+            : [];
+
+        data.base_price    = parseFloat(data.base_price);
+        data.service_id    = data.service_id || null;
+        data.duration_hours = data.duration_hours ? parseFloat(data.duration_hours) : null;
+        data.max_people     = data.max_people    ? parseInt(data.max_people, 10)    : null;
+        data.description    = data.description.trim() || null;
+        data.is_active      = data.is_active !== 'false';
+
+        // Supprimer le champ id du payload (il ne doit pas être envoyé)
+        delete data.id;
+
+        try {
+            if (isEdit) {
+                // ── UPDATE ──
+                const { error } = await sb.from('pricing_grid').update(data).eq('id', id);
+                if (error) throw error;
+                showToast('Tarif mis à jour avec succès', 'success');
+            } else {
+                // ── INSERT ──
+                data.user_id = currentUser.id;
+                const { error } = await sb.from('pricing_grid').insert([data]);
+                if (error) throw error;
+                showToast('Tarif créé avec succès', 'success');
+            }
+
+            closeModal();
+            pricingItems = await getPricingItems();
+            document.getElementById('pricingCount').textContent = `${pricingItems.length} tarif(s)`;
+            renderPricing();
+
+        } catch (err) {
+            console.error('Erreur pricing_grid :', err);
+            if (err.code === '23503') {
+                showToast("Le service associé n'existe plus. Sélectionnez-en un autre.", 'error');
+            } else if (err.code === '23514') {
+                showToast('Valeur invalide pour le type de tarification.', 'error');
+            } else {
+                showToast('Erreur : ' + (err.message || 'Réessayez.'), 'error');
+            }
+        }
+    });
+}
+
+// ─────────────────────────────────────────────────────────────
+//  I. DUPLIQUER
+// ─────────────────────────────────────────────────────────────
+async function duplicatePricingItem(id) {
+    const item = pricingItems.find(p => p.id === id);
+    if (!item) return;
+
+    const ok = await confirmAction(`Dupliquer le tarif "${item.name}" ?`);
+    if (!ok) return;
+
+    const newItem = {
+        user_id:        currentUser.id,
+        name:           item.name + ' (copie)',
+        service_id:     item.service_id || null,
+        base_price:     item.base_price,
+        pricing_type:   item.pricing_type,
+        duration_hours: item.duration_hours || null,
+        max_people:     item.max_people || null,
+        description:    item.description || null,
+        includes:       item.includes || [],
+        is_active:      true
+    };
+
+    try {
+        const { error } = await sb.from('pricing_grid').insert([newItem]);
+        if (error) throw error;
+        pricingItems = await getPricingItems();
+        document.getElementById('pricingCount').textContent = `${pricingItems.length} tarif(s)`;
+        renderPricing();
+        showToast('Tarif dupliqué avec succès', 'success');
+    } catch (err) {
+        showToast('Erreur : ' + err.message, 'error');
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  J. SUPPRIMER
+// ─────────────────────────────────────────────────────────────
+async function deletePricingItem(id) {
+    const item = pricingItems.find(p => p.id === id);
+    if (!item) return;
+
+    const ok = await confirmAction(`Supprimer définitivement le tarif "${item.name}" ? Cette action est irréversible.`);
+    if (!ok) return;
+
+    try {
+        const { error } = await sb.from('pricing_grid').delete().eq('id', id);
+        if (error) throw error;
+        pricingItems = await getPricingItems();
+        document.getElementById('pricingCount').textContent = `${pricingItems.length} tarif(s)`;
+        renderPricing();
+        showToast('Tarif supprimé', 'info');
+    } catch (err) {
+        showToast('Erreur : ' + err.message, 'error');
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  K. DÉMARRAGE
+// ─────────────────────────────────────────────────────────────
+async function loadPricing() {
+    await initDashboard();
+    setActiveNav('pricing');
+
+    const [items, svcs] = await Promise.all([
+        getPricingItems(),
+        getMyServices()
+    ]);
+
+    pricingItems = items;
+    services     = svcs;
+    document.getElementById('pricingCount').textContent = `${pricingItems.length} tarif(s)`;
+    renderPricing();
+}
+
+loadPricing();
+</script>
+</body>
+</html>

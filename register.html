@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription Prestataire — CamServices</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Allison&family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --ink: #1A1714; --ink-2: #2E2A25; --muted: #8A8279; --faint: #C9C2B8;
+            --rule: #E8E2DA; --cream: #FAF8F5; --white: #FFFFFF;
+            --gold: #C4943E; --gold-light: #D4A94E; --gold-dim: rgba(196,148,62,.08);
+            --green: #3D8B5E; --red: #DC2626; --red-light: #FEF2F2; --blue: #3B82F6; --blue-light: #EFF6FF;
+            --ff-body: 'Outfit', sans-serif; --ff-script: 'Allison', cursive;
+            --ease: cubic-bezier(.22,1,.36,1);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: var(--ff-body); background: var(--cream); color: var(--ink);
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            padding: 40px 20px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+        }
+        .register-container {
+            width: 100%; max-width: 680px; background: var(--white);
+            border: 1px solid var(--rule); border-radius: 24px;
+            box-shadow: 0 1px 3px rgba(26,23,20,.04), 0 20px 60px rgba(26,23,20,.06); overflow: hidden;
+        }
+        .register-header {
+            padding: 40px 40px 32px; text-align: center; border-bottom: 1px solid var(--rule);
+        }
+        .register-logo { font-weight: 700; font-size: 1.5rem; color: var(--ink); margin-bottom: 8px; }
+        .register-logo .script { font-family: var(--ff-script); font-size: 2.4rem; color: var(--gold); position: relative; top: 4px; }
+        .register-subtitle { font-size: .88rem; color: var(--muted); font-weight: 300; }
+        .progress-wrapper { padding: 24px 40px; border-bottom: 1px solid var(--rule); }
+        .progress-steps { display: flex; justify-content: space-between; position: relative; margin-bottom: 12px; }
+        .progress-steps::before {
+            content: ''; position: absolute; top: 15px; left: 20px; right: 20px;
+            height: 1px; background: var(--rule); z-index: 0;
+        }
+        .progress-step { display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; z-index: 1; }
+        .step-dot {
+            width: 32px; height: 32px; border-radius: 50%; background: var(--white);
+            border: 1.5px solid var(--rule); display: flex; align-items: center; justify-content: center;
+            font-size: .75rem; font-weight: 600; color: var(--muted); transition: all .3s var(--ease);
+        }
+        .step-dot.active { background: var(--ink); border-color: var(--ink); color: var(--white); }
+        .step-dot.done { background: var(--green); border-color: var(--green); color: var(--white); }
+        .step-label { font-size: .65rem; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+        .progress-step.active .step-label { color: var(--ink); font-weight: 600; }
+        .progress-step.done .step-label { color: var(--green); }
+        .progress-bar-track { height: 3px; background: var(--rule); border-radius: 2px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: var(--ink); border-radius: 2px; transition: width .5s var(--ease); }
+        .register-body { padding: 40px; }
+        .form-step { display: none; animation: fadeSlide .4s var(--ease); }
+        .form-step.active { display: block; }
+        @keyframes fadeSlide { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .step-title { font-weight: 700; font-size: 1.3rem; margin-bottom: 6px; letter-spacing: -.02em; }
+        .step-desc { font-size: .85rem; color: var(--muted); font-weight: 300; margin-bottom: 28px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: .78rem; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
+        .form-group label .optional { font-weight: 400; color: var(--muted); font-size: .7rem; margin-left: 4px; font-style: italic; }
+        .input-wrapper { position: relative; display: flex; align-items: center; }
+        .input-wrapper .input-icon { position: absolute; left: 14px; color: var(--faint); pointer-events: none; z-index: 1; }
+        input, textarea, select {
+            width: 100%; padding: 12px 14px 12px 42px; border: 1.5px solid var(--rule);
+            border-radius: 10px; font-family: var(--ff-body); font-size: .9rem;
+            color: var(--ink); background: var(--white); transition: all .25s var(--ease); outline: none;
+        }
+        textarea { padding: 14px; min-height: 100px; resize: vertical; }
+        select { padding-left: 42px; appearance: none; cursor: pointer; }
+        input:focus, textarea:focus, select:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-dim); }
+        input::placeholder, textarea::placeholder { color: var(--faint); font-weight: 300; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .upload-zone {
+            border: 2px dashed var(--rule); border-radius: 12px; padding: 28px;
+            text-align: center; cursor: pointer; transition: all .25s var(--ease); position: relative;
+        }
+        .upload-zone:hover { border-color: var(--gold); background: var(--gold-dim); }
+        .upload-zone p { font-size: .8rem; color: var(--muted); font-weight: 300; }
+        .upload-zone .upload-hint { font-size: .7rem; color: var(--faint); margin-top: 4px; }
+        .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+        .upload-preview { margin-top: 10px; display: flex; align-items: center; gap: 10px; font-size: .8rem; color: var(--green); font-weight: 500; }
+        .skills-input-wrapper {
+            border: 1.5px solid var(--rule); border-radius: 10px; padding: 10px 14px;
+            display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-height: 48px;
+        }
+        .skills-input-wrapper:focus-within { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-dim); }
+        .skill-tag {
+            display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px;
+            background: var(--ink); color: var(--white); border-radius: 20px; font-size: .78rem; font-weight: 500;
+        }
+        .skill-tag button { background: none; border: none; color: rgba(255,255,255,.6); cursor: pointer; padding: 0; display: flex; }
+        .skill-tag button:hover { color: var(--white); }
+        .skills-input { border: none; outline: none; flex: 1; min-width: 120px; padding: 6px 0; font-family: var(--ff-body); font-size: .88rem; background: transparent; }
+        .checkbox-group {
+            display: flex; align-items: flex-start; gap: 12px; padding: 16px;
+            border: 1.5px solid var(--rule); border-radius: 12px; cursor: pointer;
+        }
+        .checkbox-group:hover { border-color: var(--gold); background: var(--gold-dim); }
+        .checkbox-group input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--gold); margin-top: 2px; flex-shrink: 0; cursor: pointer; }
+        .checkbox-group .check-title { font-weight: 600; font-size: .85rem; margin-bottom: 2px; }
+        .checkbox-group .check-desc { font-size: .75rem; color: var(--muted); font-weight: 300; line-height: 1.5; }
+        .form-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 32px; gap: 12px; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px; font-family: var(--ff-body);
+            font-weight: 600; font-size: .88rem; padding: 13px 26px; border-radius: 10px;
+            border: none; cursor: pointer; transition: all .3s var(--ease); letter-spacing: .01em; text-decoration: none;
+        }
+        .btn-primary { background: var(--ink); color: var(--white); box-shadow: 0 2px 8px rgba(26,23,20,.12); }
+        .btn-primary:hover { background: var(--ink-2); transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1.5px solid var(--rule); }
+        .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+        .btn:disabled { opacity: .4; pointer-events: none; }
+        .alert {
+            padding: 12px 16px; border-radius: 10px; font-size: .8rem; margin-top: 12px;
+            display: none; align-items: center; gap: 8px; font-weight: 500;
+        }
+        .alert.error { background: var(--red-light); color: var(--red); display: flex; }
+        .alert.success { background: #F0FDF4; color: var(--green); display: flex; }
+        .badge-preview {
+            display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px;
+            border-radius: 20px; background: var(--gold); color: var(--white); font-size: .72rem; font-weight: 600; margin-left: 8px;
+        }
+        @media (max-width: 600px) {
+            .register-header, .progress-wrapper, .register-body { padding: 24px; }
+            .form-row { grid-template-columns: 1fr; }
+            .form-actions { flex-direction: column-reverse; }
+            .btn { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="register-container">
+    <div class="register-header">
+        <div class="register-logo">Cam<span class="script">S</span>ervices</div>
+        <p class="register-subtitle">Inscription prestataire · Créez votre profil professionnel</p>
+    </div>
+
+    <div class="progress-wrapper">
+        <div class="progress-steps">
+            <div class="progress-step active" data-step="1">
+                <div class="step-dot"><i data-lucide="user"></i></div>
+                <span class="step-label">Compte</span>
+            </div>
+            <div class="progress-step" data-step="2">
+                <div class="step-dot"><i data-lucide="map-pin"></i></div>
+                <span class="step-label">Adresse</span>
+            </div>
+            <div class="progress-step" data-step="3">
+                <div class="step-dot"><i data-lucide="briefcase"></i></div>
+                <span class="step-label">Profil Pro</span>
+            </div>
+            <div class="progress-step" data-step="4">
+                <div class="step-dot"><i data-lucide="shield-check"></i></div>
+                <span class="step-label">Vérification</span>
+            </div>
+        </div>
+        <div class="progress-bar-track"><div class="progress-bar-fill" style="width:0%"></div></div>
+    </div>
+
+    <form id="registerForm" class="register-body">
+        <!-- Étape 1 -->
+        <div class="form-step active" data-step="1">
+            <h2 class="step-title">Créez votre compte</h2>
+            <p class="step-desc">Informations de base pour vous identifier sur la plateforme.</p>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nom complet</label>
+                    <div class="input-wrapper"><span class="input-icon"><i data-lucide="user"></i></span><input type="text" name="full_name" placeholder="Jean Dupont" required></div>
+                </div>
+                <div class="form-group">
+                    <label>Nom d'utilisateur</label>
+                    <div class="input-wrapper"><span class="input-icon"><i data-lucide="at-sign"></i></span><input type="text" name="username" placeholder="jeandupont" required></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <div class="input-wrapper"><span class="input-icon"><i data-lucide="mail"></i></span><input type="email" name="email" placeholder="jean@email.com" required></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Mot de passe</label>
+                    <div class="input-wrapper"><span class="input-icon"><i data-lucide="lock"></i></span><input type="password" name="password" placeholder="Min. 8 caractères" required minlength="8"></div>
+                </div>
+                <div class="form-group">
+                    <label>Téléphone</label>
+                    <div class="input-wrapper"><span class="input-icon"><i data-lucide="phone"></i></span><input type="tel" name="phone" placeholder="+237 6XX XXX XXX" required></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Photo de profil <span class="optional">(optionnel)</span></label>
+                <div class="upload-zone"><i data-lucide="camera" style="width:2rem;height:2rem;margin:0 auto 8px;display:block"></i><p>Cliquez pour ajouter une photo</p><p class="upload-hint">JPG, PNG · Max 5MB</p><input type="file" name="profile_photo" accept="image/*"></div>
+                <div class="upload-preview" id="photoPreview" style="display:none"></div>
+            </div>
+        </div>
+
+        <!-- Étape 2 -->
+        <div class="form-step" data-step="2">
+            <h2 class="step-title">Votre localisation</h2>
+            <p class="step-desc">Cela permet aux clients de vous trouver facilement.</p>
+            <div class="form-group">
+                <label>Ville</label>
+                <div class="input-wrapper"><span class="input-icon"><i data-lucide="building-2"></i></span>
+                    <select name="city" required>
+                        <option value="">Sélectionnez votre ville</option>
+                        <option>Yaoundé</option><option>Douala</option><option>Bafoussam</option><option>Bamenda</option>
+                        <option>Maroua</option><option>Garoua</option><option>Ngaoundéré</option><option>Kribi</option><option>Limbe</option><option>Buea</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Quartier</label>
+                <div class="input-wrapper"><span class="input-icon"><i data-lucide="map-pin"></i></span><input type="text" name="neighborhood" placeholder="Ex: Bastos, Bonapriso..." required></div>
+            </div>
+        </div>
+
+        <!-- Étape 3 -->
+        <div class="form-step" data-step="3">
+            <h2 class="step-title">Profil professionnel</h2>
+            <p class="step-desc">Détaillez vos compétences pour attirer plus de clients.</p>
+            <div class="form-group">
+                <label>Situation actuelle</label>
+                <div class="input-wrapper"><span class="input-icon"><i data-lucide="briefcase"></i></span>
+                    <select name="employment_status" required>
+                        <option value="">Sélectionnez votre statut</option>
+                        <option value="employed">Employé(e)</option><option value="self_employed">Travailleur indépendant</option>
+                        <option value="unemployed">Sans emploi</option><option value="student">Étudiant(e)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Domaine(s) d'expertise</label>
+                <div class="skills-input-wrapper"><div id="skillsTags"></div><input type="text" class="skills-input" id="skillsInput" placeholder="Tapez et appuyez sur Entrée..."></div>
+                <input type="hidden" name="domain_expertise" id="domainExpertise">
+            </div>
+            <div class="form-group">
+                <label>Formation</label>
+                <div class="input-wrapper"><span class="input-icon"><i data-lucide="graduation-cap"></i></span><input type="text" name="education" placeholder="Ex: Licence en génie civil..."></div>
+            </div>
+            <div class="form-group">
+                <label>Activités parallèles / Autres compétences</label>
+                <div class="input-wrapper"><span class="input-icon"><i data-lucide="sparkles"></i></span><textarea name="side_activities" placeholder="Ex: J'anime des formations le week-end..."></textarea></div>
+            </div>
+        </div>
+
+        <!-- Étape 4 -->
+        <div class="form-step" data-step="4">
+            <h2 class="step-title">Vérification d'identité</h2>
+            <p class="step-desc">Obtenez un badge certifié pour rassurer vos clients.</p>
+            <div class="checkbox-group">
+                <input type="checkbox" id="wantVerification">
+                <div>
+                    <div class="check-title">Je souhaite être certifié <span class="badge-preview"><i data-lucide="shield-check" style="width:.9rem;height:.9rem"></i> Certifié</span></div>
+                    <p class="check-desc">Fournissez une pièce d'identité pour obtenir le badge de confiance. <strong>Optionnel.</strong></p>
+                </div>
+            </div>
+            <div id="verificationFields" style="display:none;margin-top:20px">
+                <div class="form-group">
+                    <label>Type de document</label>
+                    <div class="input-wrapper"><span class="input-icon"><i data-lucide="file-text"></i></span>
+                        <select name="id_document_type">
+                            <option value="">Type de pièce</option>
+                            <option value="cni">CNI</option><option value="passport">Passeport</option><option value="permit">Permis</option><option value="other">Autre</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Photo de la pièce</label>
+                    <div class="upload-zone"><i data-lucide="upload" style="width:2rem;height:2rem;margin:0 auto 8px;display:block"></i><p>Cliquez pour téléverser</p><p class="upload-hint">Photo claire · JPG, PNG</p><input type="file" name="id_document" accept="image/*"></div>
+                    <div class="upload-preview" id="idPreview" style="display:none"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert" id="formAlert"></div>
+
+        <div class="form-actions">
+            <button type="button" class="btn btn-ghost" id="prevBtn" style="display:none"><i data-lucide="arrow-left" style="width:1rem;height:1rem"></i> Retour</button>
+            <button type="button" class="btn btn-primary" id="nextBtn">Continuer <i data-lucide="arrow-right" style="width:1rem;height:1rem"></i></button>
+            <button type="submit" class="btn btn-primary" id="submitBtn" style="display:none">Finaliser l'inscription <i data-lucide="check" style="width:1rem;height:1rem"></i></button>
+        </div>
+    </form>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// CONFIG SUPABASE
+// ═══════════════════════════════════════════
+var SUPABASE_URL  = 'https://cwubxwbzzuigctvgdygv.supabase.co';
+var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dWJ4d2J6enVpZ2N0dmdkeWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzI2MTgsImV4cCI6MjA5MzgwODYxOH0.0mwBNo_S5yItQQjq2at9GNRN74ooZRBJIbZGDH9L2uk';
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+lucide.createIcons();
+
+var currentStep = 1, totalSteps = 4, skills = [];
+var stepIcons = ['user','map-pin','briefcase','shield-check'];
+var form = document.getElementById('registerForm');
+var prevBtn = document.getElementById('prevBtn');
+var nextBtn = document.getElementById('nextBtn');
+var submitBtn = document.getElementById('submitBtn');
+var stepEls = document.querySelectorAll('.form-step');
+var progressSteps = document.querySelectorAll('.progress-step');
+var progressFill = document.querySelector('.progress-bar-fill');
+var formAlert = document.getElementById('formAlert');
+var skillsInput = document.getElementById('skillsInput');
+var skillsTags = document.getElementById('skillsTags');
+var domainExpertise = document.getElementById('domainExpertise');
+var wantVerifCheck = document.getElementById('wantVerification');
+var verifFields = document.getElementById('verificationFields');
+
+// ═══════════════ SKILLS ═══════════════
+skillsInput.addEventListener('keydown',function(e){
+    if(e.key==='Enter'){
+        e.preventDefault();
+        var v=this.value.trim();
+        if(v&&skills.indexOf(v)===-1){skills.push(v);renderSkills();}
+        this.value='';
+    }
+});
+window.removeSkill=function(i){skills.splice(i,1);renderSkills();};
+function renderSkills(){
+    var h='';
+    for(var i=0;i<skills.length;i++){
+        h+='<span class="skill-tag">'+skills[i]+'<button type="button" onclick="window.removeSkill('+i+')" style="background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;padding:0;display:flex"><i data-lucide="x" style="width:.75rem;height:.75rem"></i></button></span>';
+    }
+    skillsTags.innerHTML=h;
+    domainExpertise.value=JSON.stringify(skills);
+    lucide.createIcons();
+}
+
+// ═══════════════ VERIFICATION TOGGLE ═══════════════
+wantVerifCheck.addEventListener('change',function(){verifFields.style.display=this.checked?'block':'none';});
+
+// ═══════════════ FILE PREVIEW ═══════════════
+function setupPreview(sel,pid){
+    var inp=document.querySelector(sel),pre=document.getElementById(pid);
+    if(!inp||!pre)return;
+    inp.addEventListener('change',function(){
+        if(this.files&&this.files[0]){
+            pre.style.display='flex';
+            pre.innerHTML='<i data-lucide="check-circle" style="width:1rem;height:1rem;color:#3D8B5E"></i> '+this.files[0].name;
+            lucide.createIcons();
+        }
+    });
+}
+setupPreview('input[name="profile_photo"]','photoPreview');
+setupPreview('input[name="id_document"]','idPreview');
+
+// ═══════════════ NAVIGATION ═══════════════
+function updateUI(){
+    for(var i=0;i<stepEls.length;i++)stepEls[i].classList.remove('active');
+    stepEls[currentStep-1].classList.add('active');
+    for(var j=0;j<progressSteps.length;j++){
+        progressSteps[j].classList.remove('active','done');
+        if(j+1<currentStep)progressSteps[j].classList.add('done');
+        if(j+1===currentStep)progressSteps[j].classList.add('active');
+    }
+    progressFill.style.width=((currentStep-1)/(totalSteps-1)*100)+'%';
+    prevBtn.style.display=currentStep===1?'none':'inline-flex';
+    nextBtn.style.display=currentStep===totalSteps?'none':'inline-flex';
+    submitBtn.style.display=currentStep===totalSteps?'inline-flex':'none';
+    var dots=document.querySelectorAll('.step-dot');
+    for(var k=0;k<dots.length;k++){
+        dots[k].innerHTML=k+1<currentStep?'<i data-lucide="check" style="width:.9rem;height:.9rem"></i>':'<i data-lucide="'+stepIcons[k]+'" style="width:.9rem;height:.9rem"></i>';
+    }
+    lucide.createIcons();
+    formAlert.style.display='none';formAlert.className='alert';
+}
+
+function showMsg(msg,type){
+    formAlert.innerHTML='<i data-lucide="'+(type==='error'?'alert-circle':'check-circle')+'" style="width:1rem;height:1rem;flex-shrink:0"></i> <span>'+msg+'</span>';
+    formAlert.className='alert '+type;formAlert.style.display='flex';
+    lucide.createIcons();
+}
+
+function validateStep(step){
+    var el=document.querySelector('.form-step[data-step="'+step+'"]');
+    if(!el)return true;
+    var fields=el.querySelectorAll('[required]'),ok=true;
+    for(var i=0;i<fields.length;i++){
+        if(!fields[i].value||!fields[i].value.trim()){
+            ok=false;fields[i].style.borderColor='#DC2626';
+            (function(f){setTimeout(function(){f.style.borderColor='#E8E2DA';},2000);})(fields[i]);
+        }
+    }
+    if(step===1){
+        var pwd=el.querySelector('input[name="password"]');
+        if(pwd&&pwd.value.length<8){showMsg('Mot de passe : 8 caractères minimum.','error');return false;}
+    }
+    if(!ok)showMsg('Remplissez tous les champs obligatoires.','error');
+    return ok;
+}
+
+nextBtn.addEventListener('click',function(){if(validateStep(currentStep)&&currentStep<totalSteps){currentStep++;updateUI();window.scrollTo({top:0,behavior:'smooth'});}});
+prevBtn.addEventListener('click',function(){if(currentStep>1){currentStep--;updateUI();}});
+
+// ═══════════════ UPLOAD ═══════════════
+async function uploadFile(file,bucket){
+    var name=Date.now()+'_'+Math.random().toString(36).substring(2,8)+'.'+file.name.split('.').pop();
+    var r=await sb.storage.from(bucket).upload(name,file,{cacheControl:'3600',upsert:false});
+    if(r.error)throw new Error('Upload échoué');
+    return sb.storage.from(bucket).getPublicUrl(name).data.publicUrl;
+}
+
+// ═══════════════ SUBMIT ═══════════════
+var lastAttempt=0;
+form.addEventListener('submit',async function(e){
+    e.preventDefault();
+    if(!validateStep(4))return;
+
+    var now=Date.now();
+    if((now-lastAttempt)/1000<8){showMsg('Patientez '+(8-Math.ceil((now-lastAttempt)/1000))+' seconde(s).','error');return;}
+    lastAttempt=now;
+
+    function val(n){var el=form.querySelector('[name="'+n+'"]');return el?el.value.trim():'';}
+
+    var email=val('email'),password=val('password'),fullName=val('full_name'),username=val('username');
+    var phone=val('phone'),city=val('city'),neighborhood=val('neighborhood');
+    var empStatus=val('employment_status'),education=val('education'),sideActs=val('side_activities');
+    var wantVerif=wantVerifCheck.checked,idDocType=val('id_document_type');
+    var photoFile=document.querySelector('input[name="profile_photo"]').files[0];
+    var idFile=document.querySelector('input[name="id_document"]').files[0];
+
+    submitBtn.disabled=true;submitBtn.textContent='Inscription en cours...';
+
+    try{
+        var photoUrl=null,idDocUrl=null;
+        if(photoFile&&photoFile.size>0)photoUrl=await uploadFile(photoFile,'profile-photos');
+        if(wantVerif&&idFile&&idFile.size>0)idDocUrl=await uploadFile(idFile,'id-documents');
+
+        var authRes=await sb.auth.signUp({email:email,password:password});
+        if(authRes.error){
+            var m=authRes.error.message||'';
+            if(m.indexOf('already registered')!==-1)throw new Error('Cet email est déjà utilisé.');
+            throw new Error(m||'Erreur création compte.');
+        }
+        if(!authRes.data||!authRes.data.user)throw new Error('Aucun utilisateur créé.');
+
+        var userData={
+            id:authRes.data.user.id,email:email,password_hash:'auth_managed',
+            full_name:fullName,username:username,phone:phone||null,
+            city:city||null,neighborhood:neighborhood||null,
+            employment_status:empStatus||'unemployed',
+            education:education||null,side_activities:sideActs||null,
+            domain_expertise:skills.length>0?skills:[],
+            role:'prestataire',status:'active',
+            verification_status:wantVerif?'pending':'none',
+            id_document_type:wantVerif?(idDocType||null):null,
+            profile_photo_url:photoUrl,id_document_url:idDocUrl
+        };
+
+        var insertRes=await sb.from('users').insert(userData);
+        if(insertRes.error)console.warn('⚠️ Insertion profil:',insertRes.error.message);
+
+        showMsg('✅ Inscription réussie ! Vérifiez votre email.','success');
+        var all=form.querySelectorAll('input,select,textarea,button');
+        for(var i=0;i<all.length;i++)all[i].disabled=true;
+        setTimeout(function(){window.location.href='login.html';},3000);
+
+    }catch(err){
+        console.error('❌',err);
+        showMsg(err.message||'Erreur.','error');
+        submitBtn.disabled=false;submitBtn.innerHTML='Finaliser l\'inscription <i data-lucide="check" style="width:1rem;height:1rem"></i>';
+        lucide.createIcons();
+    }
+});
+
+updateUI();
+</script>
+</body>
+</html>

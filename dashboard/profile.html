@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Profil — CamServices Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Allison&family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+<button class="menu-toggle" onclick="toggleSidebar()">
+    <i data-lucide="menu"></i>
+</button>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar" id="sidebar">
+    <a href="index.html" class="sidebar-logo">Cam<span class="script">S</span>ervices</a>
+    
+    <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sidebarAvatar"></div>
+        <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebarName">Chargement...</div>
+            <div class="sidebar-user-role" id="sidebarRole">Prestataire</div>
+            <span class="verify-badge" id="verifyBadge" style="display:none">
+                <i data-lucide="shield-check" style="width:.7rem;height:.7rem"></i> Vérifié
+            </span>
+        </div>
+    </div>
+    
+    <ul class="sidebar-nav">
+        <li><a href="index.html" id="nav-overview"><i data-lucide="layout-dashboard"></i> Vue d'ensemble</a></li>
+        <li><a href="services.html" id="nav-services"><i data-lucide="briefcase"></i> Mes services <span class="badge" id="serviceBadge">0</span></a></li>
+        <li><a href="orders.html" id="nav-orders"><i data-lucide="shopping-bag"></i> Commandes <span class="badge" id="orderBadge">0</span></a></li>
+        <li><a href="pricing.html" id="nav-pricing"><i data-lucide="tags"></i> Grille tarifaire</a></li>
+        <li><a href="portfolio.html" id="nav-portfolio"><i data-lucide="image"></i> Portfolio</a></li>
+        <li><a href="activities.html" id="nav-activities"><i data-lucide="award"></i> Activités</a></li>
+    </ul>
+    
+    <hr class="sidebar-divider">
+    
+    <ul class="sidebar-nav">
+        <li><a href="profile.html" class="active" id="nav-profile"><i data-lucide="user-circle"></i> Mon profil</a></li>
+        <li><a href="analytics.html" id="nav-analytics"><i data-lucide="bar-chart-3"></i> Statistiques</a></li>
+    </ul>
+    
+    <div class="sidebar-footer">
+        <a href="../landing.html" onclick="logout();return false"><i data-lucide="log-out"></i> Déconnexion</a>
+    </div>
+</aside>
+
+<!-- ═══ MAIN CONTENT ═══ -->
+<main class="main-content">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Mon <span class="script">profil</span></h1>
+            <p class="page-subtitle">Gérez vos informations personnelles et professionnelles</p>
+        </div>
+        <div class="page-actions" style="display:flex;gap:12px">
+            <button class="btn btn-secondary btn-sm" onclick="previewProfile()">
+                <i data-lucide="eye"></i> Aperçu public
+            </button>
+            <button class="btn btn-primary" form="profileForm" type="submit">
+                <i data-lucide="save"></i> Enregistrer
+            </button>
+        </div>
+    </div>
+    
+    <div style="display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start">
+        
+        <!-- Colonne gauche : Photo + Badge -->
+        <div style="display:flex;flex-direction:column;gap:24px">
+            <div class="card" style="text-align:center">
+                <div style="position:relative;display:inline-block;margin-bottom:16px">
+                    <div id="profilePhotoPreview" style="width:120px;height:120px;border-radius:50%;background:var(--ink);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:2.5rem;font-weight:700;margin:0 auto;overflow:hidden;border:3px solid var(--rule)">
+                        <span id="photoInitials">--</span>
+                    </div>
+                    <label for="profilePhotoInput" style="position:absolute;bottom:0;right:0;width:36px;height:36px;background:var(--ink);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--white);transition:all .2s">
+                        <i data-lucide="camera" style="width:1rem;height:1rem;color:var(--white)"></i>
+                    </label>
+                    <input type="file" id="profilePhotoInput" accept="image/*" style="display:none" onchange="handlePhotoChange(event)">
+                </div>
+                <h3 style="font-weight:700;font-size:1.1rem" id="displayName">--</h3>
+                <p style="font-size:.8rem;color:var(--muted)" id="displayUsername">@--</p>
+                
+                <div style="margin-top:12px">
+                    <span class="status-badge status-completed" id="verifiedBadge" style="display:none">
+                        <i data-lucide="shield-check" style="width:.8rem;height:.8rem"></i> Profil vérifié
+                    </span>
+                    <span class="status-badge status-pending" id="pendingBadge" style="display:none">
+                        <i data-lucide="clock" style="width:.8rem;height:.8rem"></i> Vérification en cours
+                    </span>
+                    <span class="status-badge status-cancelled" id="unverifiedBadge">
+                        <i data-lucide="shield-off" style="width:.8rem;height:.8rem"></i> Non vérifié
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Carte vérification -->
+            <div class="card">
+                <h4 style="font-weight:700;font-size:.9rem;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+                    <i data-lucide="shield-check" style="width:1rem;height:1rem;color:var(--gold)"></i>
+                    Badge certifié
+                </h4>
+                <p style="font-size:.78rem;color:var(--muted);line-height:1.6;margin-bottom:16px">
+                    Le badge certifié augmente la confiance des clients et votre visibilité sur la plateforme.
+                </p>
+                <div id="verificationSection">
+                    <!-- Dynamique selon statut -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Colonne droite : Formulaire -->
+        <div style="display:flex;flex-direction:column;gap:24px">
+            
+            <!-- Informations personnelles -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Informations personnelles</h3>
+                </div>
+                <form id="profileForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nom complet *</label>
+                            <input type="text" name="full_name" id="inputFullName" 
+                                   placeholder="Ex: Jean Dupont" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Nom d'utilisateur *</label>
+                            <input type="text" name="username" id="inputUsername" 
+                                   placeholder="Ex: jeandupont" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="inputEmail" 
+                                   placeholder="votre@email.com" disabled 
+                                   style="background:var(--cream);color:var(--muted);cursor:not-allowed">
+                            <span style="font-size:.7rem;color:var(--muted);margin-top:4px;display:block">
+                                L'email ne peut pas être modifié
+                            </span>
+                        </div>
+                        <div class="form-group">
+                            <label>Téléphone *</label>
+                            <input type="tel" name="phone" id="inputPhone" 
+                                   placeholder="Ex: +237 6XX XXX XXX" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Bio / Présentation</label>
+                        <textarea name="bio" id="inputBio" rows="4" 
+                                  placeholder="Présentez-vous en quelques mots..."></textarea>
+                        <span style="font-size:.7rem;color:var(--muted);margin-top:4px;display:block">
+                            Maximum 500 caractères. Décrivez votre expérience et ce qui vous rend unique.
+                        </span>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Adresse -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Adresse</h3>
+                </div>
+                <form id="addressForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Ville *</label>
+                            <select name="city" id="inputCity" required>
+                                <option value="">Sélectionnez votre ville</option>
+                                <option value="Yaoundé">Yaoundé</option>
+                                <option value="Douala">Douala</option>
+                                <option value="Bafoussam">Bafoussam</option>
+                                <option value="Bamenda">Bamenda</option>
+                                <option value="Maroua">Maroua</option>
+                                <option value="Garoua">Garoua</option>
+                                <option value="Ngaoundéré">Ngaoundéré</option>
+                                <option value="Kribi">Kribi</option>
+                                <option value="Limbe">Limbe</option>
+                                <option value="Buea">Buea</option>
+                                <option value="Ebolowa">Ebolowa</option>
+                                <option value="Bertoua">Bertoua</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Quartier *</label>
+                            <input type="text" name="neighborhood" id="inputNeighborhood" 
+                                   placeholder="Ex: Bastos, Bonapriso..." required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Profil professionnel -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Profil professionnel</h3>
+                </div>
+                <form id="professionalForm">
+                    <div class="form-group">
+                        <label>Situation actuelle</label>
+                        <select name="employment_status" id="inputEmploymentStatus">
+                            <option value="">Sélectionnez votre statut</option>
+                            <option value="employed">Employé(e)</option>
+                            <option value="self_employed">Travailleur indépendant</option>
+                            <option value="unemployed">Sans emploi</option>
+                            <option value="student">Étudiant(e)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Domaine(s) d'expertise</label>
+                        <div class="skills-input-wrapper" id="skillsWrapper">
+                            <div id="skillsTags"></div>
+                            <input type="text" class="skills-input" id="skillsInput" 
+                                   placeholder="Tapez et appuyez sur Entrée...">
+                        </div>
+                        <input type="hidden" name="domain_expertise" id="domainExpertise">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Formation</label>
+                        <input type="text" name="education" id="inputEducation" 
+                               placeholder="Ex: Licence en génie civil, CAP électricien...">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Activités parallèles / Autres compétences</label>
+                        <textarea name="side_activities" id="inputSideActivities" rows="3" 
+                                  placeholder="Ex: J'anime des formations le week-end, photographie amateur..."></textarea>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Sécurité -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Sécurité</h3>
+                </div>
+                <form id="securityForm">
+                    <div class="form-group">
+                        <label>Nouveau mot de passe</label>
+                        <input type="password" name="password" id="inputPassword" 
+                               placeholder="Laissez vide pour ne pas changer" minlength="8">
+                    </div>
+                    <div class="form-group">
+                        <label>Confirmer le mot de passe</label>
+                        <input type="password" name="password_confirm" id="inputPasswordConfirm" 
+                               placeholder="Confirmez le nouveau mot de passe" minlength="8">
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Bouton sauvegarde en bas -->
+            <div style="display:flex;justify-content:flex-end;gap:12px">
+                <button class="btn btn-secondary" onclick="resetForm()">
+                    <i data-lucide="rotate-ccw"></i> Réinitialiser
+                </button>
+                <button class="btn btn-primary" onclick="saveAllProfile()">
+                    <i data-lucide="save"></i> Enregistrer toutes les modifications
+                </button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div id="modalContainer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../config.js"></script>
+<script src="js/dashboard-auth.js"></script>
+<script src="js/dashboard-common.js"></script>
+<script>
+    let profileData = {};
+    let skills = [];
+    let newPhotoFile = null;
+    
+    async function loadProfile() {
+        await initDashboard();
+        setActiveNav('profile');
+        
+        // Charger les données complètes du profil
+        const { data } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', currentUser.id)
+            .single();
+        
+        if (data) {
+            profileData = data;
+            currentUser = data; // Mettre à jour le currentUser global
+        }
+        
+        populateForm();
+        updateSidebar();
+        updatePhotoPreview();
+        updateVerificationSection();
+        renderSkills();
+        lucide.createIcons();
+    }
+    
+    function populateForm() {
+        // Infos personnelles
+        document.getElementById('inputFullName').value = profileData.full_name || '';
+        document.getElementById('inputUsername').value = profileData.username || '';
+        document.getElementById('inputEmail').value = profileData.email || '';
+        document.getElementById('inputPhone').value = profileData.phone || '';
+        document.getElementById('inputBio').value = profileData.bio || '';
+        
+        // Adresse
+        document.getElementById('inputCity').value = profileData.city || '';
+        document.getElementById('inputNeighborhood').value = profileData.neighborhood || '';
+        
+        // Profil pro
+        document.getElementById('inputEmploymentStatus').value = profileData.employment_status || '';
+        document.getElementById('inputEducation').value = profileData.education || '';
+        document.getElementById('inputSideActivities').value = profileData.side_activities || '';
+        
+        // Skills
+        if (profileData.domain_expertise && Array.isArray(profileData.domain_expertise)) {
+            skills = [...profileData.domain_expertise];
+        }
+        
+        // Display info
+        document.getElementById('displayName').textContent = profileData.full_name || '--';
+        document.getElementById('displayUsername').textContent = '@' + (profileData.username || '--');
+        updatePhotoPreview();
+    }
+    
+    function updatePhotoPreview() {
+        const container = document.getElementById('profilePhotoPreview');
+        const initials = document.getElementById('photoInitials');
+        
+        if (newPhotoFile) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                container.style.backgroundImage = `url(${e.target.result})`;
+                container.style.backgroundSize = 'cover';
+                container.style.backgroundPosition = 'center';
+                initials.style.display = 'none';
+            };
+            reader.readAsDataURL(newPhotoFile);
+        } else if (profileData.profile_photo_url) {
+            container.style.backgroundImage = `url(${profileData.profile_photo_url})`;
+            container.style.backgroundSize = 'cover';
+            container.style.backgroundPosition = 'center';
+            initials.style.display = 'none';
+        } else {
+            container.style.backgroundImage = '';
+            container.style.background = 'var(--ink)';
+            initials.style.display = 'block';
+            initials.textContent = (profileData.full_name || 'U')
+                .split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        }
+    }
+    
+    function handlePhotoChange(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        // Validation
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('La photo ne doit pas dépasser 5 Mo', 'error');
+            return;
+        }
+        
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+            showToast('Format accepté : JPG, PNG, WebP', 'error');
+            return;
+        }
+        
+        newPhotoFile = file;
+        updatePhotoPreview();
+    }
+    
+    function updateVerificationSection() {
+        const section = document.getElementById('verificationSection');
+        
+        // Masquer tous les badges
+        document.getElementById('verifiedBadge').style.display = 'none';
+        document.getElementById('pendingBadge').style.display = 'none';
+        document.getElementById('unverifiedBadge').style.display = 'none';
+        
+        if (profileData.is_verified) {
+            document.getElementById('verifiedBadge').style.display = 'inline-flex';
+            section.innerHTML = `
+                <div style="background:var(--green-light);border-radius:var(--radius);padding:16px;text-align:center">
+                    <i data-lucide="check-circle" style="width:2rem;height:2rem;color:var(--green);margin-bottom:8px"></i>
+                    <p style="font-weight:600;font-size:.85rem;color:var(--green)">Profil vérifié</p>
+                    <p style="font-size:.75rem;color:var(--muted);margin-top:4px">
+                        Votre pièce d'identité a été validée. Le badge certifié est actif.
+                    </p>
+                </div>
+            `;
+        } else if (profileData.verification_status === 'pending') {
+            document.getElementById('pendingBadge').style.display = 'inline-flex';
+            section.innerHTML = `
+                <div style="background:#FFF7ED;border-radius:var(--radius);padding:16px;text-align:center">
+                    <i data-lucide="clock" style="width:2rem;height:2rem;color:#F59E0B;margin-bottom:8px"></i>
+                    <p style="font-weight:600;font-size:.85rem;color:#F59E0B">Vérification en cours</p>
+                    <p style="font-size:.75rem;color:var(--muted);margin-top:4px">
+                        Votre document est en cours d'examen. Délai moyen : 24-48h.
+                    </p>
+                </div>
+            `;
+        } else {
+            document.getElementById('unverifiedBadge').style.display = 'inline-flex';
+            section.innerHTML = `
+                <button class="btn btn-primary btn-sm" onclick="openVerificationModal()" style="width:100%">
+                    <i data-lucide="shield-check" style="width:.9rem;height:.9rem"></i>
+                    Demander la vérification
+                </button>
+            `;
+        }
+        
+        lucide.createIcons();
+    }
+    
+    async function openVerificationModal() {
+        const html = `
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i data-lucide="shield-check" style="width:1.2rem;height:1.2rem;color:var(--gold)"></i>
+                    Demande de vérification
+                </h3>
+                <button class="modal-close" onclick="closeModal()">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <form id="verificationForm">
+                <div style="background:var(--gold-dim);border-radius:var(--radius);padding:16px;margin-bottom:20px;display:flex;align-items:flex-start;gap:10px">
+                    <i data-lucide="info" style="width:1.1rem;height:1.1rem;color:var(--gold);flex-shrink:0;margin-top:1px"></i>
+                    <p style="font-size:.82rem;color:var(--ink);line-height:1.5">
+                        Pour obtenir le badge certifié, veuillez fournir une pièce d'identité valide.
+                        Votre document sera traité sous 24-48h.
+                    </p>
+                </div>
+                
+                <div class="form-group">
+                    <label>Type de document *</label>
+                    <select name="id_document_type" required>
+                        <option value="">Sélectionnez le type</option>
+                        <option value="cni">Carte Nationale d'Identité (CNI)</option>
+                        <option value="passport">Passeport</option>
+                        <option value="permit">Permis de conduire</option>
+                        <option value="other">Autre document officiel</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Photo du document *</label>
+                    <div style="border:2px dashed var(--rule);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;position:relative;transition:all .2s" 
+                         id="docUploadZone"
+                         onmouseover="this.style.borderColor='var(--gold)';this.style.background='var(--gold-dim)'"
+                         onmouseout="this.style.borderColor='var(--rule)';this.style.background='transparent'">
+                        <i data-lucide="upload" style="width:2rem;height:2rem;color:var(--faint);margin-bottom:8px"></i>
+                        <p style="font-size:.82rem;color:var(--muted)">Cliquez pour téléverser</p>
+                        <p style="font-size:.7rem;color:var(--faint)">Photo claire du recto · JPG/PNG · Max 10 Mo</p>
+                        <input type="file" name="id_document" accept="image/*" required 
+                               style="position:absolute;inset:0;opacity:0;cursor:pointer"
+                               onchange="handleDocPreview(event)">
+                    </div>
+                    <div id="docPreview" style="margin-top:8px;display:none"></div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i data-lucide="send"></i> Envoyer pour vérification
+                    </button>
+                </div>
+            </form>
+        `;
+        
+        openModal(html);
+        
+        document.getElementById('verificationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const docFile = formData.get('id_document');
+            
+            if (!docFile || !docFile.size) {
+                showToast('Veuillez sélectionner un document', 'error');
+                return;
+            }
+            
+            try {
+                // Upload du document
+                const fileName = `verification/${currentUser.id}/${Date.now()}_${docFile.name}`;
+                const { error: uploadError } = await supabase.storage
+                    .from('id-documents')
+                    .upload(fileName, docFile);
+                
+                if (uploadError) throw uploadError;
+                
+                const { data: { publicUrl } } = supabase.storage
+                    .from('id-documents')
+                    .getPublicUrl(fileName);
+                
+                // Mettre à jour le profil
+                await supabase.from('users').update({
+                    id_document_url: publicUrl,
+                    id_document_type: formData.get('id_document_type'),
+                    verification_status: 'pending'
+                }).eq('id', currentUser.id);
+                
+                closeModal();
+                profileData.verification_status = 'pending';
+                profileData.id_document_url = publicUrl;
+                updateVerificationSection();
+                showToast('Document envoyé pour vérification', 'success');
+            } catch (error) {
+                showToast('Erreur: ' + error.message, 'error');
+            }
+        });
+    }
+    
+    function handleDocPreview(event) {
+        const file = event.target.files[0];
+        const preview = document.getElementById('docPreview');
+        
+        if (file) {
+            preview.style.display = 'flex';
+            preview.style.alignItems = 'center';
+            preview.style.gap = '10px';
+            preview.innerHTML = `
+                <i data-lucide="check-circle" style="width:1rem;height:1rem;color:var(--green)"></i>
+                <span style="font-size:.8rem;font-weight:500;color:var(--green)">${file.name}</span>
+            `;
+            lucide.createIcons();
+        }
+    }
+    
+    // Skills management
+    function renderSkills() {
+        const container = document.getElementById('skillsTags');
+        container.innerHTML = skills.map((s, i) => `
+            <span class="skill-tag">
+                ${s}
+                <button type="button" onclick="removeSkill(${i})" style="background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;padding:0;display:flex;align-items:center">
+                    <i data-lucide="x" style="width:.7rem;height:.7rem"></i>
+                </button>
+            </span>
+        `).join('');
+        lucide.createIcons();
+    }
+    
+    function removeSkill(index) {
+        skills.splice(index, 1);
+        renderSkills();
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        const skillsInput = document.getElementById('skillsInput');
+        if (skillsInput) {
+            skillsInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const value = this.value.trim();
+                    if (value && !skills.includes(value)) {
+                        skills.push(value);
+                        renderSkills();
+                    }
+                    this.value = '';
+                }
+            });
+        }
+    });
+    
+    async function saveAllProfile() {
+        // Rassembler toutes les données
+        const personalData = {
+            full_name: document.getElementById('inputFullName').value,
+            username: document.getElementById('inputUsername').value,
+            phone: document.getElementById('inputPhone').value,
+            bio: document.getElementById('inputBio').value
+        };
+        
+        const addressData = {
+            city: document.getElementById('inputCity').value,
+            neighborhood: document.getElementById('inputNeighborhood').value
+        };
+        
+        const professionalData = {
+            employment_status: document.getElementById('inputEmploymentStatus').value,
+            domain_expertise: skills,
+            education: document.getElementById('inputEducation').value,
+            side_activities: document.getElementById('inputSideActivities').value
+        };
+        
+        const securityData = {
+            password: document.getElementById('inputPassword').value,
+            password_confirm: document.getElementById('inputPasswordConfirm').value
+        };
+        
+        // Validation
+        if (!personalData.full_name || !personalData.username || !personalData.phone) {
+            showToast('Veuillez remplir tous les champs obligatoires', 'error');
+            return;
+        }
+        
+        if (!addressData.city || !addressData.neighborhood) {
+            showToast('Veuillez renseigner votre adresse complète', 'error');
+            return;
+        }
+        
+        // Vérifier les mots de passe
+        if (securityData.password) {
+            if (securityData.password !== securityData.password_confirm) {
+                showToast('Les mots de passe ne correspondent pas', 'error');
+                return;
+            }
+            if (securityData.password.length < 8) {
+                showToast('Le mot de passe doit contenir au moins 8 caractères', 'error');
+                return;
+            }
+        }
+        
+        try {
+            // Upload photo si nouvelle
+            let photoUrl = profileData.profile_photo_url;
+            if (newPhotoFile) {
+                const fileName = `profile-photos/${currentUser.id}/${Date.now()}_${newPhotoFile.name}`;
+                const { error: uploadError } = await supabase.storage
+                    .from('profile-photos')
+                    .upload(fileName, newPhotoFile);
+                
+                if (uploadError) throw uploadError;
+                
+                const { data: { publicUrl } } = supabase.storage
+                    .from('profile-photos')
+                    .getPublicUrl(fileName);
+                photoUrl = publicUrl;
+            }
+            
+            // Mettre à jour le profil
+            const updateData = {
+                ...personalData,
+                ...addressData,
+                ...professionalData,
+                profile_photo_url: photoUrl
+            };
+            
+            const { error } = await supabase.from('users')
+                .update(updateData)
+                .eq('id', currentUser.id);
+            
+            if (error) throw error;
+            
+            // Mettre à jour le mot de passe si fourni
+            if (securityData.password) {
+                const { error: pwdError } = await supabase.auth.updateUser({
+                    password: securityData.password
+                });
+                if (pwdError) throw pwdError;
+            }
+            
+            // Rafraîchir
+            profileData = { ...profileData, ...updateData };
+            currentUser = { ...currentUser, ...updateData };
+            updateSidebar();
+            updatePhotoPreview();
+            showToast('Profil mis à jour avec succès', 'success');
+            
+        } catch (error) {
+            showToast('Erreur: ' + error.message, 'error');
+        }
+    }
+    
+    function resetForm() {
+        populateForm();
+        renderSkills();
+        newPhotoFile = null;
+        updatePhotoPreview();
+        showToast('Formulaire réinitialisé', 'info');
+    }
+    
+    function previewProfile() {
+        window.open(`../profile.html?id=${currentUser.id}`, '_blank');
+    }
+    
+    // Démarrer
+    loadProfile();
+</script>
+</body>
+</html>

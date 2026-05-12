@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Détail du service — CamServices</title>
+    <link href="https://fonts.googleapis.com/css2?family=Allison&family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --ink: #1A1714; --ink-2: #2E2A25; --muted: #8A8279; --faint: #C9C2B8;
+            --rule: #E8E2DA; --cream: #FAF8F5; --white: #FFFFFF;
+            --gold: #C4943E; --gold-light: #D4A94E; --gold-dim: rgba(196,148,62,.08);
+            --green: #3D8B5E; --green-light: #F0FDF4; --red: #DC2626;
+            --ff-body: 'Outfit', sans-serif; --ff-script: 'Allison', cursive;
+            --ease: cubic-bezier(.22,1,.36,1);
+            --radius: 10px; --radius-lg: 16px; --radius-xl: 20px;
+            --shadow: 0 4px 20px rgba(26,23,20,.06);
+            --shadow-lg: 0 12px 40px rgba(26,23,20,.1);
+            --max: 1100px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: var(--ff-body); background: var(--cream); color: var(--ink);
+            min-height: 100vh; -webkit-font-smoothing: antialiased; line-height: 1.6;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes toastUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+        /* ═══ NAVBAR ═══ */
+        .navbar {
+            position: sticky; top: 0; z-index: 50;
+            background: rgba(250,248,245,.92); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--rule); padding: 0 32px;
+        }
+        .navbar-inner {
+            max-width: var(--max); margin: 0 auto; height: 64px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .nav-logo { font-weight: 700; font-size: 1.1rem; color: var(--ink); text-decoration: none; letter-spacing: -.02em; }
+        .nav-logo .script { font-family: var(--ff-script); font-size: 1.9rem; color: var(--gold); position: relative; top: 3px; }
+        .nav-links { display: flex; align-items: center; gap: 20px; }
+        .nav-links a { font-size: .85rem; font-weight: 500; color: var(--muted); text-decoration: none; transition: color .2s; }
+        .nav-links a:hover { color: var(--ink); }
+        .btn-nav { background: var(--ink); color: var(--white) !important; padding: 8px 18px; border-radius: var(--radius); font-weight: 600 !important; }
+
+        /* ═══ BREADCRUMB ═══ */
+        .breadcrumb { font-size: .78rem; color: var(--muted); margin-bottom: 20px; }
+        .breadcrumb a { color: var(--muted); text-decoration: none; }
+        .breadcrumb a:hover { color: var(--gold); }
+        .breadcrumb span { margin: 0 6px; color: var(--faint); }
+
+        /* ═══ HERO ═══ */
+        .detail-hero {
+            background: var(--white); border-bottom: 1px solid var(--rule); padding: 40px 32px;
+        }
+        .detail-hero-inner { max-width: var(--max); margin: 0 auto; }
+        .detail-category-badge {
+            display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px;
+            border-radius: 20px; background: var(--gold-dim); color: var(--gold);
+            font-size: .75rem; font-weight: 600; margin-bottom: 12px;
+        }
+        .detail-title { font-weight: 800; font-size: clamp(1.6rem, 3vw, 2.2rem); letter-spacing: -.03em; margin-bottom: 8px; }
+        .detail-price { font-weight: 800; font-size: 1.8rem; color: var(--gold); letter-spacing: -.03em; }
+        .detail-price .price-type { font-size: .8rem; font-weight: 400; color: var(--muted); margin-left: 8px; }
+
+        /* ═══ LAYOUT ═══ */
+        .detail-layout {
+            max-width: var(--max); margin: 0 auto; padding: 32px;
+            display: grid; grid-template-columns: 1fr 340px; gap: 24px;
+        }
+        .detail-main { display: flex; flex-direction: column; gap: 20px; }
+        .detail-card {
+            background: var(--white); border: 1px solid var(--rule);
+            border-radius: var(--radius-lg); padding: 28px;
+        }
+        .detail-section-title {
+            font-weight: 700; font-size: 1rem; letter-spacing: -.02em;
+            margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
+        }
+        .detail-section-title i { color: var(--gold); }
+        .detail-description { font-size: .9rem; color: var(--muted); line-height: 1.75; }
+
+        .detail-info-row { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--rule); }
+        .detail-info-item { flex: 1; min-width: 120px; }
+        .detail-info-label { display: block; font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); margin-bottom: 4px; }
+        .detail-info-value { font-weight: 600; font-size: .88rem; }
+        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: .75rem; font-weight: 600; }
+        .status-badge.status-active { background: var(--green-light); color: var(--green); }
+        .status-badge.status-inactive { background: #FEF2F2; color: var(--red); }
+
+        /* ═══ PROVIDER ═══ */
+        .provider-profile { display: flex; gap: 20px; align-items: flex-start; }
+        .provider-avatar-large {
+            width: 72px; height: 72px; border-radius: 50%; overflow: hidden;
+            flex-shrink: 0; background: var(--cream); border: 2px solid var(--rule);
+        }
+        .provider-avatar-large img { width: 100%; height: 100%; object-fit: cover; }
+        .provider-avatar-initials {
+            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 1.4rem; color: var(--muted);
+        }
+        .provider-name { font-weight: 700; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .verified-badge {
+            display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px;
+            border-radius: 20px; background: var(--gold); color: var(--white);
+            font-size: .68rem; font-weight: 600;
+        }
+        .provider-location { font-size: .82rem; color: var(--muted); display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+        .provider-bio { font-size: .85rem; color: var(--muted); margin-top: 8px; line-height: 1.6; }
+        .expertise-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .expertise-tag { font-size: .7rem; padding: 3px 8px; border-radius: 4px; background: var(--cream); color: var(--muted); }
+
+        /* ═══ SIDEBAR ═══ */
+        .detail-sidebar { display: flex; flex-direction: column; gap: 20px; position: sticky; top: 80px; }
+        .sidebar-card {
+            background: var(--white); border: 1px solid var(--rule);
+            border-radius: var(--radius-lg); padding: 24px;
+        }
+        .action-card { text-align: center; }
+        .action-price { font-weight: 800; font-size: 2rem; color: var(--gold); margin-bottom: 16px; letter-spacing: -.03em; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-family: var(--ff-body); font-weight: 600; font-size: .85rem; padding: 12px 20px; border-radius: var(--radius); border: none; cursor: pointer; transition: all .3s var(--ease); text-decoration: none; }
+        .btn-block { width: 100%; }
+        .btn-dark { background: var(--ink); color: var(--white); }
+        .btn-dark:hover { background: var(--ink-2); transform: translateY(-1px); }
+        .btn-whatsapp { background: #25D366; color: var(--white); margin-top: 10px; }
+        .btn-whatsapp:hover { background: #20BD5A; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1.5px solid var(--rule); margin-top: 8px; }
+        .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+        .sidebar-card-title { font-weight: 700; font-size: .9rem; margin-bottom: 14px; }
+        .related-service-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 0; border-bottom: 1px solid var(--rule); text-decoration: none; color: inherit;
+            transition: all .2s;
+        }
+        .related-service-item:last-child { border-bottom: none; }
+        .related-service-item:hover { color: var(--gold); }
+        .related-service-title { font-weight: 600; font-size: .82rem; }
+        .related-service-price { font-size: .75rem; color: var(--muted); margin-top: 2px; }
+
+        @media (max-width: 800px) {
+            .detail-layout { grid-template-columns: 1fr; }
+            .detail-sidebar { position: static; }
+            .provider-profile { flex-direction: column; }
+        }
+        @media (max-width: 500px) {
+            .detail-hero { padding: 24px 16px; }
+            .detail-layout { padding: 24px 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══ NAVBAR ═══ -->
+<nav class="navbar">
+    <div class="navbar-inner">
+        <a href="landing.html" class="nav-logo">Cam<span class="script">S</span>ervices</a>
+         <div class="nav-links">
+    <a href="landing.html">Accueil</a>
+    <a href="services.html" class="active">Services</a>
+    <a href="../cart.html" style="position:relative;display:flex;align-items:center;gap:6px">
+        <i data-lucide="shopping-cart" style="width:1rem;height:1rem"></i> Panier
+        <span id="cartCountNav" style="background:var(--gold);color:white;font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:10px;display:none">0</span>
+    </a>
+    <a href="login.html" class="btn-nav">Connexion</a>
+</div>
+    </div>
+</nav>
+
+<!-- ═══ CONTENU DYNAMIQUE ═══ -->
+<div id="service-detail">
+    <div style="text-align:center;padding:80px">
+        <div style="width:32px;height:32px;border:2.5px solid #E8E2DA;border-top-color:#C4943E;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px"></div>
+        <p style="color:#8A8279">Chargement du service...</p>
+    </div>
+</div>
+
+<script src="config.js"></script>
+<script src="js/service-detail.js"></script>
+</body>
+</html>

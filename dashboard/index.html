@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue d'ensemble — CamServices Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Allison&family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+<button class="menu-toggle" onclick="toggleSidebar()">
+    <i data-lucide="menu"></i>
+</button>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar" id="sidebar">
+    <a href="index.html" class="sidebar-logo">Cam<span class="script">S</span>ervices</a>
+    
+    <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sidebarAvatar"></div>
+        <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebarName">Chargement...</div>
+            <div class="sidebar-user-role" id="sidebarRole">Prestataire</div>
+            <span class="verify-badge" id="verifyBadge" style="display:none">
+                <i data-lucide="shield-check" style="width:.7rem;height:.7rem"></i> Vérifié
+            </span>
+        </div>
+    </div>
+    
+    <ul class="sidebar-nav">
+        <li><a href="index.html" id="nav-overview">
+            <i data-lucide="layout-dashboard"></i> Vue d'ensemble
+        </a></li>
+        <li><a href="services.html" id="nav-services">
+            <i data-lucide="briefcase"></i> Mes services
+            <span class="badge" id="serviceBadge">0</span>
+        </a></li>
+        <li><a href="orders.html" id="nav-orders">
+            <i data-lucide="shopping-bag"></i> Commandes
+            <span class="badge" id="orderBadge">0</span>
+        </a></li>
+        <li><a href="pricing.html" id="nav-pricing">
+            <i data-lucide="tags"></i> Grille tarifaire
+        </a></li>
+        <li><a href="portfolio.html" id="nav-portfolio">
+            <i data-lucide="image"></i> Portfolio
+        </a></li>
+        <li><a href="activities.html" id="nav-activities">
+            <i data-lucide="award"></i> Activités
+        </a></li>
+    </ul>
+    
+    <hr class="sidebar-divider">
+    
+    <ul class="sidebar-nav">
+        <li><a href="profile.html" id="nav-profile">
+            <i data-lucide="user-circle"></i> Mon profil
+        </a></li>
+        <li><a href="analytics.html" id="nav-analytics">
+            <i data-lucide="bar-chart-3"></i> Statistiques
+        </a></li>
+    </ul>
+    
+    <div class="sidebar-footer">
+        <a href="../landing.html" onclick="logout();return false">
+            <i data-lucide="log-out"></i> Déconnexion
+        </a>
+    </div>
+</aside>
+
+<!-- ═══ MAIN CONTENT ═══ -->
+<main class="main-content">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Bonjour, <span class="script" id="welcomeName">Collègue</span></h1>
+            <p class="page-subtitle">Voici un aperçu de votre activité aujourd'hui</p>
+        </div>
+        <div class="page-actions">
+            <a href="services.html" class="btn btn-primary">
+                <i data-lucide="plus"></i> Nouveau service
+            </a>
+        </div>
+    </div>
+    
+    <!-- Stats Grid -->
+    <div class="stats-grid" id="statsGrid">
+        <div class="stat-card stat-card-loading">
+            <div class="stat-card-header"><div class="stat-icon gold"><i data-lucide="banknote"></i></div></div>
+            <div class="stat-value skeleton">—</div>
+            <div class="stat-label">Revenus totaux</div>
+        </div>
+        <div class="stat-card stat-card-loading">
+            <div class="stat-card-header"><div class="stat-icon green"><i data-lucide="check-circle"></i></div></div>
+            <div class="stat-value skeleton">—</div>
+            <div class="stat-label">Commandes complétées</div>
+        </div>
+        <div class="stat-card stat-card-loading">
+            <div class="stat-card-header"><div class="stat-icon blue"><i data-lucide="eye"></i></div></div>
+            <div class="stat-value skeleton">—</div>
+            <div class="stat-label">Vues cette semaine</div>
+        </div>
+        <div class="stat-card stat-card-loading">
+            <div class="stat-card-header"><div class="stat-icon purple"><i data-lucide="clock"></i></div></div>
+            <div class="stat-value skeleton">—</div>
+            <div class="stat-label">En attente</div>
+        </div>
+    </div>
+    
+    <div class="dashboard-grid">
+        <div class="card card-span-2">
+            <div class="card-header">
+                <h3 class="card-title">Commandes récentes</h3>
+                <a href="orders.html" class="btn btn-secondary btn-sm">
+                    Tout voir <i data-lucide="arrow-right" style="width:.9rem;height:.9rem"></i>
+                </a>
+            </div>
+            <div id="recentOrders">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>Chargement des commandes...</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Activité récente</h3>
+            </div>
+            <div class="activity-feed" id="activityFeed">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div id="modalContainer"></div>
+
+<!-- ═══ SCRIPTS ═══
+     ⚠️  ORDRE IMPÉRATIF — ne pas changer
+     1. Supabase SDK  → expose window.supabase (la lib)
+     2. config.js     → crée le client, remplace window.supabase par le client
+     3. dashboard-common.js → utilise window.supabase (maintenant = client)
+     4. script inline → logique spécifique à cette page
+-->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../config.js"></script>
+<script src="js/dashboard-common.js"></script>
+<script src="js/dashboard-auth.js"></script>
+<script>
+
+    async function loadOverview() {
+        const user = await initDashboard();
+        if (!user) return;
+
+        setActiveNav('overview');
+
+        document.getElementById('welcomeName').textContent =
+            currentUser?.full_name?.split(' ')[0] || 'Collègue';
+
+        const [stats, orders, views, pendingCount] = await Promise.all([
+            getProviderStats(),
+            getAllOrders(),
+            getProfileViews(7),
+            getPendingCount()
+        ]);
+
+        updateStats(stats, views.length, pendingCount);
+        renderRecentOrders(orders.slice(0, 5));
+        renderActivityFeed(orders.slice(0, 5), views.slice(0, 5));
+        lucide.createIcons();
+    }
+
+    async function getPendingCount() {
+        const { count } = await supabase
+            .from('orders')
+            .select('*', { count: 'exact', head: true })
+            .eq('provider_id', currentUser.id)
+            .eq('status', 'pending');
+        return count || 0;
+    }
+
+    function updateStats(stats, viewsCount, pendingCount) {
+        document.getElementById('statsGrid').innerHTML = `
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-icon gold"><i data-lucide="banknote"></i></div>
+                    <i data-lucide="trending-up" style="color:var(--green);width:1.2rem;height:1.2rem"></i>
+                </div>
+                <div class="stat-value">${formatPrice(stats.total_revenue || 0)}</div>
+                <div class="stat-label">Revenus totaux</div>
+                <div class="stat-trend up">Revenus cumulés</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-icon green"><i data-lucide="check-circle"></i></div>
+                </div>
+                <div class="stat-value">${stats.completed_orders || 0}</div>
+                <div class="stat-label">Commandes complétées</div>
+                <div class="stat-trend up">Sur ${stats.total_orders || 0} total</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-icon blue"><i data-lucide="eye"></i></div>
+                </div>
+                <div class="stat-value">${viewsCount}</div>
+                <div class="stat-label">Vues cette semaine</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-icon purple"><i data-lucide="clock"></i></div>
+                </div>
+                <div class="stat-value">${pendingCount}</div>
+                <div class="stat-label">En attente</div>
+                <div class="stat-trend ${pendingCount > 0 ? 'up' : ''}">
+                    ${pendingCount > 0 ? '⚠ Action requise' : '✓ Tout est à jour'}
+                </div>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+
+    function renderRecentOrders(orders) {
+        const container = document.getElementById('recentOrders');
+        if (orders.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i data-lucide="inbox" class="empty-icon" style="width:3rem;height:3rem"></i>
+                    <h3>Aucune commande pour le moment</h3>
+                    <p>Les commandes apparaîtront ici lorsque des clients commanderont vos services.</p>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+        container.innerHTML = `
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Client</th><th>Service</th><th>Montant</th>
+                            <th>Date</th><th>Statut</th><th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${orders.map(o => `
+                            <tr>
+                                <td>
+                                    <div class="client-cell">
+                                        <div class="client-avatar">${(o.client_name || 'C')[0].toUpperCase()}</div>
+                                        <strong>${o.client_name || 'Client'}</strong>
+                                    </div>
+                                </td>
+                                <td>${o.service_title || '—'}</td>
+                                <td class="price-cell">${formatPrice(o.total_amount)}</td>
+                                <td>${formatDate(o.created_at)}</td>
+                                <td><span class="status-badge status-${o.status}">${formatStatus(o.status)}</span></td>
+                                <td>
+                                    <a href="orders.html" class="btn-icon" title="Voir détails">
+                                        <i data-lucide="arrow-right" style="width:1rem;height:1rem"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    function renderActivityFeed(orders, views) {
+        const container = document.getElementById('activityFeed');
+        const activities = [];
+
+        orders.forEach(o => activities.push({
+            icon: 'shopping-bag', color: 'blue',
+            text: `<strong>${o.client_name || 'Client'}</strong> a passé une commande`,
+            detail: `${o.service_title || 'Service'} — ${formatPrice(o.total_amount)}`,
+            time: o.created_at
+        }));
+
+        views.forEach(v => activities.push({
+            icon: 'eye', color: 'purple',
+            text: `<strong>${v.viewer_name || 'Visiteur'}</strong> a consulté votre profil`,
+            detail: '',
+            time: v.viewed_at
+        }));
+
+        activities.sort((a, b) => new Date(b.time) - new Date(a.time));
+
+        if (activities.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i data-lucide="activity" class="empty-icon" style="width:2rem;height:2rem"></i>
+                    <p>Aucune activité récente</p>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+
+        container.innerHTML = activities.slice(0, 8).map(a => `
+            <div class="activity-item">
+                <div class="activity-icon" style="background:var(--${a.color}-light);color:var(--${a.color})">
+                    <i data-lucide="${a.icon}" style="width:1rem;height:1rem"></i>
+                </div>
+                <div class="activity-content">
+                    <div class="activity-text">${a.text}</div>
+                    ${a.detail ? `<div class="activity-detail">${a.detail}</div>` : ''}
+                    <div class="activity-time">${formatTimeAgo(a.time)}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    loadOverview();
+</script>
+</body>
+</html>
