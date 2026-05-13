@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="0;url=landing.html">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CamServices — Marketplace de services au Cameroun</title>
+    <meta name="description" content="Trouvez des prestataires vérifiés près de chez vous : plomberie, électricité, design, photographie et plus encore.">
+    <meta name="theme-color" content="#C4943E">
+    <link rel="icon" type="image/x-icon" href="icons/favicon.ico">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="CamServices — Trouvez le prestataire idéal">
+    <meta property="og:description" content="La première marketplace de services professionnels au Cameroun.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="icons/logo-512.png">
+
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Outfit',sans-serif;background:#1A1714;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}
+        .loader{animation:fadeIn .6s ease}
+        .logo{font-size:1.8rem;font-weight:800;letter-spacing:-.03em;margin-bottom:16px;}
+        .logo span{font-family:'Allison',cursive;font-size:2.8rem;color:#C4943E;position:relative;top:6px;}
+        .spinner{width:28px;height:28px;border:3px solid rgba(196,148,62,.2);border-top-color:#C4943E;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px;}
+        .text{font-size:.82rem;color:#8A8279;}
+        a{color:#C4943E;text-decoration:none;font-weight:600;}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes fadeIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Allison&family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="loader">
+        <div class="logo">Cam<span>S</span>ervices</div>
+        <div class="spinner"></div>
+        <p class="text">Redirection en cours... <a href="./marketplace/landing.html">Cliquez ici</a> si rien ne se passe.</p>
+    </div>
+    <script>window.location.href = './marketplace/landing.html';</script>
+</body>
+</html>
