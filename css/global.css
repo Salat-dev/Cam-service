@@ -29,8 +29,8 @@
     --orange-light: #FFF7ED;
 
     /* Typographie */
-    --ff-body: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --ff-script: 'Allison', cursive;
+    --ff-body: 'Outfit';
+    --ff-script: 'Outfit';
 
     /* Espacement */
     --space-xs: 4px;

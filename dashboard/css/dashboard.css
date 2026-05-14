@@ -24,8 +24,8 @@
     --orange: #F59E0B;
     --orange-light: #FFFBEB;
 
-    --ff-body: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-    --ff-script: 'Allison', cursive;
+   --ff-body: 'Outfit';
+    --ff-script: 'Outfit';
     --sidebar-w: 260px;
     --ease: cubic-bezier(.22,1,.36,1);
     --radius-sm: 8px;
