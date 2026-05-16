@@ -186,7 +186,7 @@
         var btn = document.getElementById('navLogin');
         if (data.session && btn) {
             btn.textContent = 'Mon compte';
-            btn.href = '#';
+            btn.href = 'login-client.html';
         }
     }
 
@@ -231,7 +231,7 @@
             + '<div class="cart-summary-row total"><span class="cart-summary-label">Total estimé</span><span class="cart-summary-value grand-total">' + fmt(total) + '</span></div>'
             + '</div>'
             + '<div class="cart-actions">'
-            + '<button class="btn btn-gold" onclick="openConfirmModal()"><i data-lucide="send"></i> Commander</button>'
+            + '<button class="btn btn-gold" onclick="openConfirmModal()"><i data-lucide="send"></i> Prendre rendez-vous</button>'
             + '<button class="btn btn-outline" onclick="clearAll()"><i data-lucide="trash-2"></i> Vider</button>'
             + '<a href="services.html" class="btn btn-outline"><i data-lucide="search"></i> Continuer</a>'
             + '</div>';
@@ -252,14 +252,21 @@
         showMsg('Panier vidé.', 'info');
     }
 
-    function openConfirmModal() {
-        var cart = getCart();
-        if (cart.length === 0) return;
+    async function openConfirmModal() {
+       var cart = getCart();
+    if (cart.length === 0) return;
 
-        var total = 0;
-        for (var i = 0; i < cart.length; i++) total += cart[i].price || 0;
+    var { data } = await sb.auth.getSession();
+    if (!data.session) {
+        showMsg('Veuillez vous connecter pour passer commande.', 'info');
+        setTimeout(function() { window.location.href = 'login.html'; }, 1500);
+        return;
+    }
+    
+    var total = 0;
+    for (var i = 0; i < cart.length; i++) total += cart[i].price || 0;
 
-        document.getElementById('modalContainer').innerHTML =
+    document.getElementById('modalContainer').innerHTML = 
             '<div class="modal-overlay" onclick="if(event.target===this)closeModal()">'
             + '<div class="modal">'
             + '<div class="modal-header">'

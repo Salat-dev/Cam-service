@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajouter au Portfolio — CamServices</title>
+    <link href="https://fonts.googleapis.com/css2?family=Allison&family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="../css/global.css">
+    <style>
+        :root {
+            --ink:#1A1714;--ink-2:#2E2A25;--muted:#8A8279;--faint:#C9C2B8;
+            --rule:#E8E2DA;--cream:#FAF8F5;--white:#FFFFFF;
+            --gold:#C4943E;--gold-light:#D4A94E;--gold-dim:rgba(196,148,62,.08);
+            --green:#3D8B5E;--green-light:#F0FDF4;--red:#DC2626;--red-light:#FEF2F2;
+            --ff-body:'Outfit',sans-serif;--ff-script:'Allison',cursive;
+            --ease:cubic-bezier(.22,1,.36,1);
+            --radius:10px;--radius-lg:16px;--radius-xl:20px;
+            --shadow:0 4px 20px rgba(26,23,20,.06);
+            --shadow-lg:0 12px 40px rgba(26,23,20,.1);
+        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:var(--ff-body);background:var(--cream);color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;-webkit-font-smoothing:antialiased;}
+        @keyframes fadeSlide{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes spin{to{transform:rotate(360deg)}}
+
+        .register-container{width:100%;max-width:720px;}
+        .register-card{background:var(--white);border:1px solid var(--rule);border-radius:var(--radius-xl);box-shadow:var(--shadow-lg);overflow:hidden;}
+
+        .register-header{padding:36px 36px 28px;text-align:center;border-bottom:1px solid var(--rule);}
+        .register-logo{font-weight:800;font-size:1.2rem;color:var(--ink);text-decoration:none;display:inline-block;margin-bottom:8px;}
+        .register-logo .script{font-family:var(--ff-script);font-size:2.2rem;color:var(--gold);position:relative;top:3px;}
+        .register-header h1{font-weight:800;font-size:1.5rem;letter-spacing:-.03em;margin-bottom:4px;}
+        .register-header p{font-size:.85rem;color:var(--muted);font-weight:300;}
+
+        /* ═══ PROGRESS ═══ */
+        .progress-wrapper{padding:20px 36px;border-bottom:1px solid var(--rule);}
+        .progress-steps{display:flex;justify-content:space-between;position:relative;margin-bottom:10px;}
+        .progress-steps::before{content:'';position:absolute;top:18px;left:24px;right:24px;height:1px;background:var(--rule);z-index:0;}
+        .progress-step{display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;z-index:1;}
+        .step-dot{width:36px;height:36px;border-radius:50%;background:var(--white);border:2px solid var(--rule);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--muted);transition:all .3s var(--ease);}
+        .step-dot.active{background:var(--ink);border-color:var(--ink);color:var(--white);}
+        .step-dot.done{background:var(--green);border-color:var(--green);color:var(--white);}
+        .step-label{font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
+        .progress-step.active .step-label{color:var(--ink);}
+        .progress-step.done .step-label{color:var(--green);}
+        .progress-bar-track{height:3px;background:var(--rule);border-radius:2px;overflow:hidden;}
+        .progress-bar-fill{height:100%;background:var(--ink);border-radius:2px;transition:width .5s var(--ease);}
+
+        /* ═══ FORM ═══ */
+        .register-body{padding:32px 36px;}
+        .form-step{display:none;animation:fadeSlide .4s var(--ease);}
+        .form-step.active{display:block;}
+        .step-title{font-weight:700;font-size:1.15rem;margin-bottom:4px;letter-spacing:-.02em;}
+        .step-desc{font-size:.82rem;color:var(--muted);font-weight:300;margin-bottom:24px;}
+
+        .form-group{margin-bottom:18px;}
+        .form-group label{display:block;font-size:.76rem;font-weight:600;color:var(--ink);margin-bottom:6px;}
+        .form-group label .req{color:var(--red);}
+        .form-group label .opt{font-weight:400;color:var(--muted);font-size:.7rem;margin-left:4px;}
+        .input-wrap{position:relative;}
+        .input-wrap input,.input-wrap select,.input-wrap textarea{
+            width:100%;padding:11px 14px 11px 40px;border:1.5px solid var(--rule);
+            border-radius:var(--radius);font-family:var(--ff-body);font-size:.88rem;
+            color:var(--ink);outline:none;transition:all .2s;background:var(--white);
+        }
+        .input-wrap textarea{padding:14px;min-height:80px;resize:vertical;}
+        .input-wrap select{appearance:none;cursor:pointer;padding-right:40px;
+            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238A8279' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat:no-repeat;background-position:right 14px center;
+        }
+        .input-wrap input:focus,.input-wrap select:focus,.input-wrap textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-dim);}
+        .input-wrap .input-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--faint);pointer-events:none;}
+        .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+
+        /* ═══ UPLOAD ═══ */
+        .upload-zone{border:2px dashed var(--rule);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
+        .upload-zone:hover{border-color:var(--gold);background:var(--gold-dim);}
+        .upload-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+        .upload-zone p{font-size:.8rem;color:var(--muted);}
+        .upload-zone .hint{font-size:.7rem;color:var(--faint);margin-top:4px;}
+        .upload-preview{margin-top:10px;display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--green);font-weight:500;}
+
+        .alert{padding:12px 14px;border-radius:var(--radius);font-size:.8rem;margin-bottom:16px;display:none;align-items:center;gap:8px;font-weight:500;}
+        .alert.error{background:var(--red-light);color:var(--red);display:flex;}
+        .alert.success{background:var(--green-light);color:var(--green);display:flex;}
+
+        .form-actions{display:flex;justify-content:space-between;align-items:center;margin-top:28px;gap:12px;}
+        .btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--ff-body);font-weight:600;font-size:.85rem;padding:11px 22px;border-radius:var(--radius);border:none;cursor:pointer;transition:all .3s var(--ease);text-decoration:none;}
+        .btn-primary{background:var(--ink);color:var(--white);}
+        .btn-primary:hover{background:var(--ink-2);}
+        .btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--rule);}
+        .btn-ghost:hover{border-color:var(--gold);color:var(--gold);}
+        .btn-save-draft{background:var(--gold-dim);color:var(--gold);border:1.5px solid var(--gold);}
+        .btn-save-draft:hover{background:var(--gold);color:var(--white);}
+        .btn:disabled{opacity:.5;cursor:not-allowed;}
+
+        /* ═══ EXIT MODAL ═══ */
+        .exit-modal-overlay{position:fixed;inset:0;background:rgba(26,23,20,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+        .exit-modal{background:var(--white);border-radius:var(--radius-xl);padding:28px;width:100%;max-width:440px;box-shadow:var(--shadow-lg);}
+        .exit-modal h3{font-weight:700;font-size:1.1rem;margin-bottom:8px;}
+        .exit-modal p{font-size:.85rem;color:var(--muted);margin-bottom:20px;}
+        .exit-modal-actions{display:flex;flex-direction:column;gap:8px;}
+
+        @media(max-width:600px){
+            .register-body{padding:24px 20px;}
+            .register-header{padding:28px 20px 24px;}
+            .progress-wrapper{padding:16px 20px;}
+            .form-row{grid-template-columns:1fr;}
+        }
+    </style>
+</head>
+<body>
+
+<div class="register-container">
+    <div class="register-card">
+        <div class="register-header">
+            <a href="../dashboard/portfolio.html" class="register-logo">Cam<span class="script">S</span>ervices</a>
+            <h1>Ajouter au portfolio</h1>
+            <p>Présentez vos plus belles réalisations</p>
+        </div>
+
+        <div class="progress-wrapper">
+            <div class="progress-steps">
+                <div class="progress-step active" data-step="1"><div class="step-dot"><i data-lucide="info"></i></div><span class="step-label">Infos</span></div>
+                <div class="progress-step" data-step="2"><div class="step-dot"><i data-lucide="image"></i></div><span class="step-label">Média</span></div>
+                <div class="progress-step" data-step="3"><div class="step-dot"><i data-lucide="check"></i></div><span class="step-label">Validation</span></div>
+            </div>
+            <div class="progress-bar-track"><div class="progress-bar-fill" style="width:0%"></div></div>
+        </div>
+
+        <form id="portfolioForm" class="register-body">
+            <div class="alert" id="formAlert"></div>
+
+            <!-- Étape 1 -->
+            <div class="form-step active" data-step="1">
+                <h2 class="step-title">Informations</h2>
+                <p class="step-desc">Décrivez votre réalisation.</p>
+
+                <div class="form-group">
+                    <label>Titre <span class="req">*</span></label>
+                    <div class="input-wrap">
+                        <i data-lucide="file-text" class="input-icon" style="width:1rem;height:1rem"></i>
+                        <input type="text" name="title" placeholder="Ex: Maquillage mariage traditionnel" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Catégorie <span class="opt">(optionnel)</span></label>
+                        <div class="input-wrap">
+                            <i data-lucide="folder" class="input-icon" style="width:1rem;height:1rem"></i>
+                            <input type="text" name="category" placeholder="Ex: Mariage, Beauté...">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Type de média</label>
+                        <div class="input-wrap">
+                            <i data-lucide="monitor" class="input-icon" style="width:1rem;height:1rem"></i>
+                            <select name="media_type">
+                                <option value="image">Image / Photo</option>
+                                <option value="video">Vidéo</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Description <span class="opt">(optionnel)</span></label>
+                    <div class="input-wrap">
+                        <i data-lucide="align-left" class="input-icon" style="width:1rem;height:1rem"></i>
+                        <textarea name="description" rows="3" placeholder="Décrivez cette réalisation..."></textarea>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Tags <span class="opt">(séparés par des virgules)</span></label>
+                    <div class="input-wrap">
+                        <i data-lucide="tag" class="input-icon" style="width:1rem;height:1rem"></i>
+                        <input type="text" name="tags" placeholder="Ex: maquillage, mariage, yaoundé">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                        <input type="checkbox" name="is_featured" style="width:18px;height:18px;accent-color:var(--gold);cursor:pointer">
+                        Mettre en vedette
+                    </label>
+                </div>
+            </div>
+
+            <!-- Étape 2 -->
+            <div class="form-step" data-step="2">
+                <h2 class="step-title">Média</h2>
+                <p class="step-desc">Ajoutez une image ou une vidéo.</p>
+
+                <div class="form-group">
+                    <label>URL du média <span class="opt">(optionnel)</span></label>
+                    <div class="input-wrap">
+                        <i data-lucide="link" class="input-icon" style="width:1rem;height:1rem"></i>
+                        <input type="url" name="media_url" id="mediaUrlInput" placeholder="https://exemple.com/photo.jpg">
+                    </div>
+                </div>
+
+                <div style="text-align:center;margin:20px 0;font-size:.8rem;color:var(--faint)">— ou —</div>
+
+                <div class="form-group">
+                    <label>Uploader une image <span class="opt">(optionnel)</span></label>
+                    <div class="upload-zone">
+                        <i data-lucide="upload" style="width:2rem;height:2rem;color:var(--faint);margin-bottom:8px;display:block"></i>
+                        <p>Cliquez pour téléverser</p>
+                        <p class="hint">JPG, PNG, WebP · Max 5MB</p>
+                        <input type="file" name="media_file" id="mediaFile" accept="image/*">
+                    </div>
+                    <div class="upload-preview" id="uploadPreview" style="display:none"></div>
+                </div>
+
+                <div id="imagePreviewContainer" style="margin-top:12px;display:none;">
+                    <p style="font-size:.75rem;font-weight:600;color:var(--muted);margin-bottom:6px">Aperçu :</p>
+                    <img id="imagePreview" src="" alt="Aperçu" style="max-width:100%;max-height:200px;border-radius:var(--radius);border:1px solid var(--rule);object-fit:cover;">
+                </div>
+            </div>
+
+            <!-- Étape 3 -->
+            <div class="form-step" data-step="3">
+                <h2 class="step-title">Récapitulatif</h2>
+                <p class="step-desc">Vérifiez avant de publier.</p>
+                <div id="summaryBox" style="background:var(--cream);border-radius:var(--radius);padding:16px;font-size:.85rem;line-height:1.8;">
+                    <p><strong>Titre :</strong> <span id="sumTitle">—</span></p>
+                    <p><strong>Catégorie :</strong> <span id="sumCategory">—</span></p>
+                    <p><strong>Type :</strong> <span id="sumType">—</span></p>
+                    <p><strong>Média :</strong> <span id="sumMedia">—</span></p>
+                    <p><strong>Vedette :</strong> <span id="sumFeatured">—</span></p>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <div style="display:flex;gap:8px;">
+                    <button type="button" class="btn btn-ghost" id="prevBtn" style="display:none"><i data-lucide="arrow-left" style="width:1rem;height:1rem"></i> Retour</button>
+                    <button type="button" class="btn btn-save-draft" id="draftBtn" style="display:none"><i data-lucide="save" style="width:1rem;height:1rem"></i> Brouillon</button>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button type="button" class="btn btn-ghost" id="exitBtn"><i data-lucide="x" style="width:1rem;height:1rem"></i> Quitter</button>
+                    <button type="button" class="btn btn-primary" id="nextBtn">Continuer <i data-lucide="arrow-right" style="width:1rem;height:1rem"></i></button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn" style="display:none"><i data-lucide="check" style="width:1rem;height:1rem"></i> Publier</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="exitModalContainer"></div>
+<script src="./js/portfolio-registration.js"></script>
+</body>
+</html>

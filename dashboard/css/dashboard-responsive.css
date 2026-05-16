@@ -1,0 +1,296 @@
+/* ============================================================
+   dashboard-responsive.css
+   Règles responsives unifiées pour toutes les pages du dashboard
+   Compatible avec les styles existants (Outfit, Allison, variables)
+   ============================================================ */
+
+/* --- Breakpoints standardisés --- */
+:root {
+    --breakpoint-tablet: 960px;
+    --breakpoint-mobile: 600px;
+}
+
+/* ============================================================
+   1. SIDEBAR & MENU TOGGLE (toutes les pages)
+   ============================================================ */
+.menu-toggle {
+    display: none;
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 101;
+    background: var(--white, #fff);
+    border: 1px solid var(--rule, #E8E2DA);
+    border-radius: var(--radius, 10px);
+    padding: 8px;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm, 0 1px 2px rgba(26,23,20,.04));
+}
+
+@media (max-width: 960px) {
+    .menu-toggle {
+        display: block;
+    }
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s var(--ease, cubic-bezier(.22,1,.36,1));
+    }
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    .main-content {
+        margin-left: 0 !important;
+        max-width: 100% !important;
+        padding: 20px;
+        padding-top: 60px;
+    }
+}
+
+/* ============================================================
+   2. GRILLES & CARTES (stats, dashboard-grid, etc.)
+   ============================================================ */
+@media (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr !important;
+        gap: 20px;
+    }
+}
+
+@media (max-width: 960px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 16px;
+    }
+}
+
+@media (max-width: 600px) {
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .card {
+        padding: 20px !important;
+    }
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+}
+
+/* ============================================================
+   3. EN-TÊTE DE PAGE (page-header)
+   ============================================================ */
+@media (max-width: 600px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 16px;
+    }
+    .page-title {
+        font-size: 1.4rem;
+    }
+    .page-title .script {
+        font-size: 2rem;
+    }
+    .page-actions {
+        width: 100%;
+        justify-content: flex-start !important;
+        flex-wrap: wrap;
+    }
+}
+
+/* ============================================================
+   4. TABLEAUX (table-wrapper)
+   ============================================================ */
+@media (max-width: 800px) {
+    .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    table {
+        min-width: 640px;
+    }
+    th, td {
+        white-space: nowrap;
+    }
+    /* Pour éviter les débordements sur les petites colonnes */
+    td .action-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+}
+
+/* ============================================================
+   5. FORMULAIRES (form-row, input groups)
+   ============================================================ */
+@media (max-width: 600px) {
+    .form-row {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+    }
+    .form-group {
+        margin-bottom: 14px;
+    }
+    .form-actions {
+        flex-direction: column-reverse;
+        align-items: stretch !important;
+    }
+    .form-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ============================================================
+   6. MODALS (toutes les pages avec modale)
+   ============================================================ */
+@media (max-width: 600px) {
+    .modal-overlay {
+        padding: 12px;
+        align-items: flex-end;
+    }
+    .modal-content {
+        max-width: 100%;
+        margin: 0;
+        border-radius: var(--radius-lg, 16px) var(--radius-lg, 16px) 0 0;
+        max-height: 85vh;
+    }
+    .modal-header {
+        padding: 20px 20px 12px;
+    }
+    .modal-content form {
+        padding: 20px;
+    }
+}
+
+/* ============================================================
+   7. PORTFOLIO GRILLE (si présente)
+   ============================================================ */
+@media (max-width: 960px) {
+    .portfolio-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+    }
+}
+
+/* ============================================================
+   8. CALENDRIER / AGENDA (service-registration)
+   ============================================================ */
+@media (max-width: 600px) {
+    .agenda-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 8px;
+    }
+    .time-slots {
+        gap: 6px;
+    }
+    .time-slot {
+        padding: 6px 12px;
+        font-size: 0.7rem;
+    }
+}
+
+/* ============================================================
+   9. BARRE DE PROGRESSION (formulaires multi-étapes)
+   ============================================================ */
+@media (max-width: 600px) {
+    .progress-steps {
+        margin-bottom: 8px;
+    }
+    .step-dot {
+        width: 28px;
+        height: 28px;
+        font-size: 0.7rem;
+    }
+    .step-label {
+        font-size: 0.55rem;
+        white-space: nowrap;
+    }
+    .progress-steps::before {
+        top: 14px;
+        left: 20px;
+        right: 20px;
+    }
+}
+
+/* ============================================================
+   10. ACTIVITY FEED & VISITEURS (analytics, index)
+   ============================================================ */
+@media (max-width: 600px) {
+    .activity-item {
+        gap: 10px;
+        padding: 12px 0;
+    }
+    .activity-icon {
+        width: 28px;
+        height: 28px;
+    }
+    .visitor-item {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .donut-chart {
+        width: 120px;
+        height: 120px;
+    }
+    .legend {
+        margin-top: 16px;
+        justify-content: center;
+    }
+}
+
+/* ============================================================
+   11. BARRE DE NAVIGATION PAR ONGLETS (orders, etc.)
+   ============================================================ */
+@media (max-width: 700px) {
+    .tabs {
+        flex-wrap: wrap;
+        gap: 6px;
+        border-bottom: none;
+    }
+    .tab {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        border: 1px solid var(--rule, #E8E2DA);
+        border-radius: 30px;
+        background: var(--white, #fff);
+    }
+    .tab.active {
+        background: var(--ink, #1A1714);
+        color: var(--white, #fff);
+        border-color: var(--ink, #1A1714);
+    }
+    .tab .count {
+        background: transparent;
+        padding: 0 0 0 4px;
+    }
+}
+
+/* ============================================================
+   12. MESSAGES D'ÉTAT VIDE (empty-state)
+   ============================================================ */
+@media (max-width: 600px) {
+    .empty-state {
+        padding: 40px 16px;
+    }
+    .empty-state .empty-icon {
+        width: 3rem;
+        height: 3rem;
+    }
+    .empty-state h3 {
+        font-size: 1rem;
+    }
+}
+
+/* ============================================================
+   13. OVERRIDES POUR LES PAGES SPÉCIFIQUES (si nécessaire)
+   ============================================================ */
+/* Amélioration de la lecture sur mobile pour les prix */
+@media (max-width: 600px) {
+    .price-cell {
+        font-size: 0.8rem;
+    }
+    .status-badge {
+        font-size: 0.65rem;
+        padding: 3px 8px;
+    }
+}

@@ -133,6 +133,44 @@
         @media(max-width:1100px){.services-grid{grid-template-columns:repeat(3,1fr);}}
         @media(max-width:800px){.services-grid{grid-template-columns:repeat(2,1fr);}.hero{padding:36px 20px;}.search-section{padding:0 20px;}.main-content{padding:20px;}}
         @media(max-width:500px){.services-grid{grid-template-columns:1fr;}.navbar{padding:0 16px;}.nav-links{gap:4px;}.nav-links a{padding:8px 10px;font-size:.78rem;}.search-row{flex-direction:column;}}
+    /* ═══ CARD IMAGE FALLBACK ═══ */
+.card-image {
+    position: relative;
+    height: 180px;
+    background: linear-gradient(135deg, var(--ink-2), var(--ink));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s;
+}
+
+.service-card:hover .card-image img {
+    transform: scale(1.05);
+}
+
+.cat-emoji {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    opacity: 0.15;
+    pointer-events: none;
+}
+
+.cat-emoji.emoji-fallback {
+    display: none;
+}
+    
+    
     </style>
 </head>
 <body>
@@ -212,186 +250,7 @@
 </footer>
 
 <!-- ═══ SCRIPTS ═══ -->
+ <script src="./js/services.js"> </script>
 <script src="../js/global.js"></script>
-<script>
-const SUPABASE_URL  = 'https://cwubxwbzzuigctvgdygv.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dWJ4d2J6enVpZ2N0dmdkeWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzI2MTgsImV4cCI6MjA5MzgwODYxOH0.0mwBNo_S5yItQQjq2at9GNRN74ooZRBJIbZGDH9L2uk';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-
-const INITIAL_COUNT = 12;
-var allServices = [];
-var filteredServices = [];
-var showAll = false;
-var currentSort = 'recent';
-
-var categoryEmojis = {
-    'Plomberie':'🔧','Électricité':'⚡','Ménage':'🏠','Photographie':'📸',
-    'Développement web':'💻','Cours particuliers':'📚','Transport':'🚗',
-    'Design':'🎨','Beauté':'💄','Bâtiment':'🏗️'
-};
-
-document.addEventListener('DOMContentLoaded', function() {
-    lucide.createIcons();
-    updateNavCartCount();
-    loadAllServices();
-
-    // Pre-fill category from URL
-    var urlCat = new URLSearchParams(window.location.search).get('cat');
-    if (urlCat) {
-        var catFilter = document.getElementById('categoryFilter');
-        // Will be set after populateFilters
-        setTimeout(function() {
-            catFilter.value = urlCat;
-            handleSearch();
-        }, 1500);
-    }
-});
-
-async function loadAllServices() {
-    try {
-        var { data, error } = await sb
-            .from('services')
-            .select('*, provider:user_id(id, full_name, city, neighborhood, profile_photo_url, is_verified)')
-            .eq('is_active', true)
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        allServices = (data || []).filter(function(s) { return s.provider !== null; });
-        populateFilters();
-        handleSearch();
-    } catch (err) {
-        console.error('Erreur chargement services:', err);
-        document.getElementById('servicesGrid').innerHTML = '<div class="empty-state"><i data-lucide="alert-triangle"></i><h3>Erreur de chargement</h3><p>' + err.message + '</p></div>';
-        lucide.createIcons();
-    }
-}
-
-function populateFilters() {
-    var cats = [...new Set(allServices.map(function(s) { return s.category; }).filter(Boolean))].sort();
-    var cities = [...new Set(allServices.map(function(s) { return s.provider.city; }).filter(Boolean))].sort();
-
-    var catSelect = document.getElementById('categoryFilter');
-    cats.forEach(function(c) {
-        var o = document.createElement('option');
-        o.value = c; o.textContent = c;
-        catSelect.appendChild(o);
-    });
-
-    var citySelect = document.getElementById('cityFilter');
-    cities.forEach(function(c) {
-        var o = document.createElement('option');
-        o.value = c; o.textContent = c;
-        citySelect.appendChild(o);
-    });
-}
-
-function handleSearch() {
-    var q = (document.getElementById('searchInput').value || '').toLowerCase().trim();
-    var cat = document.getElementById('categoryFilter').value;
-    var city = document.getElementById('cityFilter').value;
-
-    filteredServices = allServices.filter(function(s) {
-        var matchQ = !q || (s.title || '').toLowerCase().includes(q) || (s.description || '').toLowerCase().includes(q) || (s.provider.full_name || '').toLowerCase().includes(q);
-        var matchCat = cat === 'all' || s.category === cat;
-        var matchCity = city === 'all' || (s.provider.city || '') === city;
-        return matchQ && matchCat && matchCity;
-    });
-
-    sortServices();
-    showAll = false;
-    renderServices();
-}
-
-function setSort(type) {
-    document.querySelectorAll('.sort-btn').forEach(function(b) { b.classList.remove('active'); });
-    document.getElementById('sort' + ({recent:'Recent',price_asc:'PriceAsc',price_desc:'PriceDesc',alpha:'Alpha'})[type]).classList.add('active');
-    currentSort = type;
-    sortServices();
-    renderServices();
-}
-
-function sortServices() {
-    filteredServices.sort(function(a, b) {
-        if (currentSort === 'price_asc') return (a.price || 0) - (b.price || 0);
-        if (currentSort === 'price_desc') return (b.price || 0) - (a.price || 0);
-        if (currentSort === 'alpha') return (a.title || '').localeCompare(b.title || '');
-        return new Date(b.created_at) - new Date(a.created_at);
-    });
-}
-
-function renderServices() {
-    var grid = document.getElementById('servicesGrid');
-    var wrap = document.getElementById('showMoreWrap');
-    var count = document.getElementById('resultsCount');
-    var list = showAll ? filteredServices : filteredServices.slice(0, INITIAL_COUNT);
-
-    count.innerHTML = '<strong>' + filteredServices.length + '</strong> service' + (filteredServices.length > 1 ? 's' : '') + ' trouvé' + (filteredServices.length > 1 ? 's' : '');
-
-    if (filteredServices.length === 0) {
-        grid.innerHTML = '<div class="empty-state"><i data-lucide="search-x"></i><h3>Aucun résultat</h3><p>Essayez avec d\'autres mots-clés ou filtres.</p></div>';
-        wrap.style.display = 'none';
-        lucide.createIcons();
-        return;
-    }
-
-    grid.innerHTML = list.map(function(s, i) {
-        var p = s.provider || {};
-        var initials = (p.full_name || '?').split(' ').map(function(n){return n[0];}).join('').substring(0,2).toUpperCase();
-        var emoji = categoryEmojis[s.category] || '🛠️';
-
-        return '<a href="service-detail.html?id=' + s.id + '" class="service-card" style="animation-delay:' + (i * .04) + 's">'
-            + '<div class="card-image">'
-            + (s.image_url ? '<img src="' + escapeHtml(s.image_url) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' : '<span class="cat-emoji">' + emoji + '</span>')
-            + '<span class="card-category">' + escapeHtml(s.category || '') + '</span>'
-            + '<span class="card-price">' + formatPrice(s.price) + '</span>'
-            + '</div>'
-            + '<div class="card-body"><div class="card-title">' + escapeHtml(s.title) + '</div><div class="card-desc">' + escapeHtml(s.description || '') + '</div></div>'
-            + '<div class="card-footer">'
-            + '<div class="card-provider"><div class="card-avatar">' + (p.profile_photo_url ? '<img src="' + p.profile_photo_url + '">' : initials) + '</div><div><div class="card-provider-name">' + escapeHtml(p.full_name || 'Prestataire') + '</div><div class="card-provider-loc">' + escapeHtml(p.city || '') + '</div></div></div>'
-            + (p.is_verified ? '<span class="card-verified"><i data-lucide="shield-check"></i> Vérifié</span>' : '<span class="card-cta">Voir <i data-lucide="arrow-right" style="width:.7rem;height:.7rem"></i></span>')
-            + '</div></a>';
-    }).join('');
-
-    if (filteredServices.length > INITIAL_COUNT && !showAll) {
-        wrap.style.display = 'block';
-        document.getElementById('showMoreText').textContent = 'Voir les ' + (filteredServices.length - INITIAL_COUNT) + ' autres';
-    } else {
-        wrap.style.display = 'none';
-    }
-
-    lucide.createIcons();
-}
-
-function showAllServices() {
-    showAll = true;
-    renderServices();
-    document.getElementById('showMoreWrap').style.display = 'none';
-}
-
-// ═══ TOAST ═══
-function showToast(msg, type) {
-    var existing = document.querySelector('.toast');
-    if (existing) existing.remove();
-    var colors = { success:'#3D8B5E', error:'#DC2626', info:'#1A1714' };
-    var icons  = { success:'check-circle', error:'x-circle', info:'info' };
-    var toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.style.background = colors[type] || colors.info;
-    toast.innerHTML = '<i data-lucide="' + (icons[type] || 'info') + '" style="width:1.1rem;height:1.1rem"></i> ' + msg;
-    document.body.appendChild(toast);
-    lucide.createIcons();
-    setTimeout(function() { toast.style.opacity='0'; toast.style.transform='translateY(16px)'; toast.style.transition='all .3s ease'; setTimeout(function(){ toast.remove(); }, 300); }, 3500);
-}
-
-// ═══ CART ═══
-function updateNavCartCount() {
-    var cart = JSON.parse(localStorage.getItem('camservices_cart') || '[]');
-    var el = document.getElementById('cartCountNav');
-    if (el) { el.textContent = cart.length; el.style.display = cart.length > 0 ? 'inline' : 'none'; }
-}
-
-function escapeHtml(t) { var d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
-function formatPrice(p) { return new Intl.NumberFormat('fr-FR', { style:'currency', currency:'XAF', maximumFractionDigits:0 }).format(p || 0); }
-</script>
 </body>
 </html>

@@ -170,7 +170,7 @@ function renderServiceDetail() {
     if (s.duration_minutes) {
         html += '<div class="detail-info-item">';
         html += '<span class="detail-info-label">Durée estimée</span>';
-        html += '<span class="detail-info-value">' + s.duration_minutes + ' minutes</span>';
+        html += '<span class="detail-info-value">' + s.duration_minutes + ' Heures</span>';
         html += '</div>';
     }
     html += '<div class="detail-info-item">';
