@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aide & FAQ — CamServices</title>
     <link href="https://fonts.googleapis.com/css2?family=Allison&family=Outfit:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+       <link rel="stylesheet" href="../utils/utils.css">
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
@@ -104,8 +106,7 @@
     <div class="navbar-inner">
 <a href="landing.html" class="nav-logo">
  <img src="../asset/logo camservices.svg" alt="CamServices" class="logo-img"></a>
-        <div class="nav-links">
-            <a href="../marketplace/landing.html">Accueil</a>
+<button class="menu-toggle" id="menuToggle" onclick="toggleMenu()"><span></span><span></span><span></span></button>         <div class="nav-links" id="navLinks">            <a href="../marketplace/landing.html">Accueil</a>
             <a href="../marketplace/services.html">Services</a>
             <a href="contact.html">Contact</a>
             <a href="../dashboard/index.html" class="btn-nav">Dashboard</a>
@@ -252,6 +253,38 @@
 
     // ═══════════════ INIT ═══════════════
     renderFAQ(faqData);
+</script>
+<script>
+
+    // ═══════════════ TOGGLE MENU ═══════════════
+function toggleMenu() {
+    var nav = document.getElementById('navLinks');
+    var overlay = document.getElementById('navOverlay');
+    var toggle = document.getElementById('menuToggle');
+    
+    if (!nav || !overlay || !toggle) return;
+    
+    nav.classList.toggle('show');
+    overlay.classList.toggle('show');
+    toggle.classList.toggle('open');
+    document.body.style.overflow = nav.classList.contains('show') ? 'hidden' : '';
+}
+
+// Fermer le menu au clic sur un lien
+document.addEventListener('DOMContentLoaded', function() {
+    var links = document.querySelectorAll('#navLinks a');
+    for (var i = 0; i < links.length; i++) {
+        links[i].addEventListener('click', function() {
+            var nav = document.getElementById('navLinks');
+            var overlay = document.getElementById('navOverlay');
+            var toggle = document.getElementById('menuToggle');
+            if (nav) nav.classList.remove('show');
+            if (overlay) overlay.classList.remove('show');
+            if (toggle) toggle.classList.remove('open');
+            document.body.style.overflow = '';
+        });
+    }
+});
 </script>
 </body>
 </html>

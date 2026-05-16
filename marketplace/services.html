@@ -7,6 +7,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="../css/global.css">
+        <link rel="stylesheet" href="../utils/utils.css">
+
     <style>
         :root {
             --ink:#1A1714;--ink-2:#2E2A25;--muted:#8A8279;--faint:#C9C2B8;
@@ -178,8 +180,7 @@
     <div class="navbar-inner">
 <a href="landing.html" class="nav-logo">
  <img src="../asset/logo camservices.svg" alt="CamServices" class="logo-img"></a>
-        <div class="nav-links">
-            <a href="services.html" class="active">Services</a>
+<button class="menu-toggle" id="menuToggle" onclick="toggleMenu()"><span></span><span></span><span></span></button>         <div class="nav-links" id="navLinks">            <a href="services.html" class="active">Services</a>
             <a href="landing.html">Accueil</a>
             <a href="./cart.html"><i data-lucide="shopping-cart"></i> Panier <span id="cartCountNav" class="cart-count" style="display:none">0</span></a>
         </div>
@@ -255,5 +256,37 @@
 <!-- ═══ SCRIPTS ═══ -->
  <script src="./js/services.js"> </script>
 <script src="../js/global.js"></script>
+<script>
+
+    // ═══════════════ TOGGLE MENU ═══════════════
+function toggleMenu() {
+    var nav = document.getElementById('navLinks');
+    var overlay = document.getElementById('navOverlay');
+    var toggle = document.getElementById('menuToggle');
+    
+    if (!nav || !overlay || !toggle) return;
+    
+    nav.classList.toggle('show');
+    overlay.classList.toggle('show');
+    toggle.classList.toggle('open');
+    document.body.style.overflow = nav.classList.contains('show') ? 'hidden' : '';
+}
+
+// Fermer le menu au clic sur un lien
+document.addEventListener('DOMContentLoaded', function() {
+    var links = document.querySelectorAll('#navLinks a');
+    for (var i = 0; i < links.length; i++) {
+        links[i].addEventListener('click', function() {
+            var nav = document.getElementById('navLinks');
+            var overlay = document.getElementById('navOverlay');
+            var toggle = document.getElementById('menuToggle');
+            if (nav) nav.classList.remove('show');
+            if (overlay) overlay.classList.remove('show');
+            if (toggle) toggle.classList.remove('open');
+            document.body.style.overflow = '';
+        });
+    }
+});
+</script>
 </body>
 </html>
