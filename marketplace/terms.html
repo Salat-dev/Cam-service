@@ -1,8 +1,190 @@
 <!DOCTYPE html>
-<html><head><title>Conditions d'utilisation - CamServices</title></head>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conditions d'utilisation — CamServices</title>
+    <link href="https://fonts.googleapis.com/css2?family=Allison&family=Outfit:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --ink:#1A1714;--ink-2:#2E2A25;--muted:#8A8279;--faint:#C9C2B8;
+            --rule:#E8E2DA;--cream:#FAF8F5;--white:#FFFFFF;
+            --gold:#C4943E;--gold-light:#D4A94E;--gold-dim:rgba(196,148,62,.08);
+            --green:#3D8B5E;--green-light:#F0FDF4;--red:#DC2626;
+            --ff-body:'Outfit',sans-serif;--ff-script:'Allison',cursive;
+            --ease:cubic-bezier(.22,1,.36,1);
+            --radius:10px;--radius-lg:16px;--radius-xl:20px;
+            --shadow:0 4px 20px rgba(26,23,20,.06);
+            --shadow-lg:0 12px 40px rgba(26,23,20,.1);
+            --max:900px;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:var(--ff-body);background:var(--cream);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;line-height:1.6;}
+
+        .navbar{position:sticky;top:0;z-index:50;background:rgba(250,248,245,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--rule);padding:0 32px;}
+        .navbar-inner{max-width:var(--max);margin:0 auto;height:64px;display:flex;align-items:center;justify-content:space-between;}
+        .nav-logo{font-weight:800;font-size:1.15rem;color:var(--ink);text-decoration:none;letter-spacing:-.02em;}
+        .nav-logo .script{font-family:var(--ff-script);font-size:2rem;color:var(--gold);position:relative;top:3px;}
+        .nav-back{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--muted);text-decoration:none;transition:color .2s;}
+        .nav-back:hover{color:var(--ink);}
+
+        .page-container{max-width:var(--max);margin:0 auto;padding:48px 32px 80px;}
+        .page-card{background:var(--white);border:1px solid var(--rule);border-radius:var(--radius-xl);padding:48px 40px;box-shadow:var(--shadow);}
+        .page-header{text-align:center;margin-bottom:40px;padding-bottom:32px;border-bottom:1px solid var(--rule);}
+        .page-header .script{font-family:var(--ff-script);font-size:3rem;color:var(--gold);display:block;line-height:1;}
+        .page-header h1{font-weight:900;font-size:1.8rem;letter-spacing:-.03em;margin-top:4px;margin-bottom:8px;}
+        .last-updated{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;background:var(--gold-dim);color:var(--gold);font-size:.72rem;font-weight:600;margin-top:12px;}
+
+        .content-section{margin-bottom:32px;}
+        .content-section:last-child{margin-bottom:0;}
+        .content-section h2{font-weight:800;font-size:1.2rem;letter-spacing:-.02em;margin-bottom:12px;display:flex;align-items:center;gap:10px;color:var(--ink);}
+        .content-section h2 .section-icon{width:32px;height:32px;border-radius:8px;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--gold);}
+        .content-section h2 .section-icon i{width:1rem;height:1rem;}
+        .content-section p,.content-section li{font-size:.88rem;color:var(--ink-2);line-height:1.75;margin-bottom:8px;}
+        .content-section ul{list-style:none;padding-left:0;}
+        .content-section ul li{padding-left:24px;position:relative;margin-bottom:6px;}
+        .content-section ul li::before{content:'';position:absolute;left:0;top:10px;width:6px;height:6px;border-radius:50%;background:var(--gold);}
+        .highlight-box{background:var(--cream);border:1px solid var(--rule);border-radius:var(--radius);padding:20px 24px;margin:16px 0;}
+        .highlight-box p{font-size:.85rem;color:var(--ink);font-weight:500;}
+        .important-notice{background:#FEF3C7;border:1px solid #F59E0B;border-radius:var(--radius);padding:16px 20px;margin:20px 0;display:flex;align-items:flex-start;gap:10px;}
+        .important-notice i{color:#D97706;flex-shrink:0;margin-top:2px;}
+        .important-notice p{font-size:.82rem;color:#92400E;font-weight:500;margin:0;}
+
+        .footer-note{text-align:center;margin-top:32px;padding-top:24px;border-top:1px solid var(--rule);font-size:.8rem;color:var(--muted);}
+        .footer-note a{color:var(--gold);font-weight:600;text-decoration:none;}
+
+        @media(max-width:600px){
+            .page-container{padding:24px 16px 60px;}
+            .page-card{padding:28px 20px;}
+            .content-section h2{font-size:1.05rem;}
+        }
+    </style>
+</head>
 <body>
-<h1>Conditions d'utilisation</h1>
-<p>En utilisant CamServices, vous acceptez de respecter les règles de la plateforme.</p>
-<p>Les prestataires s'engagent à fournir des services de qualité.</p>
-<p>Les clients s'engagent à honorer leurs commandes.</p>
-</body></html>
+
+<nav class="navbar">
+    <div class="navbar-inner">
+        <a href="landing.html" class="nav-logo">Cam<span class="script">S</span>ervices</a>
+        <a href="landing.html" class="nav-back"><i data-lucide="arrow-left" style="width:1rem;height:1rem"></i> Retour à l'accueil</a>
+    </div>
+</nav>
+
+<main class="page-container">
+    <div class="page-card">
+        <div class="page-header">
+            <span class="script">Conditions</span>
+            <h1>Conditions d'utilisation</h1>
+            <span class="last-updated"><i data-lucide="calendar" style="width:.8rem;height:.8rem"></i> Dernière mise à jour : 1er janvier 2025</span>
+        </div>
+
+        <div class="content-section">
+            <h2><span class="section-icon"><i data-lucide="info"></i></span> Acceptation des conditions</h2>
+            <p>En utilisant la plateforme <strong>CamServices</strong>, vous acceptez sans réserve les présentes conditions d'utilisation. Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser nos services.</p>
+        </div>
+
+        <div class="content-section">
+            <h2><span class="section-icon"><i data-lucide="user"></i></span> Compte utilisateur</h2>
+            <ul>
+                <li>Vous devez fournir des informations exactes et complètes lors de l'inscription</li>
+                <li>Vous êtes responsable de la confidentialité de vos identifiants</li>
+                <li>Vous devez être âgé d'au moins 16 ans pour créer un compte</li>
+                <li>Un seul compte par personne physique ou morale est autorisé</li>
+                <li>CamServices se réserve le droit de suspendre ou supprimer tout compte frauduleux</li>
+            </ul>
+        </div>
+
+        <div class="content-section">
+            <h2><span class="section-icon"><i data-lucide="briefcase"></i></span> Prestataires</h2>
+            <p>En tant que prestataire sur CamServices, vous vous engagez à :</p>
+            <ul>
+                <li>Fournir des informations véridiques sur vos compétences et services</li>
+                <li>Respecter les prix affichés et les délais convenus avec les clients</li>
+                <li>Fournir des services de qualité professionnelle</li>
+                <li>Respecter la confidentialité des informations des clients</li>
+                <li>Ne pas contourner la plateforme pour éviter les frais de service</li>
+                <li>Maintenir une conduite professionnelle et respectueuse</li>
+            </ul>
+            <div class="important-notice">
+                <i data-lucide="alert-triangle" style="width:1.2rem;height:1.2rem"></i>
+                <p><strong>Important :</strong> CamServices n'emploie pas les prestataires. Ils sont indépendants et responsables de leurs propres obligations légales et fiscales.</p>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2><span class="section-icon"><i data-lucide="shopping-cart"></i></span> Clients</h2>
+            <p>En tant que client sur CamServices, vous vous engagez à :</p>
+            <ul>
+                <li>Fournir des informations exactes lors des commandes</li>
+                <li>Honorer vos commandes et payer les prestataires directement</li>
+                <li>Respecter les prestataires et leur temps</li>
+                <li>Ne pas publier de faux avis ou commentaires diffamatoires</li>
+                <li>Signaler tout comportement inapproprié à l'équipe CamServices</li>
+            </ul>
+        </div>
+
+        <div class="content-section">
+            <h2><span class="section-icon"><i data-lucide="ban"></i></span> Comportements interdits</h2>
+            <p>Les comportements suivants sont strictement interdits et entraîneront la suspension du compte :</p>
+            <ul>
+                <li>Usurpation d'identité ou fausses déclarations</li>
+                <li>Harcèlement, insultes ou menaces envers d'autres utilisateurs</li>
+                <li>Publication de contenu illégal, offensant ou inapproprié</li>
+                <li>Tentative de fraude ou d'escroquerie</li>
+                <li>Utilisation de la plateforme à des fins de spam ou de publicité non sollicitée</li>
+                <li>Reverse engineering ou tentative de piratage de la plateforme</li>
+            </ul>
+        </div>
+
+        <div class="content-section">
+            <h2><span class="section-icon"><i data-lucide="shield"></i></span> Responsabilité</h2>
+            <ul>
+                <li>CamServices agit en tant qu'intermédiaire entre clients et prestataires</li>
+                <li>CamServices ne garantit pas la qualité des services fournis par les prestataires</li>
+                <li>Les litiges entre clients et prestataires doivent être résolus entre les parties concernées</li>
+                <li>CamServices peut intervenir comme médiateur mais n'est pas tenu de résoudre les conflits</li>
+                <li>La plateforme est fournie "en l'état" sans garantie de disponibilité continue</li>
+            </ul>
+        </div>
+
+        <div class="content-section">
+            <h2><span class="section-icon"><i data-lucide="copyright"></i></span> Propriété intellectuelle</h2>
+            <ul>
+                <li>Le nom, le logo et le design de CamServices sont protégés</li>
+                <li>Le contenu publié par les utilisateurs (photos, descriptions) reste leur propriété</li>
+                <li>En publiant du contenu, vous autorisez CamServices à l'afficher sur la plateforme</li>
+                <li>Toute reproduction non autorisée de la plateforme est interdite</li>
+            </ul>
+        </div>
+
+        <div class="content-section">
+            <h2><span class="section-icon"><i data-lucide="scale"></i></span> Modification des conditions</h2>
+            <p>CamServices se réserve le droit de modifier ces conditions à tout moment. Les utilisateurs seront informés des changements importants par email ou via une notification sur la plateforme. L'utilisation continue de la plateforme après modification vaut acceptation des nouvelles conditions.</p>
+        </div>
+
+        <div class="content-section">
+            <h2><span class="section-icon"><i data-lucide="gavel"></i></span> Loi applicable</h2>
+            <p>Les présentes conditions sont régies par le droit camerounais. Tout litige sera soumis aux tribunaux compétents du Cameroun.</p>
+        </div>
+
+        <div class="content-section">
+            <h2><span class="section-icon"><i data-lucide="mail"></i></span> Contact</h2>
+            <div class="highlight-box">
+                <p><strong>Email :</strong> contact@camservices.cm</p>
+                <p><strong>WhatsApp :</strong> +237 6XX XXX XXX</p>
+                <p><strong>Adresse :</strong> Yaoundé, Cameroun</p>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            <p>En utilisant CamServices, vous reconnaissez avoir lu et accepté ces conditions.</p>
+            <p style="margin-top:8px"><a href="landing.html">← Retour à l'accueil</a> · <a href="privacy.html">Politique de confidentialité</a></p>
+        </div>
+    </div>
+</main>
+
+<script>
+    lucide.createIcons();
+</script>
+</body>
+</html>
