@@ -24,8 +24,8 @@
     --orange: #F59E0B;
     --orange-light: #FFFBEB;
 
-   --ff-body: 'Outfit';
-    --ff-script: 'Outfit';
+   --ff-body: 'Inter', sans-serif;
+    --ff-heading: 'Outfit', sans-serif;
     --sidebar-w: 260px;
     --ease: cubic-bezier(.22,1,.36,1);
     --radius-sm: 8px;
@@ -1055,4 +1055,27 @@ tr:hover td { background: rgba(250,248,245,.4); }
     .portfolio-image-wrapper {
         height: 200px;
     }
+}
+
+.sidebar-logo {
+    display: block;
+    padding: 0 8px;
+    margin-bottom: 32px;
+    text-decoration: none;
+}
+
+.sidebar-logo-img {
+    height: 26px;
+    width: auto;
+    display: block;
+}
+
+/* Fallback texte si image ne charge pas */
+.sidebar-logo .script {
+    font-family: var(--ff-script, 'Allison', cursive);
+    font-size: 1.8rem;
+    color: var(--gold);
+    position: relative;
+    top: 3px;
+    line-height: 0;
 }

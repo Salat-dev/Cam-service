@@ -1,0 +1,81 @@
+/* ═══════════════════════════════════════════
+   LOGO CAM SERVICES
+   ═══════════════════════════════════════════ */
+
+/* Style de base du logo */
+.nav-logo{font-weight:800;font-size:1.15rem;color:var(--ink);text-decoration:none;letter-spacing:-.02em;}
+        .nav-logo .script{font-family:var(--ff-script);font-size:2rem;color:var(--gold);position:relative;top:3px;}
+
+/* Variante avec accent sur "Services" */
+.nav-logo .accent {
+    color: var(--gold);
+}
+
+/* Variante avec point doré */
+.nav-logo .dot {
+    width: 7px;
+    height: 7px;
+    background: var(--gold);
+    border-radius: 50%;
+    display: inline-block;
+    margin-left: 2px;
+    position: relative;
+    top: -4px;
+}
+
+/* Logo dans le footer (plus grand) */
+.footer-logo {
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: var(--white);
+    margin-bottom: 12px;
+    letter-spacing: -0.03em;
+}
+
+.footer-logo .script {
+    font-family: var(--ff-script);
+    font-size: 2rem;
+    color: var(--gold);
+    position: relative;
+    top: 3px;
+}
+
+/* Logo dans la sidebar */
+.sidebar-logo {
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--ink);
+    text-decoration: none;
+    display: block;
+    padding: 0 8px;
+    margin-bottom: 32px;
+    letter-spacing: -0.02em;
+}
+
+.sidebar-logo .script {
+    font-family: var(--ff-script);
+    font-size: 1.8rem;
+    color: var(--gold);
+    position: relative;
+    top: 3px;
+    line-height: 0;
+}
+
+/* Logo centré (auth pages) */
+.auth-logo {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: var(--ink);
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 12px;
+}
+
+.auth-logo .script {
+    font-family: var(--ff-script);
+    font-size: 2.2rem;
+    color: var(--gold);
+    position: relative;
+    top: 3px;
+    line-height: 0;
+}

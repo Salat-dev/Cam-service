@@ -245,7 +245,7 @@ document.getElementById('registerForm').addEventListener('submit', async functio
             var { error } = await sb.auth.signInWithOAuth({
                 provider: 'google',
                 options: { 
-                    redirectTo: window.location.origin + '/services.html',
+                    redirectTo: window.location.origin + '/marketplace/services.html',
                     queryParams: { access_type: 'offline', prompt: 'consent' }
                 }
             });

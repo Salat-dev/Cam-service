@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guide du Prestataire — CamServices</title>
+    <link href="https://fonts.googleapis.com/css2?family=Allison&family=Outfit:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --ink:#1A1714;--ink-2:#2E2A25;--muted:#8A8279;--faint:#C9C2B8;
+            --rule:#E8E2DA;--cream:#FAF8F5;--white:#FFFFFF;
+            --gold:#C4943E;--gold-light:#D4A94E;--gold-dim:rgba(196,148,62,.08);
+            --green:#3D8B5E;--green-light:#F0FDF4;--red:#DC2626;--red-light:#FEF2F2;
+            --blue:#3B82F6;--blue-light:#EFF6FF;--purple:#7C3AED;--purple-light:#F5F3FF;
+   --ff-body: 'Inter', sans-serif;
+    --ff-heading: 'Outfit', sans-serif;            --ease:cubic-bezier(.22,1,.36,1);
+            --radius:10px;--radius-lg:16px;--radius-xl:20px;--radius-2xl:24px;
+            --shadow:0 4px 20px rgba(26,23,20,.06);
+            --shadow-lg:0 12px 40px rgba(26,23,20,.1);
+            --max:1000px;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        html{scroll-behavior:smooth;}
+        body{font-family:var(--ff-body);background:var(--cream);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;line-height:1.6;}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+        /* ═══ NAVBAR ═══ */
+        .navbar{position:sticky;top:0;z-index:50;background:rgba(250,248,245,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--rule);padding:0 32px;}
+        .navbar-inner{max-width:var(--max);margin:0 auto;height:64px;display:flex;align-items:center;justify-content:space-between;}
+        .nav-logo{font-weight:800;font-size:1.15rem;color:var(--ink);text-decoration:none;letter-spacing:-.02em;}
+        .nav-logo .script{font-family:var(--ff-script);font-size:2rem;color:var(--gold);position:relative;top:3px;}
+        .nav-links{display:flex;align-items:center;gap:16px;}
+        .nav-links a{font-size:.82rem;font-weight:500;color:var(--muted);text-decoration:none;transition:color .2s;}
+        .nav-links a:hover{color:var(--ink);}
+        .btn-nav{background:var(--ink);color:var(--white)!important;padding:8px 16px;border-radius:var(--radius);font-weight:600!important;}
+
+        /* ═══ HERO ═══ */
+        .hero{background:var(--white);border-bottom:1px solid var(--rule);padding:60px 32px;text-align:center;position:relative;overflow:hidden;}
+        .hero::before{content:'';position:absolute;top:-100px;right:-80px;width:350px;height:350px;border-radius:50%;background:radial-gradient(circle,var(--gold-dim) 0%,transparent 70%);pointer-events:none;}
+        .hero-inner{max-width:var(--max);margin:0 auto;position:relative;z-index:1;}
+        .hero .script{font-family:var(--ff-script);font-size:3.5rem;color:var(--gold);display:block;line-height:1;}
+        .hero h1{font-weight:900;font-size:clamp(1.8rem,3vw,2.4rem);letter-spacing:-.04em;margin:8px 0 12px;}
+        .hero p{font-size:.95rem;color:var(--muted);max-width:500px;margin:0 auto;}
+
+        /* ═══ CONTENT ═══ */
+        .page-container{max-width:var(--max);margin:0 auto;padding:40px 32px 80px;}
+
+        /* ═══ TABLE OF CONTENTS ═══ */
+        .toc{background:var(--white);border:1px solid var(--rule);border-radius:var(--radius-lg);padding:28px;margin-bottom:32px;box-shadow:var(--shadow);}
+        .toc h2{font-weight:800;font-size:1.1rem;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+        .toc h2 i{color:var(--gold);}
+        .toc-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:6px;}
+        .toc-list a{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--radius);font-size:.85rem;font-weight:500;color:var(--ink-2);text-decoration:none;transition:all .2s;}
+        .toc-list a:hover{background:var(--gold-dim);color:var(--gold);}
+        .toc-list a .toc-num{width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0;}
+
+        /* ═══ GUIDE SECTION ═══ */
+        .guide-section{background:var(--white);border:1px solid var(--rule);border-radius:var(--radius-xl);padding:40px;margin-bottom:24px;box-shadow:var(--shadow);animation:fadeUp .5s ease;}
+        .guide-section-header{margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--rule);}
+        .guide-section-num{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:20px;background:var(--gold-dim);color:var(--gold);font-size:.72rem;font-weight:700;margin-bottom:12px;}
+        .guide-section h2{font-weight:800;font-size:1.4rem;letter-spacing:-.03em;margin-bottom:6px;}
+        .guide-section .section-desc{font-size:.85rem;color:var(--muted);}
+        .guide-section h3{font-weight:700;font-size:1.05rem;margin:24px 0 10px;letter-spacing:-.02em;display:flex;align-items:center;gap:8px;}
+        .guide-section h3 .step-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;}
+        .guide-section p,.guide-section li{font-size:.88rem;color:var(--ink-2);line-height:1.75;margin-bottom:8px;}
+        .guide-section ul,.guide-section ol{padding-left:20px;margin-bottom:12px;}
+        .guide-section ul li,.guide-section ol li{margin-bottom:6px;padding-left:4px;}
+        .guide-section ul{list-style-type:disc;}
+        .guide-section ol{list-style-type:decimal;}
+
+        .tip-box{background:var(--blue-light);border:1px solid rgba(59,130,246,.2);border-radius:var(--radius);padding:16px 20px;margin:16px 0;display:flex;align-items:flex-start;gap:10px;}
+        .tip-box i{color:var(--blue);flex-shrink:0;margin-top:2px;}
+        .tip-box p{font-size:.82rem;color:var(--blue);margin:0;font-weight:500;}
+        .tip-box strong{color:var(--blue);}
+
+        .warning-box{background:var(--red-light);border:1px solid rgba(220,38,38,.2);border-radius:var(--radius);padding:16px 20px;margin:16px 0;display:flex;align-items:flex-start;gap:10px;}
+        .warning-box i{color:var(--red);flex-shrink:0;margin-top:2px;}
+        .warning-box p{font-size:.82rem;color:var(--red);margin:0;font-weight:500;}
+
+        .success-box{background:var(--green-light);border:1px solid rgba(61,139,94,.2);border-radius:var(--radius);padding:16px 20px;margin:16px 0;display:flex;align-items:flex-start;gap:10px;}
+        .success-box i{color:var(--green);flex-shrink:0;margin-top:2px;}
+        .success-box p{font-size:.82rem;color:var(--green);margin:0;font-weight:500;}
+
+        .image-placeholder{background:var(--cream);border:2px dashed var(--rule);border-radius:var(--radius);padding:40px;text-align:center;margin:16px 0;color:var(--faint);}
+        .image-placeholder i{margin-bottom:8px;display:block;}
+
+        /* ═══ CTA ═══ */
+        .cta-section{background:var(--ink);border-radius:var(--radius-xl);padding:40px;text-align:center;margin-top:8px;position:relative;overflow:hidden;}
+        .cta-section::before{content:'';position:absolute;top:-60px;right:-40px;width:200px;height:200px;border-radius:50%;background:rgba(196,148,62,.1);pointer-events:none;}
+        .cta-section h2{font-weight:900;font-size:1.5rem;color:var(--white);margin-bottom:8px;position:relative;z-index:1;}
+        .cta-section p{font-size:.88rem;color:var(--faint);margin-bottom:20px;position:relative;z-index:1;}
+        .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:var(--radius);font-family:var(--ff-body);font-weight:600;font-size:.85rem;cursor:pointer;text-decoration:none;transition:all .3s var(--ease);border:none;}
+        .btn-gold{background:var(--gold);color:var(--white);box-shadow:0 4px 16px rgba(196,148,62,.25);}
+        .btn-gold:hover{background:var(--gold-light);transform:translateY(-2px);}
+        .btn-dark{background:var(--ink);color:var(--white);}
+        .btn-outline{background:transparent;color:var(--white);border:1.5px solid rgba(255,255,255,.2);}
+
+        @media(max-width:600px){
+            .page-container{padding:24px 16px 60px;}
+            .guide-section{padding:24px 20px;}
+            .hero{padding:40px 16px;}
+            .toc-list{grid-template-columns:1fr;}
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══ NAVBAR ═══ -->
+<nav class="navbar">
+    <div class="navbar-inner">
+        <img src="../asset/logo camservices.svg" alt="CamServices" class="logo-img">
+        <div class="nav-links">
+            <a href="../marketplace/landing.html">Accueil</a>
+            <a href="../marketplace/services.html">Services</a>
+            <a href="../dashboard/index.html" class="btn-nav">Mon Dashboard</a>
+        </div>
+    </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+    <div class="hero-inner">
+        <span class="script">Guide</span>
+        <h1>Le guide complet du prestataire</h1>
+        <p>Tout ce que vous devez savoir pour réussir sur CamServices et développer votre activité</p>
+    </div>
+</section>
+
+<!-- ═══ CONTENT ═══ -->
+<main class="page-container">
+
+    <!-- ═══ TABLE DES MATIÈRES ═══ -->
+    <div class="toc">
+        <h2><i data-lucide="list" style="width:1.1rem;height:1.1rem"></i> Table des matières</h2>
+        <div class="toc-list">
+            <a href="#inscription"><span class="toc-num">1</span> Créer votre compte prestataire</a>
+            <a href="#dashboard"><span class="toc-num">2</span> Découvrir votre tableau de bord</a>
+            <a href="#service"><span class="toc-num">3</span> Créer votre premier service</a>
+            <a href="#portfolio"><span class="toc-num">4</span> Ajouter des réalisations à votre portfolio</a>
+            <a href="#pricing"><span class="toc-num">5</span> Définir votre grille tarifaire</a>
+            <a href="#orders"><span class="toc-num">6</span> Gérer vos commandes</a>
+            <a href="#profil"><span class="toc-num">7</span> Optimiser votre profil</a>
+            <a href="#tips"><span class="toc-num">8</span> Conseils pour réussir</a>
+        </div>
+    </div>
+
+    <!-- ═══ 1. INSCRIPTION ═══ -->
+    <div class="guide-section" id="inscription">
+        <div class="guide-section-header">
+            <div class="guide-section-num"><i data-lucide="user-plus" style="width:.8rem;height:.8rem"></i> Étape 1</div>
+            <h2>Créer votre compte prestataire</h2>
+            <p class="section-desc">La première étape pour rejoindre la communauté CamServices.</p>
+        </div>
+
+        <h3><span class="step-dot"></span> Rendez-vous sur la page d'inscription</h3>
+        <p>Cliquez sur <strong>"Devenir prestataire"</strong> depuis la page d'accueil ou <a href="../register.html" style="color:var(--gold);font-weight:600">directement ici</a>.</p>
+
+        <h3><span class="step-dot"></span> Remplissez le formulaire en 4 étapes</h3>
+        <ol>
+            <li><strong>Compte :</strong> Nom complet, nom d'utilisateur, email, mot de passe, téléphone, photo de profil</li>
+            <li><strong>Adresse :</strong> Ville et quartier pour que les clients vous trouvent facilement</li>
+            <li><strong>Profil Pro :</strong> Situation actuelle, domaines d'expertise, formation, activités parallèles</li>
+            <li><strong>Vérification (optionnelle) :</strong> Pièce d'identité pour obtenir le badge "Vérifié"</li>
+        </ol>
+
+        <div class="tip-box">
+            <i data-lucide="lightbulb" style="width:1.1rem;height:1.1rem"></i>
+            <p><strong>Conseil :</strong> Ajoutez une photo de profil professionnelle. Les profils avec photo reçoivent <strong>3 fois plus</strong> de demandes.</p>
+        </div>
+    </div>
+
+    <!-- ═══ 2. DASHBOARD ═══ -->
+    <div class="guide-section" id="dashboard">
+        <div class="guide-section-header">
+            <div class="guide-section-num"><i data-lucide="layout-dashboard" style="width:.8rem;height:.8rem"></i> Étape 2</div>
+            <h2>Découvrir votre tableau de bord</h2>
+            <p class="section-desc">Votre espace de gestion centralisé.</p>
+        </div>
+
+        <h3><span class="step-dot"></span> Vue d'ensemble</h3>
+        <p>La page d'accueil du dashboard affiche vos statistiques clés : revenus, commandes, vues du profil. C'est votre tableau de bord principal.</p>
+
+        <h3><span class="step-dot"></span> Navigation</h3>
+        <p>La barre latérale gauche vous permet d'accéder à toutes les sections :</p>
+        <ul>
+            <li><strong>Mes services :</strong> gérez vos offres</li>
+            <li><strong>Commandes :</strong> suivez les demandes des clients</li>
+            <li><strong>Grille tarifaire :</strong> définissez vos tarifs détaillés</li>
+            <li><strong>Portfolio :</strong> montrez vos réalisations</li>
+            <li><strong>Activités :</strong> certifications et formations</li>
+            <li><strong>Mon profil :</strong> modifiez vos informations</li>
+            <li><strong>Statistiques :</strong> analysez vos performances</li>
+        </ul>
+    </div>
+
+    <!-- ═══ 3. CRÉER UN SERVICE ═══ -->
+    <div class="guide-section" id="service">
+        <div class="guide-section-header">
+            <div class="guide-section-num"><i data-lucide="briefcase" style="width:.8rem;height:.8rem"></i> Étape 3</div>
+            <h2>Créer votre premier service</h2>
+            <p class="section-desc">C'est le cœur de votre activité sur CamServices.</p>
+        </div>
+
+        <h3><span class="step-dot"></span> Cliquez sur "Nouveau service"</h3>
+        <p>Depuis la page <strong>Mes services</strong>, cliquez sur le bouton <strong>"Nouveau service"</strong>.</p>
+
+        <h3><span class="step-dot"></span> Remplissez les informations</h3>
+        <ol>
+            <li><strong>Titre :</strong> soyez clair et descriptif. Ex: "Plombier professionnel - Intervention rapide"</li>
+            <li><strong>Catégorie :</strong> choisissez la catégorie qui correspond le mieux</li>
+            <li><strong>Type de prix :</strong> fixe, horaire, journalier ou par projet</li>
+            <li><strong>Prix :</strong> indiquez un prix compétitif en FCFA</li>
+            <li><strong>Description :</strong> détaillez ce que vous proposez, votre expérience, ce qui est inclus</li>
+            <li><strong>Image :</strong> ajoutez une photo de votre travail (URL ou upload)</li>
+            <li><strong>Jours de travail :</strong> sélectionnez vos jours de disponibilité</li>
+            <li><strong>Horaires :</strong> définissez vos heures de début et de fin</li>
+        </ol>
+
+        <div class="tip-box">
+            <i data-lucide="lightbulb" style="width:1.1rem;height:1.1rem"></i>
+            <p><strong>Conseil :</strong> Un service avec une image et une description détaillée reçoit <strong>5 fois plus</strong> de clics.</p>
+        </div>
+    </div>
+
+    <!-- ═══ 4. PORTFOLIO ═══ -->
+    <div class="guide-section" id="portfolio">
+        <div class="guide-section-header">
+            <div class="guide-section-num"><i data-lucide="image" style="width:.8rem;height:.8rem"></i> Étape 4</div>
+            <h2>Ajouter des réalisations à votre portfolio</h2>
+            <p class="section-desc">Montrez votre savoir-faire avec des photos de vos meilleurs travaux.</p>
+        </div>
+
+        <h3><span class="step-dot"></span> Pourquoi un portfolio ?</h3>
+        <p>Les clients veulent voir votre travail avant de commander. Un portfolio bien rempli augmente votre crédibilité et rassure les clients potentiels.</p>
+
+        <h3><span class="step-dot"></span> Comment ajouter une réalisation</h3>
+        <ol>
+            <li>Allez dans <strong>Portfolio</strong> depuis le menu latéral</li>
+            <li>Cliquez sur <strong>"Ajouter une réalisation"</strong></li>
+            <li>Donnez un titre (ex: "Maquillage mariage traditionnel")</li>
+            <li>Ajoutez une catégorie et une description</li>
+            <li>Ajoutez l'image (URL ou upload)</li>
+            <li>Cochez "Mettre en vedette" pour les meilleures réalisations</li>
+        </ol>
+
+        <div class="success-box">
+            <i data-lucide="check-circle" style="width:1.1rem;height:1.1rem"></i>
+            <p><strong>Bonne pratique :</strong> Ajoutez au moins <strong>5 réalisations</strong> variées pour montrer l'étendue de vos compétences.</p>
+        </div>
+    </div>
+
+    <!-- ═══ 5. GRILLE TARIFAIRE ═══ -->
+    <div class="guide-section" id="pricing">
+        <div class="guide-section-header">
+            <div class="guide-section-num"><i data-lucide="tags" style="width:.8rem;height:.8rem"></i> Étape 5</div>
+            <h2>Définir votre grille tarifaire</h2>
+            <p class="section-desc">Des tarifs clairs pour attirer plus de clients.</p>
+        </div>
+
+        <h3><span class="step-dot"></span> Pourquoi une grille tarifaire ?</h3>
+        <p>Une grille tarifaire détaillée permet aux clients de savoir exactement combien ils vont payer. Cela élimine les surprises et augmente la confiance.</p>
+
+        <h3><span class="step-dot"></span> Types de tarification</h3>
+        <ul>
+            <li><strong>Forfait :</strong> prix fixe pour une prestation complète</li>
+            <li><strong>Horaire :</strong> prix par heure travaillée</li>
+            <li><strong>Demi-journée / Journée :</strong> idéal pour les prestations longues</li>
+            <li><strong>Par personne :</strong> pour les services dont le prix dépend du nombre</li>
+        </ul>
+    </div>
+
+    <!-- ═══ 6. COMMANDES ═══ -->
+    <div class="guide-section" id="orders">
+        <div class="guide-section-header">
+            <div class="guide-section-num"><i data-lucide="shopping-bag" style="width:.8rem;height:.8rem"></i> Étape 6</div>
+            <h2>Gérer vos commandes</h2>
+            <p class="section-desc">Suivez et traitez les demandes de vos clients.</p>
+        </div>
+
+        <h3><span class="step-dot"></span> Cycle de vie d'une commande</h3>
+        <ol>
+            <li><strong>En attente :</strong> un client a passé commande</li>
+            <li><strong>Confirmée :</strong> vous acceptez la commande</li>
+            <li><strong>En cours :</strong> vous avez commencé la prestation</li>
+            <li><strong>Terminée :</strong> la prestation est livrée</li>
+        </ol>
+
+        <h3><span class="step-dot"></span> Actions disponibles</h3>
+        <ul>
+            <li><strong>Confirmer :</strong> acceptez la commande</li>
+            <li><strong>Annuler :</strong> refusez la commande</li>
+            <li><strong>Démarrer :</strong> indiquez que le travail a commencé</li>
+            <li><strong>Terminer :</strong> marquez la prestation comme livrée</li>
+            <li><strong>Corbeille :</strong> supprimez une commande (restaurable)</li>
+        </ul>
+
+        <div class="warning-box">
+            <i data-lucide="alert-triangle" style="width:1.1rem;height:1.1rem"></i>
+            <p><strong>Attention :</strong> Les informations du client (nom, téléphone, adresse) sont visibles dans le détail de la commande. Contactez le client via WhatsApp ou téléphone.</p>
+        </div>
+    </div>
+
+    <!-- ═══ 7. PROFIL ═══ -->
+    <div class="guide-section" id="profil">
+        <div class="guide-section-header">
+            <div class="guide-section-num"><i data-lucide="user-circle" style="width:.8rem;height:.8rem"></i> Étape 7</div>
+            <h2>Optimiser votre profil</h2>
+            <p class="section-desc">Un profil complet attire plus de clients.</p>
+        </div>
+
+        <h3><span class="step-dot"></span> Les éléments clés d'un bon profil</h3>
+        <ul>
+            <li><strong>Photo de profil :</strong> claire et professionnelle</li>
+            <li><strong>Nom complet :</strong> votre vrai nom ou nom commercial</li>
+            <li><strong>Bio :</strong> parlez de vous, de votre expérience</li>
+            <li><strong>Expertise :</strong> listez vos domaines de compétence</li>
+            <li><strong>Formation :</strong> vos diplômes et certifications</li>
+            <li><strong>Vérification :</strong> obtenez le badge "Vérifié"</li>
+        </ul>
+
+        <div class="tip-box">
+            <i data-lucide="lightbulb" style="width:1.1rem;height:1.1rem"></i>
+            <p><strong>Statistique :</strong> Les profils vérifiés reçoivent <strong>2 fois plus</strong> de commandes que les profils non vérifiés.</p>
+        </div>
+    </div>
+
+    <!-- ═══ 8. CONSEILS ═══ -->
+    <div class="guide-section" id="tips">
+        <div class="guide-section-header">
+            <div class="guide-section-num"><i data-lucide="star" style="width:.8rem;height:.8rem"></i> Conseils</div>
+            <h2>Conseils pour réussir sur CamServices</h2>
+            <p class="section-desc">Les bonnes pratiques qui font la différence.</p>
+        </div>
+
+        <h3><span class="step-dot"></span> Soyez réactif</h3>
+        <p>Répondez rapidement aux demandes des clients. Un temps de réponse court augmente votre taux de conversion.</p>
+
+        <h3><span class="step-dot"></span> Soignez vos photos</h3>
+        <p>Des photos de qualité de vos réalisations valent mieux qu'un long discours. Investissez dans de bonnes photos.</p>
+
+        <h3><span class="step-dot"></span> Fixez des prix justes</h3>
+        <p>Étudiez la concurrence et proposez des prix compétitifs. Vous pourrez les ajuster avec l'expérience.</p>
+
+        <h3><span class="step-dot"></span> Demandez des avis</h3>
+        <p>Après chaque prestation réussie, encouragez vos clients à laisser un avis positif. Les avis rassurent les futurs clients.</p>
+
+        <h3><span class="step-dot"></span> Mettez à jour régulièrement</h3>
+        <p>Ajoutez de nouvelles réalisations, ajustez vos tarifs, modifiez vos disponibilités. Un profil actif est mieux référencé.</p>
+
+        <div class="success-box">
+            <i data-lucide="check-circle" style="width:1.1rem;height:1.1rem"></i>
+            <p><strong>Rappel :</strong> CamServices est gratuit pour les clients. Vous ne payez rien pour recevoir des commandes. Votre succès est notre priorité.</p>
+        </div>
+    </div>
+
+    <!-- ═══ CTA ═══ -->
+    <div class="cta-section">
+        <h2>Prêt à démarrer ?</h2>
+        <p>Créez votre compte prestataire et commencez à recevoir des commandes dès aujourd'hui.</p>
+        <a href="../register.html" class="btn btn-gold"><i data-lucide="user-plus" style="width:1rem;height:1rem"></i> Créer mon compte prestataire</a>
+        <a href="../dashboard/index.html" class="btn btn-outline" style="margin-left:10px"><i data-lucide="layout-dashboard" style="width:1rem;height:1rem"></i> Accéder au dashboard</a>
+    </div>
+
+</main>
+
+<script>
+    lucide.createIcons();
+    
+    // Smooth scroll pour les ancres
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+
+    // Animation des sections au scroll
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.guide-section').forEach(section => {
+        section.style.opacity = '0';
+        section.style.transform = 'translateY(20px)';
+        section.style.transition = 'all 0.5s cubic-bezier(0.22, 1, 0.36, 1)';
+        observer.observe(section);
+    });
+</script>
+</body>
+</html>

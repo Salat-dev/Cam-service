@@ -15,8 +15,8 @@
             --gold:#C4943E;--gold-light:#D4A94E;--gold-dim:rgba(196,148,62,.08);
             --green:#3D8B5E;--green-light:#F0FDF4;--red:#DC2626;
             --blue:#3B82F6;--blue-light:#EFF6FF;
-            --ff-body:'Outfit',sans-serif;--ff-script:'Allison',cursive;
-            --ease:cubic-bezier(.22,1,.36,1);
+   --ff-body: 'Inter', sans-serif;
+    --ff-heading: 'Outfit', sans-serif;            --ease:cubic-bezier(.22,1,.36,1);
             --radius:10px;--radius-lg:16px;--radius-xl:20px;
             --shadow:0 4px 20px rgba(26,23,20,.06);
             --shadow-lg:0 12px 40px rgba(26,23,20,.1);
@@ -126,7 +126,8 @@
 <!-- ═══ NAVBAR ═══ -->
 <nav class="navbar">
     <div class="navbar-inner">
-        <a href="landing.html" class="nav-logo">Cam<span class="script">S</span>ervices</a>
+<a href="landing.html" class="nav-logo">
+ <img src="../asset/logo camservices.svg" alt="CamServices" class="logo-img"></a>
         <div class="nav-links">
             <a href="services.html" class="active">Services</a>
             <a href="landing.html">Accueil</a>

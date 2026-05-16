@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mon Panier — CamServices</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;0,9..40,900;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="../css/global.css">
     <style>
@@ -15,10 +14,8 @@
             --gold:#C4943E;--gold-light:#D4A94E;--gold-dim:rgba(196,148,62,.08);
             --green:#3D8B5E;--green-light:#F0FDF4;--red:#DC2626;--red-light:#FEF2F2;
             --blue:#3B82F6;
-            --ff-body:'DM Sans',system-ui,sans-serif;
-            --ff-display:'DM Sans';
-            
-            --ease:cubic-bezier(.22,1,.36,1);
+   --ff-body: 'Inter', sans-serif;
+    --ff-heading: 'Outfit', sans-serif;            --ease:cubic-bezier(.22,1,.36,1);
             --radius:10px;--radius-lg:16px;--radius-xl:20px;--radius-2xl:24px;
             --shadow:0 4px 20px rgba(26,23,20,.06);
             --shadow-lg:0 12px 40px rgba(26,23,20,.1);
@@ -58,6 +55,13 @@
         .empty-cart-icon{width:72px;height:72px;border-radius:50%;background:var(--cream);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;color:var(--faint);}
         .empty-cart h2{font-family:var(--ff-display);font-weight:400;font-size:1.25rem;margin-bottom:6px;}
         .empty-cart p{color:var(--muted);font-size:.88rem;margin-bottom:22px;}
+
+        /* ═══ AUTH REQUIRED STATE ═══ */
+        .auth-required{text-align:center;padding:72px 20px;background:var(--white);border:1px solid var(--rule);border-radius:var(--radius-xl);animation:slideUp .4s var(--ease);}
+        .auth-required-icon{width:80px;height:80px;border-radius:50%;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;color:var(--gold);}
+        .auth-required h2{font-family:var(--ff-display);font-weight:400;font-size:1.4rem;margin-bottom:10px;letter-spacing:-.02em;}
+        .auth-required p{color:var(--muted);font-size:.88rem;margin-bottom:26px;max-width:380px;margin-left:auto;margin-right:auto;line-height:1.6;}
+        .auth-required-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
 
         /* ═══ BUTTONS ═══ */
         .btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--ff-body);font-weight:600;font-size:.82rem;padding:11px 22px;border-radius:var(--radius);border:none;cursor:pointer;text-decoration:none;transition:all .25s var(--ease);}
@@ -119,12 +123,18 @@
         .success-state h2{font-family:var(--ff-display);font-weight:400;font-size:1.25rem;margin-bottom:6px;}
         .success-state p{color:var(--muted);font-size:.88rem;margin-bottom:22px;}
 
+        /* ═══ LOADING ═══ */
+        .loading-state{text-align:center;padding:80px 20px;}
+        .loading-spinner{width:36px;height:36px;border:2.5px solid var(--rule);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px;}
+
         @media(max-width:600px){
             .main-content{padding:20px 16px;}
             .cart-actions{flex-direction:column;}
             .cart-actions .btn{width:100%;justify-content:center;}
             .form-row{grid-template-columns:1fr;}
             .cart-item{padding:14px 16px;gap:12px;}
+            .auth-required-actions{flex-direction:column;}
+            .auth-required-actions .btn{width:100%;justify-content:center;}
         }
     </style>
 </head>
@@ -133,7 +143,8 @@
 <!-- ═══ NAVBAR ═══ -->
 <nav class="navbar">
     <div class="navbar-inner">
-        <a href="landing.html" class="nav-logo">Cam<span class="accent">Services</span></a>
+<a href="landing.html" class="nav-logo">
+ <img src="../asset/logo camservices.svg" alt="CamServices" class="logo-img"></a>
         <div class="nav-links">
             <a href="services.html"><i data-lucide="search"></i> Explorer</a>
             <a href="cart.html" class="cart-nav-active"><i data-lucide="shopping-cart"></i> Panier <span class="cart-count" id="cartCount">0</span></a>
@@ -148,7 +159,12 @@
         <h1>Mon <span class="accent">panier</span></h1>
         <p>Finalisez vos demandes de services</p>
     </div>
-    <div id="cartContainer"></div>
+    <div id="cartContainer">
+        <div class="loading-state">
+            <div class="loading-spinner"></div>
+            <p style="color:var(--muted);font-size:.85rem">Vérification de la session...</p>
+        </div>
+    </div>
     <div class="cart-message" id="cartMessage"></div>
 </main>
 
@@ -160,13 +176,20 @@
     var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dWJ4d2J6enVpZ2N0dmdkeWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzI2MTgsImV4cCI6MjA5MzgwODYxOH0.0mwBNo_S5yItQQjq2at9GNRN74ooZRBJIbZGDH9L2uk';
     var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
+    var _isUserLoggedIn = false;
+
     lucide.createIcons();
     init();
 
     async function init() {
         updateCartCount();
+        // ⚠️ Vérifier la session AVANT toute autre action
+        var hasSession = await checkUserSession();
+        if (!hasSession) {
+            showAuthRequired();
+            return;
+        }
         displayCart();
-        checkUserSession();
     }
 
     function getCart() {
@@ -183,11 +206,45 @@
 
     async function checkUserSession() {
         var { data } = await sb.auth.getSession();
+        _isUserLoggedIn = !!(data.session);
         var btn = document.getElementById('navLogin');
-        if (data.session && btn) {
+        if (_isUserLoggedIn && btn) {
             btn.textContent = 'Mon compte';
             btn.href = 'login-client.html';
         }
+        return _isUserLoggedIn;
+    }
+
+    // ⚠️ Helper centralisé pour exiger la connexion
+    async function requireAuth(actionLabel) {
+        var { data } = await sb.auth.getSession();
+        if (data.session) { _isUserLoggedIn = true; return true; }
+        _isUserLoggedIn = false;
+        showAuthRequired(actionLabel);
+        return false;
+    }
+
+    // Affichage du state "connexion requise"
+    function showAuthRequired(actionLabel) {
+        // Sauvegarde de l'URL pour redirection après login
+        localStorage.setItem('camservices_redirect_url', window.location.href);
+
+        var msg = actionLabel
+            ? 'Vous devez vous connecter pour ' + actionLabel + '.'
+            : 'Vous devez être connecté pour consulter votre panier et passer des commandes.';
+
+        var container = document.getElementById('cartContainer');
+        container.innerHTML =
+            '<div class="auth-required">'
+            + '<div class="auth-required-icon"><i data-lucide="lock" style="width:2.2rem;height:2.2rem"></i></div>'
+            + '<h2>Connexion requise</h2>'
+            + '<p>' + msg + ' Connectez-vous ou créez un compte gratuitement en quelques secondes.</p>'
+            + '<div class="auth-required-actions">'
+            + '<a href="login-client.html" class="btn btn-primary"><i data-lucide="log-in"></i> Se connecter</a>'
+            + '<a href="signup-client.html" class="btn btn-outline"><i data-lucide="user-plus"></i> Créer un compte</a>'
+            + '</div>'
+            + '</div>';
+        lucide.createIcons();
     }
 
     function displayCart() {
@@ -238,14 +295,22 @@
         lucide.createIcons();
     }
 
-    function removeItem(serviceId, index) {
+    async function removeItem(serviceId, index) {
+        // ⚠️ Vérification de connexion
+        var isAuth = await requireAuth('gérer votre panier');
+        if (!isAuth) return;
+
         var cart = getCart().filter(function(item) { return item.serviceId !== serviceId; });
         saveCart(cart);
         displayCart();
         showMsg('Service retiré.', 'info');
     }
 
-    function clearAll() {
+    async function clearAll() {
+        // ⚠️ Vérification de connexion
+        var isAuth = await requireAuth('gérer votre panier');
+        if (!isAuth) return;
+
         if (!confirm('Vider le panier ?')) return;
         clearCart();
         displayCart();
@@ -253,20 +318,17 @@
     }
 
     async function openConfirmModal() {
-       var cart = getCart();
-    if (cart.length === 0) return;
+        var cart = getCart();
+        if (cart.length === 0) return;
 
-    var { data } = await sb.auth.getSession();
-    if (!data.session) {
-        showMsg('Veuillez vous connecter pour passer commande.', 'info');
-        setTimeout(function() { window.location.href = 'login.html'; }, 1500);
-        return;
-    }
-    
-    var total = 0;
-    for (var i = 0; i < cart.length; i++) total += cart[i].price || 0;
+        // ⚠️ Vérification de connexion OBLIGATOIRE pour passer commande
+        var isAuth = await requireAuth('passer une commande');
+        if (!isAuth) return;
 
-    document.getElementById('modalContainer').innerHTML = 
+        var total = 0;
+        for (var i = 0; i < cart.length; i++) total += cart[i].price || 0;
+
+        document.getElementById('modalContainer').innerHTML =
             '<div class="modal-overlay" onclick="if(event.target===this)closeModal()">'
             + '<div class="modal">'
             + '<div class="modal-header">'
@@ -310,6 +372,14 @@
         var cart = getCart();
         if (cart.length === 0) return;
 
+        // ⚠️ Re-vérification de la connexion au moment de l'envoi (sécurité)
+        var { data: sessionData } = await sb.auth.getSession();
+        if (!sessionData.session) {
+            closeModal();
+            showAuthRequired('passer une commande');
+            return;
+        }
+
         var clientName = document.getElementById('clientName').value.trim();
         var clientPhone = document.getElementById('clientPhone').value.trim();
         var clientAddress = document.getElementById('clientAddress').value.trim();
@@ -325,16 +395,13 @@
 
         try {
             var clientClientId = null;
-            var { data: sessionData } = await sb.auth.getSession();
 
-            if (sessionData.session) {
-                var { data: clientProfile } = await sb
-                    .from('users_clients')
-                    .select('id')
-                    .eq('auth_id', sessionData.session.user.id)
-                    .single();
-                if (clientProfile) clientClientId = clientProfile.id;
-            }
+            var { data: clientProfile } = await sb
+                .from('users_clients')
+                .select('id')
+                .eq('auth_id', sessionData.session.user.id)
+                .single();
+            if (clientProfile) clientClientId = clientProfile.id;
 
             var orders = [];
             for (var i = 0; i < cart.length; i++) {

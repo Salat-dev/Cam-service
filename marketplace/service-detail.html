@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Détail du service — CamServices</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;0,9..40,900;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="../css/global.css">
     <style>
@@ -15,10 +14,8 @@
             --gold:#C4943E;--gold-light:#D4A94E;--gold-dim:rgba(196,148,62,.08);
             --green:#3D8B5E;--green-light:#F0FDF4;--red:#DC2626;
             --blue:#3B82F6;--blue-light:#EFF6FF;--purple:#8B5CF6;--purple-light:#F5F3FF;
-            --ff-body:'DM Sans',system-ui,sans-serif;
-            --ff-display:'DM Sans';
-
-            --ease:cubic-bezier(.22,1,.36,1);
+       --ff-body: 'Inter', sans-serif;
+    --ff-heading: 'Outfit', sans-serif;            --ease:cubic-bezier(.22,1,.36,1);
             --radius:10px;--radius-lg:16px;--radius-xl:20px;--radius-2xl:24px;
             --shadow:0 4px 20px rgba(26,23,20,.06);
             --shadow-lg:0 12px 40px rgba(26,23,20,.1);
@@ -45,6 +42,8 @@
         .nav-links a:hover{color:var(--ink);background:rgba(26,23,20,.03);}
         .nav-links a i{width:.9rem;height:.9rem;}
         .cart-count{background:var(--gold);color:var(--white);font-size:.6rem;font-weight:700;padding:2px 7px;border-radius:10px;min-width:18px;text-align:center;}
+        .btn-nav{background:var(--ink);color:var(--white)!important;padding:8px 16px;border-radius:var(--radius);font-weight:600!important;}
+        .btn-nav:hover{background:var(--ink-2)!important;}
 
         /* ═══ DETAIL HERO ═══ */
         .detail-hero{background:var(--white);border-bottom:1px solid var(--rule);padding:36px 24px;position:relative;overflow:hidden;}
@@ -150,6 +149,15 @@
         .empty-section{text-align:center;padding:20px;color:var(--faint);font-size:.8rem;}
         .empty-section i{width:1.8rem;height:1.8rem;margin-bottom:6px;display:block;margin-left:auto;margin-right:auto;}
 
+        /* ═══ AUTH MODAL ═══ */
+        .auth-modal-overlay{position:fixed;inset:0;z-index:9800;background:rgba(26,23,20,.55);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;animation:modalFadeIn .25s ease;}
+        .auth-modal{background:var(--white);border-radius:var(--radius-2xl);padding:32px 28px;max-width:420px;width:100%;text-align:center;box-shadow:var(--shadow-lg);animation:fadeUp .35s var(--ease);}
+        .auth-modal-icon{width:64px;height:64px;border-radius:50%;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:var(--gold);}
+        .auth-modal-icon i{width:1.8rem;height:1.8rem;}
+        .auth-modal h3{font-family:var(--ff-display);font-weight:400;font-size:1.25rem;margin-bottom:8px;letter-spacing:-.02em;}
+        .auth-modal p{color:var(--muted);font-size:.85rem;margin-bottom:22px;line-height:1.55;}
+        .auth-modal-actions{display:flex;flex-direction:column;gap:8px;}
+
         /* ═══ SKELETON ═══ */
         .skeleton-block{border-radius:var(--radius);background:linear-gradient(90deg,var(--rule) 25%,var(--cream) 50%,var(--rule) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;}
 
@@ -177,10 +185,12 @@
 <!-- ═══ NAVBAR ═══ -->
 <nav class="navbar">
     <div class="navbar-inner">
-        <a href="landing.html" class="nav-logo">Cam<span class="accent">Services</span></a>
+<a href="landing.html" class="nav-logo">
+ <img src="../asset/logo camservices.svg" alt="CamServices" class="logo-img"></a>
         <div class="nav-links">
             <a href="services.html">Services</a>
             <a href="cart.html"><i data-lucide="shopping-cart"></i> Panier <span id="cartCountNav" class="cart-count" style="display:none">0</span></a>
+            <a href="login-client.html" class="btn-nav" id="navLogin">Connexion</a>
         </div>
     </div>
 </nav>
@@ -207,11 +217,60 @@ var _providerStats = null;
 var _providerPricing = [];
 var _providerPortfolio = [];
 var _providerActivities = [];
+var _isUserLoggedIn = false;
 
 document.addEventListener('DOMContentLoaded', function() {
     lucide.createIcons();
+    checkAuthStatus();
     loadServiceDetail();
 });
+
+// ═══ AUTHENTIFICATION ═══
+async function checkAuthStatus() {
+    var { data } = await sb.auth.getSession();
+    _isUserLoggedIn = !!(data.session);
+    var btn = document.getElementById('navLogin');
+    if (_isUserLoggedIn && btn) {
+        btn.textContent = 'Mon compte';
+        btn.href = 'login-client.html';
+    }
+}
+
+async function requireAuth(actionLabel) {
+    var { data } = await sb.auth.getSession();
+    if (data.session) { _isUserLoggedIn = true; return true; }
+    _isUserLoggedIn = false;
+    showAuthModal(actionLabel);
+    return false;
+}
+
+function showAuthModal(actionLabel) {
+    var existing = document.getElementById('authModalOverlay');
+    if (existing) existing.remove();
+
+    var overlay = document.createElement('div');
+    overlay.id = 'authModalOverlay';
+    overlay.className = 'auth-modal-overlay';
+    overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+
+    // Sauvegarde de l'URL courante pour redirection après login
+    localStorage.setItem('camservices_redirect_url', window.location.href);
+
+    overlay.innerHTML =
+        '<div class="auth-modal">'
+        + '<div class="auth-modal-icon"><i data-lucide="lock"></i></div>'
+        + '<h3>Connexion requise</h3>'
+        + '<p>Vous devez vous connecter pour ' + (actionLabel || 'continuer') + '. Connectez-vous ou créez un compte gratuitement en quelques secondes.</p>'
+        + '<div class="auth-modal-actions">'
+        + '<a href="login-client.html" class="btn btn-dark btn-block"><i data-lucide="log-in"></i> Se connecter</a>'
+        + '<a href="signup-client.html" class="btn btn-ghost btn-block"><i data-lucide="user-plus"></i> Créer un compte</a>'
+        + '<button onclick="document.getElementById(\'authModalOverlay\').remove()" style="background:none;border:none;color:var(--muted);font-size:.78rem;margin-top:6px;cursor:pointer;padding:6px;text-decoration:underline">Plus tard</button>'
+        + '</div>'
+        + '</div>';
+
+    document.body.appendChild(overlay);
+    lucide.createIcons();
+}
 
 function getServiceId() {
     return new URLSearchParams(window.location.search).get('id');
@@ -297,12 +356,11 @@ function renderServiceDetail() {
 
     var html = '';
 
-       // ═══ HERO ═══
+    // ═══ HERO ═══
     html += '<section class="detail-hero">';
     html += '<div class="detail-hero-inner">';
     html += '<div class="breadcrumb"><a href="landing.html">Accueil</a> <span>/</span> <a href="services.html">Services</a> <span>/</span> <span>' + escapeHtml(s.title) + '</span></div>';
-    
-    // Image du service si disponible
+
     if (s.image_url) {
         html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:center">';
         html += '<div>';
@@ -321,7 +379,7 @@ function renderServiceDetail() {
         html += '<div class="detail-price">' + formatPrice(s.price) + ' <span class="price-type">' + formatPricingType(s.pricing_type) + '</span></div>';
         html += '</div>';
     }
-    
+
     html += '</div></section>';
 
     // ═══ LAYOUT ═══
@@ -340,14 +398,12 @@ function renderServiceDetail() {
     html += '<div class="detail-info-item"><span class="detail-info-label">Statut</span><span class="detail-info-value"><span class="status-badge ' + (s.is_active ? 'status-active' : 'status-inactive') + '">' + (s.is_active ? 'Disponible' : 'Indisponible') + '</span></span></div>';
     html += '</div></div>';
 
-
     // ── Agenda / Disponibilités ──
-
     if (s.working_days && s.working_days.length > 0) {
         html += '<div class="detail-card">';
         html += '<h2 class="detail-section-title"><i data-lucide="calendar"></i> Disponibilités</h2>';
         html += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
-        
+
         var dayNames = { 'Lun':'Lundi', 'Mar':'Mardi', 'Mer':'Mercredi', 'Jeu':'Jeudi', 'Ven':'Vendredi', 'Sam':'Samedi', 'Dim':'Dimanche' };
         for (var d = 0; d < s.working_days.length; d++) {
             var day = s.working_days[d];
@@ -357,7 +413,7 @@ function renderServiceDetail() {
             html += '</span>';
         }
         html += '</div>';
-        
+
         if (s.time_start && s.time_end) {
             html += '<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--cream);border-radius:var(--radius);font-size:.85rem;color:var(--ink)">';
             html += '<i data-lucide="clock" style="width:1rem;height:1rem;color:var(--gold)"></i>';
@@ -373,7 +429,7 @@ function renderServiceDetail() {
             html += '<span>' + s.time_start.substring(0, 5) + '</span>';
             html += '</div>';
         }
-        
+
         html += '</div>';
     }
 
@@ -577,17 +633,13 @@ function showPortfolioLightbox(index) {
     });
 }
 
-// ═══ CART ═══
+// ═══ CART (avec auth obligatoire) ═══
 async function handleAddToCart() {
     if (!_currentService) { showToast('Service non disponible.', 'error'); return; }
-    
-    var { data } = await sb.auth.getSession();
-    if (!data.session) {
-        showToast('Connectez-vous pour ajouter au panier.', 'info');
-        localStorage.setItem('camservices_redirect', 'cart');
-        setTimeout(function() { window.location.href = 'login.html'; }, 1500);
-        return;
-    }
+
+    // ⚠️ Vérification de connexion OBLIGATOIRE
+    var isAuth = await requireAuth('ajouter ce service à votre panier');
+    if (!isAuth) return;
 
     var cart = JSON.parse(localStorage.getItem('camservices_cart') || '[]');
     for (var i = 0; i < cart.length; i++) {
@@ -595,11 +647,11 @@ async function handleAddToCart() {
             showToast('Ce service est déjà dans votre panier.', 'info');
             openCartDrawer();
             return;
-        }  
+        }
     }
     cart.push({
         serviceId: _currentService.id,
-        title: _currentService.title, 
+        title: _currentService.title,
         price: _currentService.price,
         category: _currentService.category || '',
         providerName: _currentProvider.full_name || 'Inconnu',
@@ -607,11 +659,14 @@ async function handleAddToCart() {
         addedAt: new Date().toISOString()
     });
     localStorage.setItem('camservices_cart', JSON.stringify(cart));
-    updateNavCartCount(); 
+    updateNavCartCount();
     showToast('Service ajouté au panier !', 'success');
 }
 
-function removeFromCart(serviceId) {
+async function removeFromCart(serviceId) {
+    var isAuth = await requireAuth('gérer votre panier');
+    if (!isAuth) return;
+
     var cart = JSON.parse(localStorage.getItem('camservices_cart') || '[]');
     cart = cart.filter(function(item) { return item.serviceId !== serviceId; });
     localStorage.setItem('camservices_cart', JSON.stringify(cart));
@@ -625,7 +680,11 @@ function clearCart() {
     openCartDrawer();
 }
 
-function openCartDrawer() {
+async function openCartDrawer() {
+    // ⚠️ Vérification de connexion OBLIGATOIRE pour ouvrir le panier
+    var isAuth = await requireAuth('consulter votre panier');
+    if (!isAuth) return;
+
     var old = document.getElementById('cartDrawerOverlay');
     if (old) old.remove();
     var cart = JSON.parse(localStorage.getItem('camservices_cart') || '[]');
@@ -680,15 +739,12 @@ function closeCartDrawer() {
 }
 
 async function handleCheckout() {
-    var { data } = await sb.auth.getSession();
-    if (!data.session) {
-        showToast('Connectez-vous pour passer commande.', 'info');
-        localStorage.setItem('camservices_redirect', 'checkout');
-        setTimeout(function() { window.location.href = 'login.html'; }, 1500);
-        return;
-    }
+    // ⚠️ Vérification de connexion OBLIGATOIRE
+    var isAuth = await requireAuth('passer une commande');
+    if (!isAuth) return;
+
     closeCartDrawer();
-    showToast('Redirection vers le paiement...', 'info');
+    showToast('Redirection vers le panier...', 'info');
     setTimeout(function() { window.location.href = 'cart.html'; }, 800);
 }
 

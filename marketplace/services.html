@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trouver un Service — CamServices</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;0,9..40,900;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="../css/global.css">
     <style>
@@ -15,9 +14,8 @@
             --gold:#C4943E;--gold-light:#D4A94E;--gold-dim:rgba(196,148,62,.08);
             --green:#3D8B5E;--green-light:#F0FDF4;--red:#DC2626;
             --blue:#3B82F6;--blue-light:#EFF6FF;
-             --ff-body:'DM Sans',system-ui,sans-serif;
-            --ff-display:'DM Sans';
-            --ease:cubic-bezier(.22,1,.36,1);
+   --ff-body: 'Inter', sans-serif;
+    --ff-heading: 'Outfit', sans-serif;            --ease:cubic-bezier(.22,1,.36,1);
             --radius:10px;--radius-lg:16px;--radius-xl:20px;
             --shadow:0 4px 20px rgba(26,23,20,.06);
             --shadow-lg:0 12px 40px rgba(26,23,20,.1);
@@ -178,7 +176,8 @@
 <!-- ═══ NAVBAR ═══ -->
 <nav class="navbar">
     <div class="navbar-inner">
-        <a href="landing.html" class="nav-logo">Cam<span class="accent">Services</span></a>
+<a href="landing.html" class="nav-logo">
+ <img src="../asset/logo camservices.svg" alt="CamServices" class="logo-img"></a>
         <div class="nav-links">
             <a href="services.html" class="active">Services</a>
             <a href="landing.html">Accueil</a>
@@ -244,8 +243,12 @@
 <!-- ═══ FOOTER ═══ -->
 <footer class="footer">
     <div class="footer-inner">
-        <div class="footer-logo">Cam<span class="accent">Services</span></div>
-        <div class="footer-text">© 2026 CamServices — Tous droits réservés</div>
+<div class="footer-logo">
+    <a href="landing.html">
+        <img src="../asset/logo camservices.svg" alt="CamServices" class="footer-logo-img" onerror="this.style.display='none';this.parentElement.innerHTML='Cam<span class=accent>Services</span>'">
+    </a>
+</div>
+<div class="footer-text">© 2026 CamServices — Tous droits réservés</div>
     </div>
 </footer>
 

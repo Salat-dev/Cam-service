@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarifs — CamServices</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../css/global.css">
+    <style>
+        :root {
+            --ink:#1A1714;--ink-2:#2E2A25;--muted:#8A8279;--faint:#C9C2B8;
+            --rule:#E8E2DA;--cream:#FAF8F5;--white:#FFFFFF;
+            --gold:#C4943E;--gold-light:#D4A94E;--gold-dim:rgba(196,148,62,.08);
+            --green:#3D8B5E;--green-light:#F0FDF4;--red:#DC2626;--red-light:#FEF2F2;
+            --blue:#3B82F6;--blue-light:#EFF6FF;--purple:#8B5CF6;--purple-light:#F5F3FF;
+   --ff-body: 'Inter', sans-serif;
+    --ff-heading: 'Outfit', sans-serif;
+    --ease:cubic-bezier(.22,1,.36,1);
+            --radius:10px;--radius-lg:16px;--radius-xl:20px;--radius-2xl:24px;
+            --shadow:0 4px 20px rgba(26,23,20,.06);
+            --shadow-lg:0 12px 40px rgba(26,23,20,.1);
+            --shadow-gold:0 16px 50px rgba(196,148,62,.18);
+            --max:1200px;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:var(--ff-body);background:var(--cream);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;line-height:1.6;}
+        ::selection{background:var(--gold-dim);color:var(--ink);}
+
+        @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        @keyframes scaleIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+        @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+        @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+        /* ═══ NAVBAR ═══ */
+        .navbar{position:sticky;top:0;z-index:50;background:rgba(250,248,245,.88);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid rgba(232,226,218,.6);padding:0 24px;}
+        .navbar-inner{max-width:var(--max);margin:0 auto;height:64px;display:flex;align-items:center;justify-content:space-between;}
+        .nav-logo{font-weight:800;font-size:1.15rem;color:var(--ink);text-decoration:none;letter-spacing:-.02em;}
+        .nav-logo .script{font-family:var(--ff-script);font-size:2rem;color:var(--gold);position:relative;top:3px;}
+        .nav-links{display:flex;align-items:center;gap:6px;}
+        .nav-links a{font-size:.82rem;font-weight:500;color:var(--muted);text-decoration:none;transition:all .2s;padding:8px 14px;border-radius:var(--radius);display:flex;align-items:center;gap:6px;}
+        .nav-links a:hover{color:var(--ink);background:rgba(26,23,20,.03);}
+        .nav-links a.active{color:var(--gold);font-weight:600;}
+        .nav-links a i{width:.9rem;height:.9rem;}
+        .btn-nav{background:var(--ink);color:var(--white)!important;padding:8px 16px;border-radius:var(--radius);font-weight:600!important;}
+        .btn-nav:hover{background:var(--ink-2)!important;}
+
+        /* ═══ HERO ═══ */
+        .pricing-hero{padding:72px 24px 36px;text-align:center;position:relative;overflow:hidden;}
+        .pricing-hero::before{content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,var(--gold-dim) 0%,transparent 70%);pointer-events:none;}
+        .pricing-hero-inner{max-width:760px;margin:0 auto;position:relative;z-index:1;animation:fadeUp .6s var(--ease);}
+        .hero-badge{display:inline-flex;align-items:center;gap:7px;padding:6px 14px;border-radius:20px;background:var(--gold-dim);color:var(--gold);font-size:.72rem;font-weight:600;margin-bottom:20px;letter-spacing:.02em;text-transform:uppercase;}
+        .hero-badge i{width:.85rem;height:.85rem;}
+        .pricing-hero h1{font-family:var(--ff-display);font-weight:400;font-size:clamp(2rem,5vw,3.2rem);letter-spacing:-.025em;line-height:1.1;margin-bottom:18px;}
+        .pricing-hero h1 .accent{color:var(--gold);font-style:italic;}
+        .pricing-hero p{font-size:1rem;color:var(--muted);max-width:560px;margin:0 auto;line-height:1.65;}
+
+        /* ═══ BILLING TOGGLE ═══ */
+        .billing-toggle{display:inline-flex;align-items:center;gap:4px;background:var(--white);border:1px solid var(--rule);padding:5px;border-radius:30px;margin-top:30px;box-shadow:var(--shadow);}
+        .billing-toggle button{background:none;border:none;padding:9px 22px;font-family:var(--ff-body);font-size:.82rem;font-weight:600;color:var(--muted);cursor:pointer;border-radius:24px;transition:all .25s var(--ease);display:flex;align-items:center;gap:7px;}
+        .billing-toggle button.active{background:var(--ink);color:var(--white);}
+        .billing-toggle button:hover:not(.active){color:var(--ink);}
+        .save-badge{background:var(--green-light);color:var(--green);font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:6px;}
+        .billing-toggle button.active .save-badge{background:var(--gold);color:var(--white);}
+
+        /* ═══ PLANS GRID ═══ */
+        .plans-section{max-width:var(--max);margin:0 auto;padding:30px 24px 60px;}
+        .plans-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch;}
+        .plan-card{background:var(--white);border:1px solid var(--rule);border-radius:var(--radius-xl);padding:32px 26px;display:flex;flex-direction:column;position:relative;transition:all .3s var(--ease);animation:fadeUp .55s var(--ease) both;}
+        .plan-card:nth-child(1){animation-delay:.05s;}
+        .plan-card:nth-child(2){animation-delay:.15s;}
+        .plan-card:nth-child(3){animation-delay:.25s;}
+        .plan-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);border-color:var(--faint);}
+
+        /* Plan featured */
+        .plan-card.featured{background:linear-gradient(180deg,#1F1B17 0%,#1A1714 100%);color:var(--white);border:none;box-shadow:var(--shadow-gold);transform:scale(1.03);}
+        .plan-card.featured:hover{transform:scale(1.03) translateY(-4px);}
+        .plan-card.featured::before{content:'';position:absolute;inset:0;border-radius:var(--radius-xl);padding:1.5px;background:linear-gradient(135deg,var(--gold) 0%,transparent 50%,var(--gold) 100%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;}
+
+        .plan-badge-top{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--white);font-size:.66rem;font-weight:700;padding:5px 14px;border-radius:20px;letter-spacing:.06em;text-transform:uppercase;box-shadow:0 4px 14px rgba(196,148,62,.35);display:flex;align-items:center;gap:5px;}
+        .plan-badge-top i{width:.75rem;height:.75rem;}
+
+        .plan-icon{width:48px;height:48px;border-radius:var(--radius);background:var(--gold-dim);color:var(--gold);display:flex;align-items:center;justify-content:center;margin-bottom:16px;}
+        .plan-icon i{width:1.3rem;height:1.3rem;}
+        .plan-card.featured .plan-icon{background:rgba(196,148,62,.18);color:var(--gold-light);}
+
+        .plan-name{font-family:var(--ff-display);font-weight:400;font-size:1.4rem;margin-bottom:5px;letter-spacing:-.02em;}
+        .plan-tagline{font-size:.82rem;color:var(--muted);margin-bottom:22px;line-height:1.5;}
+        .plan-card.featured .plan-tagline{color:rgba(255,255,255,.65);}
+
+        .plan-price-block{margin-bottom:24px;padding-bottom:22px;border-bottom:1px solid var(--rule);}
+        .plan-card.featured .plan-price-block{border-bottom-color:rgba(255,255,255,.1);}
+        .plan-price{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;}
+        .plan-price-amount{font-family:var(--ff-display);font-weight:400;font-size:2.3rem;letter-spacing:-.02em;line-height:1;}
+        .plan-price-currency{font-family:var(--ff-body);font-size:.95rem;font-weight:600;color:var(--muted);}
+        .plan-card.featured .plan-price-currency{color:rgba(255,255,255,.55);}
+        .plan-price-period{font-size:.78rem;color:var(--muted);}
+        .plan-card.featured .plan-price-period{color:rgba(255,255,255,.55);}
+        .plan-price-note{font-size:.72rem;color:var(--faint);margin-top:5px;}
+        .plan-card.featured .plan-price-note{color:rgba(255,255,255,.4);}
+        .plan-price-old{font-size:.78rem;color:var(--faint);text-decoration:line-through;margin-top:3px;display:inline-block;}
+
+        .plan-features{list-style:none;padding:0;margin:0 0 28px;flex:1;display:flex;flex-direction:column;gap:11px;}
+        .plan-features li{display:flex;align-items:flex-start;gap:10px;font-size:.85rem;color:var(--ink-2);line-height:1.55;}
+        .plan-card.featured .plan-features li{color:rgba(255,255,255,.85);}
+        .plan-features li .check-icon{flex-shrink:0;width:18px;height:18px;border-radius:50%;background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;margin-top:2px;}
+        .plan-features li .check-icon i{width:.65rem;height:.65rem;stroke-width:3.5;}
+        .plan-features li .cross-icon{flex-shrink:0;width:18px;height:18px;border-radius:50%;background:var(--cream);color:var(--faint);display:flex;align-items:center;justify-content:center;margin-top:2px;}
+        .plan-features li .cross-icon i{width:.65rem;height:.65rem;stroke-width:3;}
+        .plan-features li.disabled{color:var(--faint);text-decoration:line-through;}
+        .plan-card.featured .plan-features li .check-icon{background:rgba(61,139,94,.2);color:#7FD4A0;}
+        .plan-card.featured .plan-features li .cross-icon{background:rgba(255,255,255,.06);color:rgba(255,255,255,.3);}
+
+        .feature-highlight{font-weight:700;color:var(--ink);}
+        .plan-card.featured .feature-highlight{color:var(--white);}
+
+        /* Plan CTA */
+        .plan-cta{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px 22px;border-radius:var(--radius);font-family:var(--ff-body);font-size:.85rem;font-weight:600;cursor:pointer;transition:all .25s var(--ease);text-decoration:none;border:none;}
+        .plan-cta i{width:.95rem;height:.95rem;}
+        .plan-cta-default{background:var(--white);color:var(--ink);border:1.5px solid var(--rule);}
+        .plan-cta-default:hover{border-color:var(--ink);background:var(--ink);color:var(--white);transform:translateY(-1px);}
+        .plan-cta-primary{background:var(--gold);color:var(--white);}
+        .plan-cta-primary:hover{background:var(--gold-light);transform:translateY(-1px);box-shadow:0 6px 20px rgba(196,148,62,.3);}
+        .plan-cta-dark{background:var(--ink);color:var(--white);}
+        .plan-cta-dark:hover{background:var(--ink-2);transform:translateY(-1px);}
+
+        /* ═══ FEATURES COMPARISON ═══ */
+        .comparison-section{background:var(--white);padding:64px 24px;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);}
+        .comparison-inner{max-width:var(--max);margin:0 auto;}
+        .section-header{text-align:center;margin-bottom:42px;}
+        .section-header h2{font-family:var(--ff-display);font-weight:400;font-size:clamp(1.6rem,3vw,2.2rem);letter-spacing:-.02em;margin-bottom:10px;}
+        .section-header h2 .accent{color:var(--gold);font-style:italic;}
+        .section-header p{font-size:.9rem;color:var(--muted);max-width:520px;margin:0 auto;}
+
+        .comparison-table{width:100%;border-collapse:collapse;font-size:.85rem;}
+        .comparison-table th,.comparison-table td{padding:14px 16px;text-align:left;border-bottom:1px solid var(--rule);}
+        .comparison-table th{font-family:var(--ff-body);font-weight:700;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);background:var(--cream);}
+        .comparison-table th:first-child{border-radius:var(--radius) 0 0 0;}
+        .comparison-table th:last-child{border-radius:0 var(--radius) 0 0;}
+        .comparison-table td{color:var(--ink-2);}
+        .comparison-table td:first-child{font-weight:600;color:var(--ink);}
+        .comparison-table td.center{text-align:center;}
+        .comparison-table tr:hover td{background:var(--cream);}
+        .comparison-table .yes{color:var(--green);}
+        .comparison-table .no{color:var(--faint);}
+        .comparison-table .featured-col{background:var(--gold-dim);color:var(--gold);font-weight:700;}
+        .comparison-cat{font-family:var(--ff-display);font-weight:400;font-size:.95rem;color:var(--ink);padding-top:24px!important;background:none!important;border-bottom:none!important;}
+
+        /* ═══ FAQ ═══ */
+        .faq-section{padding:64px 24px;}
+        .faq-inner{max-width:760px;margin:0 auto;}
+        .faq-list{display:flex;flex-direction:column;gap:10px;margin-top:32px;}
+        .faq-item{background:var(--white);border:1px solid var(--rule);border-radius:var(--radius-lg);overflow:hidden;transition:all .25s var(--ease);}
+        .faq-item:hover{border-color:var(--gold);}
+        .faq-item.open{border-color:var(--gold);box-shadow:var(--shadow);}
+        .faq-question{padding:18px 22px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-weight:600;font-size:.92rem;color:var(--ink);}
+        .faq-question:hover{color:var(--gold);}
+        .faq-question .chevron{width:22px;height:22px;border-radius:50%;background:var(--cream);color:var(--muted);display:flex;align-items:center;justify-content:center;transition:all .3s var(--ease);flex-shrink:0;margin-left:14px;}
+        .faq-item.open .faq-question .chevron{background:var(--gold);color:var(--white);transform:rotate(45deg);}
+        .faq-question .chevron i{width:.85rem;height:.85rem;}
+        .faq-answer{max-height:0;overflow:hidden;transition:max-height .35s var(--ease);}
+        .faq-item.open .faq-answer{max-height:300px;}
+        .faq-answer-inner{padding:0 22px 20px;font-size:.86rem;color:var(--muted);line-height:1.7;}
+
+        /* ═══ CTA FINAL ═══ */
+        .cta-final{padding:24px 24px 80px;}
+        .cta-final-inner{max-width:var(--max);margin:0 auto;background:linear-gradient(135deg,#1F1B17 0%,#1A1714 100%);border-radius:var(--radius-2xl);padding:60px 40px;text-align:center;position:relative;overflow:hidden;}
+        .cta-final-inner::before{content:'';position:absolute;top:-50%;right:-20%;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(196,148,62,.15) 0%,transparent 60%);pointer-events:none;}
+        .cta-final-content{position:relative;z-index:1;}
+        .cta-final h2{font-family:var(--ff-display);font-weight:400;font-size:clamp(1.6rem,3vw,2.2rem);color:var(--white);letter-spacing:-.02em;margin-bottom:12px;}
+        .cta-final h2 .accent{color:var(--gold);font-style:italic;}
+        .cta-final p{color:rgba(255,255,255,.7);font-size:.95rem;max-width:480px;margin:0 auto 28px;line-height:1.6;}
+        .cta-final-buttons{display:inline-flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+        .btn-large{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;border-radius:var(--radius);font-family:var(--ff-body);font-size:.9rem;font-weight:600;cursor:pointer;transition:all .25s var(--ease);text-decoration:none;border:none;}
+        .btn-large i{width:1rem;height:1rem;}
+        .btn-large-gold{background:var(--gold);color:var(--white);}
+        .btn-large-gold:hover{background:var(--gold-light);transform:translateY(-1px);box-shadow:0 8px 24px rgba(196,148,62,.35);}
+        .btn-large-ghost{background:rgba(255,255,255,.08);color:var(--white);border:1px solid rgba(255,255,255,.15);}
+        .btn-large-ghost:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3);}
+
+        /* ═══ FOOTER ═══ */
+        .footer{background:var(--white);border-top:1px solid var(--rule);padding:36px 24px;text-align:center;}
+        .footer-inner{max-width:var(--max);margin:0 auto;}
+        .footer-logo{font-family:var(--ff-display);font-size:1.1rem;color:var(--ink);margin-bottom:8px;}
+        .footer-logo .accent{color:var(--gold);}
+        .footer-text{font-size:.78rem;color:var(--muted);}
+
+        /* ═══ RESPONSIVE ═══ */
+        @media(max-width:900px){
+            .plans-grid{grid-template-columns:1fr;gap:16px;max-width:440px;margin:0 auto;}
+            .plan-card.featured{transform:none;}
+            .plan-card.featured:hover{transform:translateY(-4px);}
+            .comparison-table{font-size:.78rem;}
+            .comparison-table th,.comparison-table td{padding:11px 10px;}
+            .pricing-hero{padding:48px 18px 28px;}
+        }
+        @media(max-width:600px){
+            .navbar{padding:0 16px;}
+            .nav-links{gap:2px;}
+            .nav-links a{padding:8px 10px;font-size:.78rem;}
+            .nav-links a span{display:none;}
+            .billing-toggle button{padding:8px 14px;font-size:.78rem;}
+            .plan-card{padding:26px 22px;}
+            .cta-final-inner{padding:40px 22px;}
+            .comparison-section,.faq-section{padding:44px 18px;}
+            .comparison-table{display:block;overflow-x:auto;white-space:nowrap;}
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══ NAVBAR ═══ -->
+<nav class="navbar">
+    <div class="navbar-inner">
+        <a href="../marketplace/landing.html" class="nav-logo">
+    <img src="../asset/logo camservices.svg" alt="CamServices" class="logo-img"></a>
+        <div class="nav-links">
+            <a href="../marketplace/services.html"><i data-lucide="search"></i> <span>Explorer</span></a>
+            <a href="pricing.html" class="active"><i data-lucide="tag"></i> <span>Tarifs</span></a>
+            <a href="../login.html" class="btn-nav">Connexion</a>
+        </div>
+    </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section class="pricing-hero">
+    <div class="pricing-hero-inner">
+        <div class="hero-badge"><i data-lucide="sparkles"></i> Pour les prestataires</div>
+        <h1>Choisissez la formule qui vous <span class="accent">ressemble</span></h1>
+        <p>Lancez votre activité sur CamServices, attirez plus de clients et développez votre réputation. Annulez à tout moment.</p>
+
+        <div class="billing-toggle">
+            <button id="btnMonthly" class="active" onclick="setBilling('monthly')">Mensuel</button>
+            <button id="btnYearly" onclick="setBilling('yearly')">Annuel <span class="save-badge">−20%</span></button>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ PLANS ═══ -->
+<section class="plans-section">
+    <div class="plans-grid" id="plansGrid"></div>
+</section>
+
+<!-- ═══ COMPARISON ═══ -->
+<section class="comparison-section">
+    <div class="comparison-inner">
+        <div class="section-header">
+            <h2>Comparez les <span class="accent">fonctionnalités</span></h2>
+            <p>Toutes les formules incluent un support en français et l'accès complet à la plateforme.</p>
+        </div>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Fonctionnalité</th>
+                    <th class="center">Découverte</th>
+                    <th class="center featured-col">Pro</th>
+                    <th class="center">Premium</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="4" class="comparison-cat">Publication de services</td></tr>
+                <tr>
+                    <td>Nombre de services publiés</td>
+                    <td class="center">3</td>
+                    <td class="center featured-col">15</td>
+                    <td class="center">Illimité</td>
+                </tr>
+                <tr>
+                    <td>Photos par service</td>
+                    <td class="center">2</td>
+                    <td class="center featured-col">10</td>
+                    <td class="center">Illimité</td>
+                </tr>
+                <tr>
+                    <td>Portfolio de réalisations</td>
+                    <td class="center">5 items</td>
+                    <td class="center featured-col">30 items</td>
+                    <td class="center">Illimité</td>
+                </tr>
+                <tr>
+                    <td>Grille tarifaire détaillée</td>
+                    <td class="center"><i data-lucide="x" class="no" style="width:1rem"></i></td>
+                    <td class="center featured-col"><i data-lucide="check" class="yes" style="width:1rem"></i></td>
+                    <td class="center"><i data-lucide="check" class="yes" style="width:1rem"></i></td>
+                </tr>
+
+                <tr><td colspan="4" class="comparison-cat">Visibilité & marketing</td></tr>
+                <tr>
+                    <td>Mise en avant dans la recherche</td>
+                    <td class="center"><i data-lucide="x" class="no" style="width:1rem"></i></td>
+                    <td class="center featured-col">Standard</td>
+                    <td class="center">Prioritaire</td>
+                </tr>
+                <tr>
+                    <td>Badge "Vérifié"</td>
+                    <td class="center"><i data-lucide="x" class="no" style="width:1rem"></i></td>
+                    <td class="center featured-col"><i data-lucide="check" class="yes" style="width:1rem"></i></td>
+                    <td class="center"><i data-lucide="check" class="yes" style="width:1rem"></i></td>
+                </tr>
+                <tr>
+                    <td>Statistiques de profil</td>
+                    <td class="center">Basiques</td>
+                    <td class="center featured-col">Avancées</td>
+                    <td class="center">Premium</td>
+                </tr>
+                <tr>
+                    <td>Page profil personnalisable</td>
+                    <td class="center"><i data-lucide="x" class="no" style="width:1rem"></i></td>
+                    <td class="center featured-col"><i data-lucide="check" class="yes" style="width:1rem"></i></td>
+                    <td class="center"><i data-lucide="check" class="yes" style="width:1rem"></i></td>
+                </tr>
+
+                <tr><td colspan="4" class="comparison-cat">Gestion & support</td></tr>
+                <tr>
+                    <td>Commission sur transactions</td>
+                    <td class="center">15%</td>
+                    <td class="center featured-col">8%</td>
+                    <td class="center">5%</td>
+                </tr>
+                <tr>
+                    <td>Réponse aux demandes</td>
+                    <td class="center">Standard</td>
+                    <td class="center featured-col">Prioritaire</td>
+                    <td class="center">VIP 24/7</td>
+                </tr>
+                <tr>
+                    <td>Activités & certifications</td>
+                    <td class="center">3 max</td>
+                    <td class="center featured-col">10 max</td>
+                    <td class="center">Illimité</td>
+                </tr>
+                <tr>
+                    <td>Conseiller dédié</td>
+                    <td class="center"><i data-lucide="x" class="no" style="width:1rem"></i></td>
+                    <td class="center featured-col"><i data-lucide="x" class="no" style="width:1rem"></i></td>
+                    <td class="center"><i data-lucide="check" class="yes" style="width:1rem"></i></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- ═══ FAQ ═══ -->
+<section class="faq-section">
+    <div class="faq-inner">
+        <div class="section-header">
+            <h2>Questions <span class="accent">fréquentes</span></h2>
+            <p>Tout ce que vous devez savoir avant de vous lancer.</p>
+        </div>
+        <div class="faq-list" id="faqList"></div>
+    </div>
+</section>
+
+<!-- ═══ CTA FINAL ═══ -->
+<section class="cta-final">
+    <div class="cta-final-inner">
+        <div class="cta-final-content">
+            <h2>Prêt à <span class="accent">vous lancer</span> ?</h2>
+            <p>Rejoignez les centaines de prestataires qui font confiance à CamServices pour développer leur activité au Cameroun.</p>
+            <div class="cta-final-buttons">
+                <a href="../register.html" class="btn-large btn-large-gold"><i data-lucide="rocket"></i> Commencer gratuitement</a>
+                <a href="contact.html" class="btn-large btn-large-ghost"><i data-lucide="message-circle"></i> Nous contacter</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="footer">
+    <div class="footer-inner">
+<div class="footer-logo">
+    <a href="../marketplace/landing.html">
+        <img src="../asset/logo camservices.svg" alt="CamServices" class="footer-logo-img" onerror="this.style.display='none';this.parentElement.innerHTML='Cam<span class=accent>Services</span>'">
+    </a>
+</div>        <div class="footer-text">© 2025 CamServices — La marketplace des services au Cameroun</div>
+    </div>
+</footer>
+
+<script>
+    // ═══ DATA ═══
+    const PLANS = [
+        {
+            id: 'discovery',
+            icon: 'sparkles',
+            name: 'Découverte',
+            tagline: 'Pour démarrer et tester la plateforme',
+            priceMonthly: 0,
+            priceYearly: 0,
+            cta: 'Commencer gratuitement',
+            ctaStyle: 'default',
+            ctaLink: '../register.html',
+            features: [
+                { included: true, text: 'Jusqu\'à <span class="feature-highlight">3 services</span> publiés' },
+                { included: true, text: '2 photos par service' },
+                { included: true, text: 'Profil prestataire de base' },
+                { included: true, text: 'Réception des demandes clients' },
+                { included: true, text: '5 items dans le portfolio' },
+                { included: false, text: 'Mise en avant dans la recherche' },
+                { included: false, text: 'Badge Vérifié' },
+                { included: false, text: 'Grille tarifaire détaillée' }
+            ]
+        },
+        {
+            id: 'pro',
+            icon: 'zap',
+            name: 'Pro',
+            tagline: 'Pour les prestataires actifs qui veulent se développer',
+            priceMonthly: 9900,
+            priceYearly: 7920,
+            featured: true,
+            badge: 'Le plus populaire',
+            cta: 'Choisir Pro',
+            ctaStyle: 'primary',
+            ctaLink: '../register.html?plan=pro',
+            features: [
+                { included: true, text: 'Jusqu\'à <span class="feature-highlight">15 services</span> publiés' },
+                { included: true, text: '10 photos par service' },
+                { included: true, text: '<span class="feature-highlight">Badge Vérifié</span> après validation' },
+                { included: true, text: 'Mise en avant standard' },
+                { included: true, text: 'Grille tarifaire détaillée' },
+                { included: true, text: 'Statistiques avancées' },
+                { included: true, text: 'Portfolio jusqu\'à 30 items' },
+                { included: true, text: 'Commission réduite à <span class="feature-highlight">8%</span>' }
+            ]
+        },
+        {
+            id: 'premium',
+            icon: 'crown',
+            name: 'Premium',
+            tagline: 'Pour les pros et agences qui veulent dominer leur secteur',
+            priceMonthly: 24900,
+            priceYearly: 19920,
+            cta: 'Choisir Premium',
+            ctaStyle: 'dark',
+            ctaLink: '../register.html?plan=premium',
+            features: [
+                { included: true, text: '<span class="feature-highlight">Services illimités</span>' },
+                { included: true, text: 'Photos illimitées' },
+                { included: true, text: '<span class="feature-highlight">Mise en avant prioritaire</span>' },
+                { included: true, text: 'Portfolio illimité' },
+                { included: true, text: 'Statistiques premium + exports' },
+                { included: true, text: 'Support VIP 24/7' },
+                { included: true, text: '<span class="feature-highlight">Conseiller dédié</span>' },
+                { included: true, text: 'Commission réduite à <span class="feature-highlight">5%</span>' }
+            ]
+        }
+    ];
+
+    const FAQS = [
+        {
+            q: "Puis-je changer de formule à tout moment ?",
+            a: "Oui, vous pouvez passer à une formule supérieure ou inférieure à tout moment depuis votre tableau de bord. La nouvelle tarification s'applique immédiatement et nous calculons un prorata si nécessaire."
+        },
+        {
+            q: "Comment fonctionne la commission sur transactions ?",
+            a: "Une commission est prélevée uniquement sur les commandes confirmées et payées via la plateforme. Elle dépend de votre formule : 15% (Découverte), 8% (Pro) et 5% (Premium). Aucun frais caché."
+        },
+        {
+            q: "Quels moyens de paiement acceptez-vous ?",
+            a: "Nous acceptons Orange Money, MTN Mobile Money, les cartes bancaires (Visa, Mastercard) et les virements bancaires pour les abonnements annuels."
+        },
+        {
+            q: "Est-ce que je peux annuler mon abonnement ?",
+            a: "Oui, vous pouvez annuler votre abonnement à tout moment depuis votre profil. Aucun engagement, aucun frais d'annulation. Votre formule reste active jusqu'à la fin de la période payée."
+        },
+        {
+            q: "Le plan Découverte est-il vraiment gratuit ?",
+            a: "Absolument. Aucune carte de crédit requise, pas de période d'essai limitée. Vous pouvez publier jusqu'à 3 services gratuitement, à vie."
+        },
+        {
+            q: "Comment obtenir le badge Vérifié ?",
+            a: "Le badge Vérifié est inclus avec les formules Pro et Premium. Après votre abonnement, soumettez votre pièce d'identité et un justificatif d'activité ; notre équipe valide votre profil sous 24-48h."
+        },
+        {
+            q: "Y a-t-il un tarif spécial pour les entreprises ?",
+            a: "Oui, nous proposons des plans Entreprise sur devis pour les agences et structures gérant plusieurs prestataires. Contactez-nous pour une démonstration personnalisée."
+        }
+    ];
+
+    // ═══ STATE ═══
+    let currentBilling = 'monthly';
+
+    // ═══ RENDER ═══
+    function fmt(n) {
+        return new Intl.NumberFormat('fr-FR').format(n);
+    }
+
+    function renderPlans() {
+        const grid = document.getElementById('plansGrid');
+        let html = '';
+
+        PLANS.forEach(plan => {
+            const price = currentBilling === 'monthly' ? plan.priceMonthly : plan.priceYearly;
+            const isFree = price === 0;
+
+            html += `<div class="plan-card ${plan.featured ? 'featured' : ''}">`;
+
+            if (plan.badge) {
+                html += `<div class="plan-badge-top"><i data-lucide="star"></i> ${plan.badge}</div>`;
+            }
+
+            html += `
+                <div class="plan-icon"><i data-lucide="${plan.icon}"></i></div>
+                <h3 class="plan-name">${plan.name}</h3>
+                <p class="plan-tagline">${plan.tagline}</p>
+                <div class="plan-price-block">
+                    <div class="plan-price">
+            `;
+
+            if (isFree) {
+                html += `<span class="plan-price-amount">Gratuit</span>`;
+            } else {
+                html += `
+                    <span class="plan-price-amount">${fmt(price)}</span>
+                    <span class="plan-price-currency">XAF</span>
+                    <span class="plan-price-period">/ mois</span>
+                `;
+            }
+
+            html += `</div>`;
+
+            if (!isFree && currentBilling === 'yearly') {
+                html += `<div class="plan-price-note">Facturé annuellement (${fmt(price * 12)} XAF/an)</div>`;
+                html += `<span class="plan-price-old">${fmt(plan.priceMonthly)} XAF/mois</span>`;
+            } else if (isFree) {
+                html += `<div class="plan-price-note">Pour toujours, sans engagement</div>`;
+            } else {
+                html += `<div class="plan-price-note">Facturé mensuellement</div>`;
+            }
+
+            html += `</div><ul class="plan-features">`;
+
+            plan.features.forEach(f => {
+                if (f.included) {
+                    html += `<li><span class="check-icon"><i data-lucide="check"></i></span><span>${f.text}</span></li>`;
+                } else {
+                    html += `<li class="disabled"><span class="cross-icon"><i data-lucide="x"></i></span><span>${f.text}</span></li>`;
+                }
+            });
+
+            html += `</ul>`;
+            html += `<a href="${plan.ctaLink}" class="plan-cta plan-cta-${plan.ctaStyle}">${plan.cta} <i data-lucide="arrow-right"></i></a>`;
+            html += `</div>`;
+        });
+
+        grid.innerHTML = html;
+        lucide.createIcons();
+    }
+
+    function renderFaq() {
+        const list = document.getElementById('faqList');
+        let html = '';
+
+        FAQS.forEach((item, i) => {
+            html += `
+                <div class="faq-item" id="faq-${i}">
+                    <div class="faq-question" onclick="toggleFaq(${i})">
+                        <span>${item.q}</span>
+                        <span class="chevron"><i data-lucide="plus"></i></span>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-inner">${item.a}</div>
+                    </div>
+                </div>
+            `;
+        });
+
+        list.innerHTML = html;
+        lucide.createIcons();
+    }
+
+    function toggleFaq(i) {
+        const item = document.getElementById('faq-' + i);
+        const wasOpen = item.classList.contains('open');
+
+        document.querySelectorAll('.faq-item').forEach(el => el.classList.remove('open'));
+
+        if (!wasOpen) item.classList.add('open');
+    }
+
+    function setBilling(mode) {
+        currentBilling = mode;
+        document.getElementById('btnMonthly').classList.toggle('active', mode === 'monthly');
+        document.getElementById('btnYearly').classList.toggle('active', mode === 'yearly');
+        renderPlans();
+    }
+
+    // ═══ INIT ═══
+    document.addEventListener('DOMContentLoaded', () => {
+        lucide.createIcons();
+        renderPlans();
+        renderFaq();
+    });
+</script>
+
+</body>
+</html>
