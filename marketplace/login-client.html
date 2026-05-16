@@ -108,7 +108,7 @@
             </button>
         </div>
         <div class="auth-footer">
-            Pas encore de compte ? <a href="register-client.html">Inscrivez-vous gratuitement</a>
+            Pas encore de compte ? <a href="/marketplace/register-client.html">Inscrivez-vous gratuitement</a>
         </div>
     </div>
 </div>
@@ -116,59 +116,78 @@
 <script>
     var SUPABASE_URL  = 'https://cwubxwbzzuigctvgdygv.supabase.co';
 var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dWJ4d2J6enVpZ2N0dmdkeWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzI2MTgsImV4cCI6MjA5MzgwODYxOH0.0mwBNo_S5yItQQjq2at9GNRN74ooZRBJIbZGDH9L2uk';
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-   
-    var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-    lucide.createIcons();
+lucide.createIcons();
 
-    function showAlert(msg, type) {
-        var a = document.getElementById('formAlert');
-        a.innerHTML = '<i data-lucide="'+(type==='error'?'alert-circle':'check-circle')+'" style="width:1rem;height:1rem"></i> '+msg;
-        a.className = 'alert '+type; a.style.display='flex'; lucide.createIcons();
-    }
+function showAlert(msg, type) {
+    var a = document.getElementById('formAlert');
+    if (!a) return;
+    a.innerHTML = '<i data-lucide="'+(type==='error'?'alert-circle':'check-circle')+'" style="width:1rem;height:1rem"></i> '+msg;
+    a.className = 'alert '+type; a.style.display='flex'; lucide.createIcons();
+}
 
-    // Charger email mémorisé
-    var savedEmail = localStorage.getItem('client_email');
-    if (savedEmail) document.getElementById('emailInput').value = savedEmail;
+// Email mémorisé
+var savedEmail = localStorage.getItem('client_email');
+if (savedEmail) {
+    var emailInput = document.getElementById('emailInput');
+    if (emailInput) emailInput.value = savedEmail;
+}
 
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        var email = document.getElementById('emailInput').value.trim();
-        var password = document.getElementById('passwordInput').value;
-        var btn = document.getElementById('loginBtn');
+// Login email/mdp
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var email = document.getElementById('emailInput').value.trim();
+    var password = document.getElementById('passwordInput').value;
+    var btn = document.getElementById('loginBtn');
 
-        if (!email || !password) { showAlert('Veuillez remplir tous les champs.', 'error'); return; }
+    if (!email || !password) { showAlert('Veuillez remplir tous les champs.', 'error'); return; }
 
-        btn.disabled = true; btn.textContent = 'Connexion...';
-        localStorage.setItem('client_email', email);
+    btn.disabled = true; btn.textContent = 'Connexion...';
+    localStorage.setItem('client_email', email);
 
-        try {
-            var { data, error } = await sb.auth.signInWithPassword({ email: email, password: password });
-            
-            if (error) {
-                var msg = error.message;
-                if (msg.indexOf('Invalid') !== -1) msg = 'Email ou mot de passe incorrect.';
-                else if (msg.indexOf('not confirmed') !== -1) msg = 'Email non confirmé. Vérifiez vos mails.';
-                showAlert(msg, 'error');
-                btn.disabled = false; btn.textContent = 'Se connecter';
-                return;
-            }
-
-            if (data.user) {
-                // ✅ Vérifier/Créer le profil client dans users_clients
-                await ensureClientProfile(data.user);
-                
-                showAlert('✅ Connexion réussie !', 'success');
-                setTimeout(function() { window.location.href = 'services.html'; }, 1000);
-            }
-        } catch(err) {
-            showAlert('Erreur de connexion.', 'error');
+    try {
+        var { data, error } = await sb.auth.signInWithPassword({ email: email, password: password });
+        
+        if (error) {
+            var msg = error.message;
+            if (msg.indexOf('Invalid') !== -1) msg = 'Email ou mot de passe incorrect.';
+            else if (msg.indexOf('not confirmed') !== -1) msg = 'Email non confirmé. Vérifiez vos mails.';
+            showAlert(msg, 'error');
             btn.disabled = false; btn.textContent = 'Se connecter';
+            return;
         }
-    });
 
-    // ✅ S'assurer que le profil client existe
-    async function ensureClientProfile(user) {
+        if (data.user) {
+            await ensureClientProfile(data.user);
+            showAlert('✅ Connexion réussie !', 'success');
+            setTimeout(function() { window.location.href = '/marketplace/services.html'; }, 1000);
+        }
+    } catch(err) {
+        showAlert('Erreur de connexion.', 'error');
+        btn.disabled = false; btn.textContent = 'Se connecter';
+    }
+});
+
+// ✅ Connexion Google
+async function loginWithGoogle() {
+    try {
+        var { data, error } = await sb.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: window.location.origin + '/marketplace/services.html'
+            }
+        });
+        if (error) showAlert('Erreur Google: ' + error.message, 'error');
+    } catch(err) { 
+        showAlert('Erreur connexion Google.', 'error'); 
+    }
+}
+
+// ✅ Créer le profil client après connexion Google
+async function ensureClientProfile(user) {
+    if (!user) return;
+    try {
         var { data: existing } = await sb
             .from('users_clients')
             .select('id')
@@ -176,27 +195,19 @@ var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
             .single();
 
         if (!existing) {
-            // Créer le profil client s'il n'existe pas
             await sb.from('users_clients').insert({
                 auth_id: user.id,
-                full_name: user.user_metadata?.full_name || 'Client',
+                full_name: user.user_metadata?.full_name || user.email || 'Client',
                 phone: user.user_metadata?.phone || '',
                 email: user.email,
                 status: 'active'
             });
             console.log('✅ Profil client créé');
         }
+    } catch (err) {
+        console.warn('Erreur création profil client:', err);
     }
-
-    async function loginWithGoogle() {
-        try {
-            var { error } = await sb.auth.signInWithOAuth({
-                provider: 'google',
-                options: { redirectTo: window.location.origin + '/services.html' }
-            });
-            if (error) showAlert('Erreur Google: ' + error.message, 'error');
-        } catch(err) { showAlert('Erreur connexion Google.', 'error'); }
-    }
+}
 </script>
 </body>
 </html>
