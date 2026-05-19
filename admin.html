@@ -2,11 +2,12 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administration — warap</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Administration — CamServices</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
         :root {
             --primary: #22C55E; --primary-hover: #16A34A; --primary-light: #F0FDF4; --primary-dim: rgba(34,197,94,.08);
@@ -17,14 +18,19 @@
             --shadow: 0 4px 20px rgba(0,0,0,.06); --shadow-lg: 0 12px 40px rgba(0,0,0,.1);
             --radius-sm: 8px; --radius: 12px; --radius-lg: 16px; --radius-xl: 20px;
             --sidebar-w: 240px; --max: 1400px;
+            --bottom-nav-h: 72px;
         }
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; background:var(--surface); color:var(--text-primary); display:flex; min-height:100vh; -webkit-font-smoothing:antialiased; }
+        
         @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
         @keyframes spin { to{transform:rotate(360deg)} }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+        @keyframes slideUpBottom { from{transform:translateY(100%)} to{transform:translateY(0)} }
+        @keyframes slideUpModal { from{opacity:0;transform:translateY(30px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+        @keyframes slideUpMobile { from{opacity:0;transform:translateY(60px)} to{opacity:1;transform:translateY(0)} }
 
-        /* ═══ SIDEBAR ═══ */
+        /* ═══ SIDEBAR (Desktop) ═══ */
         .sidebar { width:var(--sidebar-w); background:var(--bg); border-right:1px solid var(--border-light); display:flex; flex-direction:column; position:fixed; top:0; left:0; bottom:0; z-index:100; padding:20px 14px; overflow-y:auto; }
         .sidebar-logo { font-weight:800; font-size:1rem; color:var(--text-primary); text-decoration:none; display:flex; align-items:center; gap:6px; margin-bottom:28px; padding:0 8px; }
         .sidebar-logo span { color:var(--primary); }
@@ -34,6 +40,8 @@
         .sidebar-nav a.active { background:var(--primary-dim); color:var(--primary); font-weight:600; }
         .sidebar-nav a i { width:1rem; height:1rem; }
         .sidebar-nav .badge { margin-left:auto; background:var(--accent); color:#fff; font-size:.625rem; padding:2px 7px; border-radius:10px; }
+        .sidebar-logout { display:flex; align-items:center; gap:8px; padding:10px 12px; color:var(--error); text-decoration:none; font-size:.8125rem; font-weight:500; border-radius:var(--radius-sm); transition:all .2s; }
+        .sidebar-logout:hover { background:var(--error-light); }
 
         /* ═══ MAIN ═══ */
         .main-content { flex:1; margin-left:var(--sidebar-w); padding:28px 28px 64px; max-width:100%; }
@@ -56,9 +64,9 @@
         .section-title { font-weight:700; font-size:1rem; display:flex; align-items:center; gap:8px; }
         .section-title i { color:var(--primary); }
 
-        .table-wrapper { overflow-x:auto; }
-        table { width:100%; border-collapse:collapse; font-size:.78rem; }
-        th { text-align:left; font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); padding:10px 12px; border-bottom:1px solid var(--border); white-space:nowrap; }
+        .table-wrapper { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+        table { width:100%; border-collapse:collapse; font-size:.78rem; min-width:700px; }
+        th { text-align:left; font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); padding:10px 12px; border-bottom:1px solid var(--border); white-space:nowrap; background:var(--surface); }
         td { padding:10px 12px; border-bottom:1px solid var(--border-light); }
         tr:hover td { background:var(--surface); }
 
@@ -81,33 +89,121 @@
         .btn-warning { background:var(--accent); color:#fff; }
         .action-group { display:flex; gap:4px; flex-wrap:wrap; }
 
-        .tabs { display:flex; gap:2px; border-bottom:1px solid var(--border); margin-bottom:18px; overflow-x:auto; }
+        .tabs { display:flex; gap:2px; border-bottom:1px solid var(--border); margin-bottom:18px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
         .tab { padding:9px 16px; font-size:.78rem; font-weight:500; color:var(--text-muted); cursor:pointer; border-bottom:2px solid transparent; background:none; border-top:none; border-left:none; border-right:none; font-family:'Inter',sans-serif; white-space:nowrap; }
         .tab.active { color:var(--primary); border-bottom-color:var(--primary); font-weight:600; }
 
         .live-dot { width:7px; height:7px; background:var(--primary); border-radius:50%; animation:pulse 2s infinite; display:inline-block; }
 
-        .search-input { padding:7px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.78rem; outline:none; max-width:220px; }
+        .search-input { padding:7px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.78rem; outline:none; max-width:100%; width:100%; }
         .search-input:focus { border-color:var(--primary); }
 
         .tab-content { display:none; animation:fadeUp .3s ease; }
         .tab-content.active { display:block; }
 
-        @media (max-width:900px) {
-            .sidebar { display:none; }
-            .main-content { margin-left:0; padding:20px 14px; }
-            .stats-grid { grid-template-columns:repeat(2,1fr); }
+        .empty-state { text-align:center; padding:40px 20px; color:var(--text-muted); }
+        .empty-state i { display:block; margin:0 auto 12px; }
+        .loading-spinner { text-align:center; padding:40px; }
+        .spinner { width:28px; height:28px; border:3px solid var(--border-light); border-top-color:var(--primary); border-radius:50%; margin:0 auto 12px; animation:spin .7s linear infinite; }
+
+        /* ═══ MODAL ═══ */
+        .modal-overlay { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,.5); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:20px; animation:fadeIn .2s; }
+        .modal-content { background:#fff; border-radius:var(--radius-xl); padding:28px; width:100%; max-width:600px; max-height:85vh; overflow-y:auto; box-shadow:var(--shadow-lg); animation:slideUpModal .35s ease; }
+        .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+        .modal-title { font-weight:700; font-size:1.1rem; }
+        .modal-close { background:none; border:none; cursor:pointer; color:var(--text-muted); padding:6px; border-radius:var(--radius-sm); }
+        .modal-close:hover { background:var(--surface); color:var(--text-primary); }
+
+        /* ═══════════════════════════════════════════
+           BOTTOM NAVBAR MOBILE ADMIN
+           ═══════════════════════════════════════════ */
+        .bottom-navbar {
+            display: none;
+            position: fixed; bottom:0; left:0; right:0; z-index:150;
+            background: rgba(255,255,255,0.95); backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top:1px solid var(--border-light);
+            padding:4px 2px; padding-bottom:max(4px, env(safe-area-inset-bottom));
+            box-shadow:0 -4px 20px rgba(0,0,0,0.06);
+            animation:slideUpBottom .4s ease;
         }
-        @media (max-width:500px) {
-            .stats-grid { grid-template-columns:1fr; }
+        .bottom-nav-list { display:flex; align-items:center; justify-content:space-around; list-style:none; margin:0; padding:0; max-width:500px; margin:0 auto; }
+        .bottom-nav-item { flex:1; text-align:center; }
+        .bottom-nav-link {
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+            gap:2px; padding:5px 3px; text-decoration:none;
+            color:var(--text-muted); font-size:.5625rem; font-weight:500;
+            font-family:'Inter',sans-serif; transition:all .2s; border-radius:10px;
+            position:relative; min-height:44px; -webkit-tap-highlight-color:transparent;
+        }
+        .bottom-nav-link i { width:1.25rem; height:1.25rem; transition:all .2s; }
+        .bottom-nav-link span { line-height:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+        .bottom-nav-link.active { color:var(--primary); font-weight:600; }
+        .bottom-nav-link.active::before { content:''; position:absolute; top:0; left:50%; transform:translateX(-50%); width:20px; height:2px; background:var(--primary); border-radius:0 0 2px 2px; }
+        .bottom-nav-link:active { transform:scale(.95); background:var(--border-light); }
+
+        .more-menu-dropdown {
+            position:fixed; bottom:calc(var(--bottom-nav-h) + 8px + env(safe-area-inset-bottom));
+            right:8px; background:#fff; border:1px solid var(--border-light);
+            border-radius:16px; box-shadow:0 8px 32px rgba(0,0,0,.12);
+            padding:6px; z-index:160; min-width:160px; animation:fadeUp .3s ease;
+        }
+        .more-menu-dropdown a {
+            display:flex; align-items:center; gap:10px; padding:10px 14px;
+            text-decoration:none; color:var(--text-primary); font-size:.8125rem;
+            font-weight:500; font-family:'Inter',sans-serif; border-radius:10px; transition:background .2s;
+        }
+        .more-menu-dropdown a:hover { background:var(--surface); }
+        .more-menu-dropdown a i { width:1.1rem; height:1.1rem; color:var(--text-muted); }
+
+        /* ═══ RESPONSIVE ═══ */
+        @media (min-width:1024px) {
+            .bottom-navbar { display:none !important; }
+            .menu-toggle { display:none !important; }
+            .sidebar { display:flex !important; }
+        }
+
+        @media (max-width:1023px) {
+            .sidebar { display:none !important; }
+            .bottom-navbar { display:block; }
+            .main-content { margin-left:0 !important; padding:20px 14px; padding-bottom:calc(var(--bottom-nav-h) + 20px + env(safe-area-inset-bottom)) !important; }
+            .menu-toggle { display:flex; position:fixed; top:12px; left:12px; z-index:101; background:#fff; border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px; cursor:pointer; font-family:'Inter',sans-serif; font-size:.75rem; font-weight:600; color:var(--text-primary); align-items:center; gap:6px; box-shadow:var(--shadow); }
+            .stats-grid { grid-template-columns:repeat(2,1fr); gap:10px; }
+            .stat-card { padding:16px; }
+            .stat-value { font-size:1.25rem; }
+            .page-title { font-size:1.35rem; }
+            .modal-content { max-width:95%; margin:0; }
+        }
+
+        @media (max-width:767px) {
+            .main-content { padding:16px 10px; padding-bottom:calc(var(--bottom-nav-h) + 16px + env(safe-area-inset-bottom)) !important; padding-top:56px; }
+            .stats-grid { grid-template-columns:repeat(2,1fr); gap:8px; }
+            .section-card { padding:16px; }
+            .modal-overlay { padding:12px; align-items:flex-end; }
+            .modal-content { max-width:100%; border-radius:20px 20px 0 0; padding:24px 18px; max-height:88vh; animation:slideUpMobile .35s ease; }
+            .bottom-nav-link { font-size:.5rem; gap:1px; }
+            .bottom-nav-link i { width:1.15rem; height:1.15rem; }
+        }
+
+        @media (max-width:480px) {
+            .main-content { padding:12px 6px; padding-bottom:calc(var(--bottom-nav-h) + 12px + env(safe-area-inset-bottom)) !important; padding-top:52px; }
+            .stats-grid { grid-template-columns:1fr; gap:8px; }
+            .page-title { font-size:1.2rem; }
+            .stat-card { padding:14px; }
+            .stat-value { font-size:1.1rem; }
+            .btn { padding:5px 10px; font-size:.68rem; }
+            .tab { padding:7px 12px; font-size:.7rem; }
+            .modal-content { padding:20px 14px; border-radius:18px 18px 0 0; }
+            .bottom-nav-link { font-size:.45rem; }
+            .bottom-nav-link i { width:1.1rem; height:1.1rem; }
         }
     </style>
 </head>
 <body>
 
-<!-- ═══ SIDEBAR ═══ -->
-<aside class="sidebar">
-    <a href="#" class="sidebar-logo">⚙️ Admin <span>warap</span></a>
+<!-- ═══ SIDEBAR (Desktop) ═══ -->
+<aside class="sidebar" id="sidebar">
+    <a href="#" class="sidebar-logo">⚙️ Admin <span>CamServices</span></a>
     <ul class="sidebar-nav" id="sidebarNav">
         <li><a href="#" class="active" data-tab="dashboard"><i data-lucide="layout-dashboard"></i> Tableau de bord</a></li>
         <li><a href="#" data-tab="users"><i data-lucide="users"></i> Utilisateurs <span class="badge" id="pendingBadge">0</span></a></li>
@@ -120,11 +216,47 @@
         <li><a href="#" data-tab="analytics"><i data-lucide="bar-chart-3"></i> Analytics</a></li>
         <li><a href="#" data-tab="support"><i data-lucide="headphones"></i> Support</a></li>
     </ul>
-    <a href="../landing.html" onclick="logout()" style="display:flex;align-items:center;gap:8px;padding:10px;color:var(--error);text-decoration:none;font-size:.8125rem;font-weight:500"><i data-lucide="log-out" style="width:1rem;height:1rem"></i> Déconnexion</a>
+    <a href="../landing.html" onclick="logout()" class="sidebar-logout"><i data-lucide="log-out" style="width:1rem;height:1rem"></i> Déconnexion</a>
 </aside>
+
+<!-- ═══ BOUTON MENU MOBILE ═══ -->
+<button class="menu-toggle" id="menuToggle" onclick="toggleAdminMenu()" style="display:none">
+    <i data-lucide="menu" style="width:1rem;height:1rem"></i> Menu
+</button>
 
 <!-- ═══ MAIN ═══ -->
 <main class="main-content" id="mainContent"></main>
+
+<!-- ═══ BOTTOM NAVBAR (Mobile) ═══ -->
+<nav class="bottom-navbar" id="bottomNavbar" aria-label="Navigation admin">
+    <div class="bottom-nav-list">
+        <div class="bottom-nav-item">
+            <a href="#" class="bottom-nav-link active" data-tab="dashboard" aria-label="Dashboard">
+                <i data-lucide="layout-dashboard"></i><span>Accueil</span>
+            </a>
+        </div>
+        <div class="bottom-nav-item">
+            <a href="#" class="bottom-nav-link" data-tab="users" aria-label="Utilisateurs">
+                <i data-lucide="users"></i><span>Users</span>
+            </a>
+        </div>
+        <div class="bottom-nav-item">
+            <a href="#" class="bottom-nav-link" data-tab="orders" aria-label="Commandes">
+                <i data-lucide="shopping-bag"></i><span>Cmd</span>
+            </a>
+        </div>
+        <div class="bottom-nav-item">
+            <a href="#" class="bottom-nav-link" data-tab="verification" aria-label="Vérif">
+                <i data-lucide="shield-check"></i><span>Vérif</span>
+            </a>
+        </div>
+        <div class="bottom-nav-item">
+            <a href="#" class="bottom-nav-link" id="moreMenuTrigger" data-tab="more" aria-label="Plus">
+                <i data-lucide="more-horizontal"></i><span>Plus</span>
+            </a>
+        </div>
+    </div>
+</nav>
 
 <script>
 const SUPABASE_URL = 'https://cwubxwbzzuigctvgdygv.supabase.co';
@@ -141,16 +273,106 @@ async function init() {
     const { data: profile } = await sb.from('users').select('role').eq('id', user.id).single();
     if (!profile || profile.role !== 'admin') { alert('Accès refusé'); window.location.href = '../landing.html'; return; }
     
+    // Sidebar navigation
     document.querySelectorAll('#sidebarNav a').forEach(a => {
         a.addEventListener('click', function(e) {
             e.preventDefault();
-            document.querySelectorAll('#sidebarNav a').forEach(x => x.classList.remove('active'));
-            this.classList.add('active');
-            currentTab = this.dataset.tab;
-            loadTab(currentTab);
+            setActiveTab(this.dataset.tab);
         });
     });
+    
+    // Bottom navbar navigation
+    document.querySelectorAll('.bottom-nav-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const tab = this.dataset.tab;
+            if (tab === 'more') {
+                toggleMoreMenu();
+                return;
+            }
+            setActiveTab(tab);
+        });
+    });
+    
+    // Menu mobile
+    document.getElementById('menuToggle').addEventListener('click', toggleAdminMenu);
+    
     loadTab('dashboard');
+}
+
+function setActiveTab(tab) {
+    currentTab = tab;
+    // Sidebar
+    document.querySelectorAll('#sidebarNav a').forEach(x => x.classList.remove('active'));
+    const sidebarLink = document.querySelector(`#sidebarNav a[data-tab="${tab}"]`);
+    if (sidebarLink) sidebarLink.classList.add('active');
+    // Bottom nav
+    document.querySelectorAll('.bottom-nav-link').forEach(x => x.classList.remove('active'));
+    const bottomLink = document.querySelector(`.bottom-nav-link[data-tab="${tab}"]`);
+    if (bottomLink) bottomLink.classList.add('active');
+    closeMoreMenu();
+    loadTab(tab);
+}
+
+// ═══ MENU MOBILE ═══
+let adminMenuOpen = false;
+function toggleAdminMenu() {
+    const sidebar = document.getElementById('sidebar');
+    if (!adminMenuOpen) {
+        sidebar.style.display = 'flex';
+        sidebar.style.position = 'fixed';
+        sidebar.style.top = '0';
+        sidebar.style.left = '0';
+        sidebar.style.bottom = '0';
+        sidebar.style.zIndex = '300';
+        sidebar.style.width = '280px';
+        sidebar.style.boxShadow = '4px 0 24px rgba(0,0,0,.15)';
+        sidebar.style.animation = 'slideInLeft .3s ease';
+        adminMenuOpen = true;
+    } else {
+        sidebar.style.display = 'none';
+        adminMenuOpen = false;
+    }
+}
+
+// ═══ MORE MENU ═══
+let moreMenuOpen = false;
+function toggleMoreMenu() {
+    if (moreMenuOpen) { closeMoreMenu(); return; }
+    openMoreMenu();
+}
+function openMoreMenu() {
+    closeMoreMenu();
+    const menu = document.createElement('div');
+    menu.className = 'more-menu-dropdown';
+    menu.id = 'moreMenuDropdown';
+    const items = [
+        { tab:'disputes', icon:'alert-triangle', label:'Litiges' },
+        { tab:'payments', icon:'banknote', label:'Paiements' },
+        { tab:'commissions', icon:'percent', label:'Commissions' },
+        { tab:'security', icon:'shield', label:'Sécurité' },
+        { tab:'analytics', icon:'bar-chart-3', label:'Analytics' },
+        { tab:'support', icon:'headphones', label:'Support' }
+    ];
+    menu.innerHTML = items.map(i => `<a href="#" data-tab="${i.tab}"><i data-lucide="${i.icon}"></i> ${i.label}</a>`).join('');
+    document.body.appendChild(menu);
+    menu.querySelectorAll('a').forEach(a => a.addEventListener('click', function(e) {
+        e.preventDefault();
+        setActiveTab(this.dataset.tab);
+    }));
+    lucide.createIcons();
+    moreMenuOpen = true;
+    setTimeout(() => document.addEventListener('click', closeMoreMenuOnClickOutside), 0);
+}
+function closeMoreMenu() {
+    const m = document.getElementById('moreMenuDropdown'); if (m) m.remove();
+    moreMenuOpen = false;
+    document.removeEventListener('click', closeMoreMenuOnClickOutside);
+}
+function closeMoreMenuOnClickOutside(e) {
+    const m = document.getElementById('moreMenuDropdown');
+    const t = document.getElementById('moreMenuTrigger');
+    if (m && !m.contains(e.target) && e.target !== t) closeMoreMenu();
 }
 
 async function logout() { await sb.auth.signOut(); window.location.href = '../landing.html'; }
@@ -163,9 +385,9 @@ async function loadTab(tab) {
     const c = document.getElementById('mainContent');
     switch(tab) {
         case 'dashboard': c.innerHTML = await renderDashboard(); break;
-        case 'users': c.innerHTML = await renderUsers(); break;
-        case 'verification': c.innerHTML = await renderVerification(); break;
-        case 'orders': c.innerHTML = await renderOrders(); break;
+        case 'users': c.innerHTML = await renderUsers(); loadUsersData(); break;
+        case 'verification': c.innerHTML = await renderVerification(); loadVerificationData(); break;
+        case 'orders': c.innerHTML = await renderOrders(); loadOrdersData(); break;
         case 'disputes': c.innerHTML = renderDisputes(); break;
         case 'payments': c.innerHTML = renderPayments(); break;
         case 'commissions': c.innerHTML = renderCommissions(); break;
@@ -174,9 +396,6 @@ async function loadTab(tab) {
         case 'support': c.innerHTML = renderSupport(); break;
     }
     lucide.createIcons();
-    if (tab === 'users') { loadUsersData(); }
-    if (tab === 'verification') { loadVerificationData(); }
-    if (tab === 'orders') { loadOrdersData(); }
 }
 
 // ═══ DASHBOARD ═══
@@ -191,31 +410,20 @@ async function renderDashboard() {
         sb.from('orders').select('*',{count:'exact',head:true}).eq('status','completed'),
         sb.from('orders').select('*',{count:'exact',head:true}).eq('status','cancelled')
     ]);
-
     return `<div class="page-header"><h1 class="page-title">Tableau de <span>bord</span></h1></div>
     <div class="stats-grid">
         ${stat('users','#3B82F6','#EFF6FF',users.count||0,'Utilisateurs totaux')}
         ${stat('briefcase','#22C55E','#F0FDF4',providers.count||0,'Prestataires')}
         ${stat('user-check','#7C3AED','#F5F3FF',clients.count||0,'Clients')}
-        ${stat('clock','#F59E0B','#FFFBEB',pending.count||0,'En attente validation','','<div class="stat-trend up">⚠ Action requise</div>')}
+        ${stat('clock','#F59E0B','#FFFBEB',pending.count||0,'En attente','<div class="stat-trend up">⚠ Action requise</div>')}
         ${stat('package','#EF4444','#FEF2F2',services.count||0,'Services')}
         ${stat('shopping-bag','#3B82F6','#EFF6FF',orders.count||0,'Commandes')}
-        ${stat('check-circle','#22C55E','#F0FDF4',completedOrders.count||0,'Missions terminées','','<div class="stat-trend up">↑ Taux réussite</div>')}
-        ${stat('x-circle','#EF4444','#FEF2F2',cancelledOrders.count||0,'Annulations','','<div class="stat-trend down">↓ À surveiller</div>')}
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-        <div class="section-card">
-            <div class="section-header"><h3 class="section-title"><i data-lucide="activity"></i> Activité récente</h3></div>
-            <p style="color:var(--text-muted);font-size:.8125rem"><span class="live-dot"></span> Système opérationnel · ${new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}</p>
-        </div>
-        <div class="section-card">
-            <div class="section-header"><h3 class="section-title"><i data-lucide="shield"></i> Sécurité</h3></div>
-            <p style="color:var(--text-muted);font-size:.8125rem">✅ Aucun signalement actif · 0 litiges ouverts</p>
-        </div>
+        ${stat('check-circle','#22C55E','#F0FDF4',completedOrders.count||0,'Terminées','<div class="stat-trend up">↑ Taux réussite</div>')}
+        ${stat('x-circle','#EF4444','#FEF2F2',cancelledOrders.count||0,'Annulations','<div class="stat-trend down">↓ À surveiller</div>')}
     </div>`;
 }
 
-function stat(icon,color,bg,val,label,extra='',trend='') {
+function stat(icon,color,bg,val,label,trend='') {
     return `<div class="stat-card"><div class="stat-icon" style="background:${bg};color:${color}"><i data-lucide="${icon}" style="width:1.1rem;height:1.1rem"></i></div><div class="stat-value">${val}</div><div class="stat-label">${label}</div>${trend}</div>`;
 }
 
@@ -234,7 +442,6 @@ async function renderUsers() {
 }
 
 let userFilter = 'prestataire';
-async function loadUsersData() { filterUserTable(userFilter); }
 async function filterUserTable(filter, btn) {
     if (filter) userFilter = filter;
     if (btn) { document.querySelectorAll('#mainContent .tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active'); }
@@ -260,38 +467,26 @@ async function filterUserTable(filter, btn) {
     lucide.createIcons();
 }
 
+async function loadUsersData() { filterUserTable(userFilter); }
+
 // ═══ VERIFICATION ═══
 async function renderVerification() {
     return `<div class="page-header"><h1 class="page-title">Vérification des <span>prestataires</span></h1></div>
-    <div class="section-card">
-        <div class="section-header"><h3 class="section-title"><i data-lucide="clock"></i> En attente de validation</h3></div>
-        <div class="table-wrapper" id="verificationTable"><div class="loading-spinner"><div class="spinner"></div></div></div>
-    </div>`;
+    <div class="section-card"><div class="section-header"><h3 class="section-title"><i data-lucide="clock"></i> En attente de validation</h3></div>
+    <div class="table-wrapper" id="verificationTable"><div class="loading-spinner"><div class="spinner"></div></div></div></div>`;
 }
 async function loadVerificationData() {
     const { data } = await sb.from('users').select('*').eq('role','prestataire').eq('verification_status','pending').order('created_at');
     document.getElementById('verificationTable').innerHTML = data?.length ? `<table><thead><tr><th>Prestataire</th><th>Email</th><th>Téléphone</th><th>Ville</th><th>Document</th><th>Date</th><th>Actions</th></tr></thead><tbody>${data.map(u=>`
-        <tr>
-            <td><div class="user-cell"><div class="user-avatar">${(u.full_name||'?')[0].toUpperCase()}</div><strong>${esc(u.full_name)}</strong></div></td>
-            <td>${esc(u.email)}</td><td>${esc(u.phone||'—')}</td><td>${esc(u.city||'—')}</td>
-            <td>${u.id_document_url?`<a href="${u.id_document_url}" target="_blank" class="btn btn-outline">Voir doc</a>`:'Aucun'}</td>
-            <td>${fmtDate(u.created_at)}</td>
-            <td><div class="action-group">
-                <button class="btn btn-primary" onclick="verifyProvider('${u.id}')"><i data-lucide="check" style="width:.7rem;height:.7rem"></i> Valider</button>
-                <button class="btn btn-outline" onclick="viewProfile('${u.id}')"><i data-lucide="eye" style="width:.7rem;height:.7rem"></i></button>
-                <button class="btn btn-danger" onclick="blockUser('${u.id}')"><i data-lucide="x" style="width:.7rem;height:.7rem"></i> Refuser</button>
-            </div></td>
-        </tr>`).join('')}</tbody></table>` : '<div class="empty-state">✅ Tous les prestataires sont vérifiés.</div>';
+        <tr><td><div class="user-cell"><div class="user-avatar">${(u.full_name||'?')[0].toUpperCase()}</div><strong>${esc(u.full_name)}</strong></div></td><td>${esc(u.email)}</td><td>${esc(u.phone||'—')}</td><td>${esc(u.city||'—')}</td><td>${u.id_document_url?`<a href="${u.id_document_url}" target="_blank" class="btn btn-outline">Voir</a>`:'Aucun'}</td><td>${fmtDate(u.created_at)}</td><td><div class="action-group"><button class="btn btn-primary" onclick="verifyProvider('${u.id}')"><i data-lucide="check" style="width:.7rem;height:.7rem"></i></button><button class="btn btn-outline" onclick="viewProfile('${u.id}')"><i data-lucide="eye" style="width:.7rem;height:.7rem"></i></button><button class="btn btn-danger" onclick="blockUser('${u.id}')"><i data-lucide="x" style="width:.7rem;height:.7rem"></i></button></div></td></tr>`).join('')}</tbody></table>` : '<div class="empty-state"><i data-lucide="check-circle" style="color:var(--primary);width:2rem;height:2rem"></i><p>Tous les prestataires sont vérifiés.</p></div>';
     lucide.createIcons();
 }
 
 // ═══ ORDERS ═══
 async function renderOrders() {
     return `<div class="page-header"><h1 class="page-title">Gestion des <span>commandes</span></h1></div>
-    <div class="section-card">
-        <div class="section-header"><h3 class="section-title"><i data-lucide="shopping-bag"></i> Toutes les commandes</h3></div>
-        <div class="table-wrapper" id="ordersTable"><div class="loading-spinner"><div class="spinner"></div></div></div>
-    </div>`;
+    <div class="section-card"><div class="section-header"><h3 class="section-title"><i data-lucide="shopping-bag"></i> Toutes les commandes</h3></div>
+    <div class="table-wrapper" id="ordersTable"><div class="loading-spinner"><div class="spinner"></div></div></div></div>`;
 }
 async function loadOrdersData() {
     const { data } = await sb.from('orders').select('*, service:service_id(title)').order('created_at',{ascending:false}).limit(50);
@@ -300,7 +495,7 @@ async function loadOrdersData() {
     lucide.createIcons();
 }
 
-// ═══ AUTRES ONGLETS (simplifiés) ═══
+// ═══ AUTRES ONGLETS ═══
 function renderDisputes() { return `<div class="page-header"><h1 class="page-title">Centre de <span>litiges</span></h1></div><div class="section-card"><div class="empty-state"><i data-lucide="check-circle" style="width:2rem;height:2rem;color:var(--primary)"></i><p>Aucun litige en cours.</p></div></div>`; }
 function renderPayments() { return `<div class="page-header"><h1 class="page-title">Gestion des <span>paiements</span></h1></div><div class="section-card"><div class="empty-state"><p>Historique des transactions · Module à venir</p></div></div>`; }
 function renderCommissions() { return `<div class="page-header"><h1 class="page-title"><span>Commissions</span></h1></div><div class="stats-grid">${stat('percent','#22C55E','#F0FDF4','10%','Commission globale')}${stat('settings','#3B82F6','#EFF6FF','Configurable','Par catégorie')}</div>`; }
@@ -308,8 +503,7 @@ function renderSecurity() { return `<div class="page-header"><h1 class="page-tit
 async function renderAnalytics() {
     const { count: svc } = await sb.from('services').select('*',{count:'exact',head:true});
     const { count: ord } = await sb.from('orders').select('*',{count:'exact',head:true});
-    return `<div class="page-header"><h1 class="page-title"><span>Analytics</span></h1></div>
-    <div class="stats-grid">${stat('package','#22C55E','#F0FDF4',svc||0,'Services')}${stat('shopping-bag','#3B82F6','#EFF6FF',ord||0,'Commandes')}</div>`;
+    return `<div class="page-header"><h1 class="page-title"><span>Analytics</span></h1></div><div class="stats-grid">${stat('package','#22C55E','#F0FDF4',svc||0,'Services')}${stat('shopping-bag','#3B82F6','#EFF6FF',ord||0,'Commandes')}</div>`;
 }
 function renderSupport() { return `<div class="page-header"><h1 class="page-title">Support <span>client</span></h1></div><div class="section-card"><div class="empty-state"><p>Centre de support · Module à venir</p></div></div>`; }
 
@@ -324,11 +518,11 @@ async function viewProfile(userId) {
     const { data: orders } = await sb.from('orders').select('*, service:service_id(title)').eq('provider_id',userId).order('created_at',{ascending:false}).limit(10);
     if (!user) return;
     const initials = (user.full_name||'?').split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
-    const modal = document.createElement('div');
-    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)';
-    modal.onclick = e => { if(e.target===modal) modal.remove(); };
-    modal.innerHTML = `<div style="background:#fff;border-radius:16px;padding:24px;width:100%;max-width:600px;max-height:85vh;overflow-y:auto" onclick="event.stopPropagation()">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"><h3 style="font-weight:700">Profil</h3><button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;cursor:pointer;color:var(--text-muted)"><i data-lucide="x"></i></button></div>
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.onclick = e => { if(e.target===overlay) overlay.remove(); };
+    overlay.innerHTML = `<div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header"><h3 class="modal-title">Profil utilisateur</h3><button class="modal-close" onclick="this.closest('.modal-overlay').remove()"><i data-lucide="x"></i></button></div>
         <div style="display:flex;gap:14px;align-items:center;margin-bottom:16px">
             <div style="width:56px;height:56px;border-radius:50%;background:var(--text-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;overflow:hidden">${user.profile_photo_url?`<img src="${user.profile_photo_url}" style="width:100%;height:100%;object-fit:cover">`:initials}</div>
             <div><div style="font-weight:700">${esc(user.full_name)}</div><div style="font-size:.78rem;color:var(--text-muted)">${esc(user.email)} · ${esc(user.phone||'—')}</div></div>
@@ -339,11 +533,16 @@ async function viewProfile(userId) {
             <div><div style="font-weight:800">${user.is_verified?'✅':'❌'}</div><div style="font-size:.65rem;color:var(--text-muted)">Vérifié</div></div>
             <div><div style="font-weight:800">${user.status}</div><div style="font-size:.65rem;color:var(--text-muted)">Statut</div></div>
         </div>
-        ${orders?.length?`<div style="font-weight:700;font-size:.8rem;margin-bottom:6px">Dernières commandes</div><table style="width:100%;font-size:.7rem"><thead><tr><th>Client</th><th>Service</th><th>Montant</th></tr></thead><tbody>${orders.map(o=>`<tr><td>${esc(o.client_name||'—')}</td><td>${esc(o.service?.title||'—')}</td><td>${fmt(o.total_amount)}</td></tr>`).join('')}</tbody></table>`:''}
+        ${orders?.length?`<div style="font-weight:700;font-size:.8rem;margin-bottom:6px">Dernières commandes</div><div class="table-wrapper"><table style="min-width:400px"><thead><tr><th>Client</th><th>Service</th><th>Montant</th></tr></thead><tbody>${orders.map(o=>`<tr><td>${esc(o.client_name||'—')}</td><td>${esc(o.service?.title||'—')}</td><td>${fmt(o.total_amount)}</td></tr>`).join('')}</tbody></table></div>`:''}
     </div>`;
-    document.body.appendChild(modal);
+    document.body.appendChild(overlay);
     lucide.createIcons();
 }
+
+// ═══ STYLE MENU MOBILE ═══
+const menuStyle = document.createElement('style');
+menuStyle.textContent = `@keyframes slideInLeft{from{transform:translateX(-100%)}to{transform:translateX(0)}}`;
+document.head.appendChild(menuStyle);
 </script>
 </body>
 </html>

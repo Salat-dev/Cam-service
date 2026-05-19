@@ -15,6 +15,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js');
+    }
+</script>
     
     <style>
         :root {
@@ -1385,13 +1390,15 @@
             <a href="services.html">Services</a>
             <a href="#about">À propos</a>
             <a href="../register.html">Devenir prestataire</a>
+            <a href="#" id="installPwaBtn" style="display:none;background:#22C55E;color:#fff!important;padding:8px 16px;border-radius:8px;font-weight:600;font-size:.8125rem;text-decoration:none" onclick="installPwa();return false">
+                <i data-lucide="download"></i> Installer Warap
+            </a>
             <a href="../login-client.html" class="btn btn-primary btn-sm">
                 <i data-lucide="log-in"></i> Connexion
             </a>
         </div>
     </div>
 </nav>
-
 <!-- ═══ HERO ═══ -->
 <section class="hero">
     <div class="hero-bg">
@@ -1688,7 +1695,63 @@
         <p>© 2026 warap — Tous droits réservés</p>
     </div>
 </footer>
+<!-- ═══ PWA ═══ -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1A1714">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CamServices">
+<link rel="apple-touch-icon" href="assets/icons/icon-192x192.png">
+<link rel="apple-touch-startup-image" href="assets/screenshots/splash.png">
 
+<!-- Service Worker -->
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('✅ SW enregistré:', reg.scope))
+                .catch(err => console.warn('⚠️ SW erreur:', err));
+        });
+    }
+</script>
+
+<!-- Installation PWA prompt -->
+<script>
+var deferredPrompt;
+
+// Essayer la méthode normale
+window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById('installPwaBtn').style.display = 'inline-flex';
+});
+
+// ✅ FORCER L'AFFICHAGE si beforeinstallprompt ne se déclenche pas
+document.addEventListener('DOMContentLoaded', function() {
+    var btn = document.getElementById('installPwaBtn');
+    // Afficher le bouton immédiatement
+    btn.style.display = 'inline-flex';
+    
+    // Si deferredPrompt n'est pas disponible, on donne les instructions manuelles
+    if (!deferredPrompt) {
+        btn.onclick = function() {
+            alert('Pour installer l\'application :\n\n📱 Android : ouvrez le menu ⋮ → "Installer l\'application"\n💻 PC : cliquez sur l\'icône ⊕ dans la barre d\'adresse');
+            return false;
+        };
+    }
+});
+
+function installPwa() {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function(result) {
+            console.log('PWA install:', result.outcome);
+            deferredPrompt = null;
+            document.getElementById('installPwaBtn').style.display = 'none';
+        });
+    }
+}
+</script>
 <!-- ═══ SCRIPTS ═══ -->
 <script>
 var categoryIcons = {
@@ -1833,5 +1896,6 @@ function renderTestimonials() {
 function escapeHtml(t) { var d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
 function formatPrice(p) { return new Intl.NumberFormat('fr-FR', { style:'currency', currency:'XAF', maximumFractionDigits:0 }).format(p || 0); }
 </script>
+
 </body>
 </html>

@@ -1385,13 +1385,15 @@
             <a href="services.html">Services</a>
             <a href="#about">À propos</a>
             <a href="../register.html">Devenir prestataire</a>
+            <a href="#" id="installPwaBtn" style="display:inline-flex;background:#22C55E;color:#fff!important;padding:8px 16px;border-radius:8px;font-weight:600;font-size:.8125rem;text-decoration:none" onclick="installPwa();return false">
+                <i data-lucide="download"></i> Installer
+            </a>
             <a href="../login-client.html" class="btn btn-primary btn-sm">
                 <i data-lucide="log-in"></i> Connexion
             </a>
         </div>
     </div>
 </nav>
-
 <!-- ═══ HERO ═══ -->
 <section class="hero">
     <div class="hero-bg">
@@ -1689,6 +1691,46 @@
         <p>© 2026 warap — Tous droits réservés</p>
     </div>
 </footer>
+<!-- ═══ PWA ═══ -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1A1714">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CamServices">
+<link rel="apple-touch-icon" href="../asset/icons/icon-192x192.png.png">
+<link rel="apple-touch-startup-image" href="../asset/screenshots/splash.png">
+
+<!-- Service Worker -->
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('✅ SW enregistré:', reg.scope))
+                .catch(err => console.warn('⚠️ SW erreur:', err));
+        });
+    }
+</script>
+
+<!-- Installation PWA prompt -->
+<script>
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        // Afficher ton bouton "Installer l'application"
+        const installBtn = document.getElementById('installPwaBtn');
+        if (installBtn) {
+            installBtn.style.display = 'flex';
+            installBtn.addEventListener('click', () => {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((result) => {
+                    console.log('PWA install:', result.outcome);
+                    deferredPrompt = null;
+                });
+            });
+        }
+    });
+</script>
 
 <!-- ═══ SCRIPTS ═══ -->
 <script>
@@ -1834,5 +1876,6 @@ function renderTestimonials() {
 function escapeHtml(t) { var d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
 function formatPrice(p) { return new Intl.NumberFormat('fr-FR', { style:'currency', currency:'XAF', maximumFractionDigits:0 }).format(p || 0); }
 </script>
+
 </body>
 </html>
