@@ -1,0 +1,370 @@
+/* ═══════════════════════════════════════════════════════════════
+   ULTRA RESPONSIVE DASHBOARD - Mobile First
+   À inclure dans toutes les pages du dashboard
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ============================================================
+   1. BREAKPOINTS SYSTEM
+   ============================================================ */
+/* Mobile S : 320px - 374px */
+/* Mobile M : 375px - 424px */
+/* Mobile L : 425px - 767px */
+/* Tablet  : 768px - 1023px */
+/* Laptop  : 1024px - 1279px */
+/* Desktop : 1280px+ */
+
+/* ============================================================
+   2. GLOBAL RESPONSIVE RULES
+   ============================================================ */
+@media (max-width: 1279px) {
+    :root {
+        --sidebar-w: 240px;
+    }
+    .main-content {
+        padding: 24px;
+    }
+}
+
+@media (max-width: 1023px) {
+    :root {
+        --sidebar-w: 0px;
+    }
+    
+    /* Sidebar overlay */
+    .sidebar {
+        transform: translateX(-100%);
+        box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+        z-index: 200;
+    }
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    
+    /* Overlay quand sidebar ouverte */
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.4);
+        z-index: 199;
+        animation: fadeIn 0.3s ease;
+    }
+    .sidebar-overlay.show {
+        display: block;
+    }
+    
+    .main-content {
+        margin-left: 0 !important;
+        max-width: 100% !important;
+        padding: 20px;
+        padding-top: 72px;
+    }
+    
+    .menu-toggle {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 767px) {
+    .main-content {
+        padding: 16px;
+        padding-top: 68px;
+    }
+    
+    /* Grilles en 2 colonnes */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px;
+    }
+    
+    .dashboard-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px;
+    }
+    
+    /* Cards */
+    .card {
+        padding: 20px;
+    }
+    
+    /* Page header */
+    .page-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px;
+    }
+    .page-title {
+        font-size: 1.35rem !important;
+    }
+    
+    /* Tables - scroll horizontal */
+    .table-wrapper {
+        margin: 0 -16px;
+        padding: 0 16px;
+    }
+    table {
+        min-width: 650px;
+    }
+    th, td {
+        padding: 10px 12px;
+        font-size: 0.8125rem;
+    }
+    
+    /* Forms */
+    .form-row {
+        grid-template-columns: 1fr !important;
+        gap: 0;
+    }
+    
+    /* Modals */
+    .modal-overlay {
+        padding: 12px;
+        align-items: flex-end;
+    }
+    .modal {
+        border-radius: 20px 20px 0 0 !important;
+        max-height: 85vh;
+        padding: 24px 20px;
+    }
+    
+    /* Buttons full width */
+    .page-actions {
+        width: 100%;
+    }
+    .page-actions .btn {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 424px) {
+    .main-content {
+        padding: 12px;
+        padding-top: 64px;
+    }
+    
+    /* Grilles en 1 colonne */
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px;
+    }
+    
+    .pricing-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .activities-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    /* Cards */
+    .card {
+        padding: 16px;
+        border-radius: 12px;
+    }
+    .stat-card {
+        padding: 16px;
+    }
+    
+    /* Typographie */
+    .page-title {
+        font-size: 1.2rem !important;
+    }
+    .stat-value {
+        font-size: 1.5rem !important;
+    }
+    
+    /* Tabs scroll */
+    .tabs {
+        gap: 2px;
+        padding-bottom: 4px;
+    }
+    .tab {
+        padding: 8px 14px;
+        font-size: 0.8125rem;
+    }
+    
+    /* Buttons */
+    .btn {
+        padding: 8px 16px;
+        font-size: 0.8125rem;
+    }
+    .btn-lg {
+        padding: 10px 20px;
+        font-size: 0.875rem;
+    }
+    
+    /* Cart items */
+    .cart-item {
+        padding: 12px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    /* Activity items */
+    .activity-item {
+        padding: 10px 0;
+    }
+    
+    /* Charts */
+    .bar-chart {
+        height: 150px;
+        gap: 8px;
+    }
+    .donut-chart {
+        width: 100px;
+        height: 100px;
+    }
+    .donut-center {
+        width: 60px;
+        height: 60px;
+    }
+    
+    /* Navbar mobile */
+    .navbar {
+        padding: 0 12px;
+        height: 56px;
+    }
+    .nav-logo {
+        font-size: 1rem;
+    }
+    .nav-links a {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 374px) {
+    /* Très petits écrans */
+    .main-content {
+        padding: 8px;
+        padding-top: 60px;
+    }
+    
+    .card {
+        padding: 12px;
+    }
+    
+    .stat-card {
+        padding: 12px;
+    }
+    
+    .stat-value {
+        font-size: 1.25rem !important;
+    }
+    
+    .btn {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+    }
+    
+    .tab {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+    }
+    
+    /* Masquer les textes non essentiels */
+    .hide-on-small {
+        display: none !important;
+    }
+}
+
+/* ============================================================
+   3. TOUCH OPTIMIZATIONS
+   ============================================================ */
+@media (hover: none) and (pointer: coarse) {
+    /* Augmenter les zones de toucher */
+    .btn, .btn-icon, .tab, .nav-links a, .sidebar-nav a {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Supprimer les effets hover sur tactile */
+    .stat-card:hover,
+    .card:hover,
+    .pricing-card:hover,
+    .activity-card:hover,
+    .cat-card:hover,
+    .feat-card:hover,
+    .cart-item:hover {
+        transform: none !important;
+    }
+    
+    /* Remplacer hover par active */
+    .btn:active,
+    .btn-icon:active {
+        transform: scale(0.97);
+    }
+    
+    /* Scroll fluide */
+    .tabs, .table-wrapper {
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+    }
+}
+
+/* ============================================================
+   4. PRINT STYLES
+   ============================================================ */
+@media print {
+    .sidebar, .menu-toggle, .btn, .page-actions, .tabs {
+        display: none !important;
+    }
+    .main-content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #ccc !important;
+        break-inside: avoid;
+    }
+    body {
+        background: #fff !important;
+    }
+}
+
+/* ============================================================
+   5. ORIENTATION
+   ============================================================ */
+@media (orientation: landscape) and (max-height: 500px) {
+    .hero {
+        min-height: auto;
+        padding: 40px 24px;
+    }
+    .modal {
+        max-height: 95vh;
+    }
+}
+
+/* ============================================================
+   6. DARK MODE SUPPORT (optionnel)
+   ============================================================ */
+@media (prefers-color-scheme: dark) {
+    
+    :root {
+        --text-primary: #F9FAFB;
+        --text-secondary: #D1D5DB;
+        --text-muted: #9CA3AF;
+        --surface: #1F2937;
+        --background: #111827;
+        --border: #374151;
+        --border-light: #2D3748;
+    }
+    body { background: var(--background); }
+    .card, .stat-card, .sidebar, .modal, .navbar { background: #1F2937; }
+}
+
+/* ============================================================
+   7. REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

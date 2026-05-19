@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmer la commande — CamServices</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #22C55E; --primary-hover: #16A34A; --primary-light: #F0FDF4;
+            --text-primary: #111827; --text-secondary: #4B5563; --text-muted: #6B7280;
+            --background: #FFFFFF; --surface: #F9FAFB; --border: #E5E7EB; --border-light: #F3F4F6;
+            --error: #EF4444; --blue: #3B82F6; --blue-light: #EFF6FF;
+            --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 20px;
+            --shadow: 0 4px 16px rgba(0,0,0,0.06); --shadow-lg: 0 12px 40px rgba(0,0,0,0.1);
+            --max: 700px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',sans-serif; background:var(--surface); color:var(--text-primary); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; -webkit-font-smoothing:antialiased; }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes spin { to{transform:rotate(360deg)} }
+
+        .container { width:100%; max-width:var(--max); }
+        .card { background:#fff; border:1px solid var(--border-light); border-radius:var(--radius-xl); padding:32px 28px; box-shadow:var(--shadow); animation:fadeUp .4s ease; }
+
+        .page-header { text-align:center; margin-bottom:28px; }
+        .page-header h1 { font-weight:800; font-size:1.5rem; }
+        .page-header h1 span { color:var(--primary); }
+        .page-header p { font-size:.875rem; color:var(--text-secondary); margin-top:4px; }
+
+        .summary-box { background:var(--surface); border-radius:var(--radius-md); padding:16px; margin-bottom:24px; }
+        .summary-row { display:flex; justify-content:space-between; padding:6px 0; font-size:.875rem; }
+        .summary-row.total { border-top:1px solid var(--border); margin-top:8px; padding-top:12px; font-weight:700; font-size:1rem; }
+        .summary-row.total span:last-child { color:var(--primary); font-size:1.1rem; }
+
+        .form-group { margin-bottom:16px; }
+        .form-group label { display:block; font-size:.8125rem; font-weight:600; margin-bottom:6px; }
+        .form-group label .req { color:var(--error); }
+        .form-group input, .form-group textarea { width:100%; padding:11px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.875rem; outline:none; transition:all .2s; }
+        .form-group input:focus, .form-group textarea:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-light); }
+        .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+        .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 24px; border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-weight:600; font-size:.875rem; cursor:pointer; border:none; text-decoration:none; transition:all .2s; }
+        .btn-primary { background:var(--primary); color:#fff; width:100%; }
+        .btn-primary:hover { background:var(--primary-hover); }
+        .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+        .btn-outline { background:#fff; color:var(--text-secondary); border:1.5px solid var(--border); width:100%; margin-top:8px; }
+        .btn-outline:hover { border-color:var(--text-primary); color:var(--text-primary); }
+
+        .info-box { background:var(--blue-light); border-radius:var(--radius-sm); padding:12px 14px; font-size:.8125rem; color:var(--blue); display:flex; align-items:flex-start; gap:8px; margin-bottom:20px; }
+        .alert { padding:12px 14px; border-radius:var(--radius-sm); font-size:.8125rem; font-weight:500; margin-bottom:16px; display:none; }
+        .alert.error { background:#FEF2F2; color:var(--error); display:block; }
+        .alert.success { background:var(--primary-light); color:var(--primary); display:block; }
+
+        .loading-spinner { width:18px; height:18px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .6s linear infinite; display:inline-block; }
+
+        @media (max-width:500px) {
+            .card { padding:24px 18px; }
+            .form-row { grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <div class="page-header">
+            <h1>Confirmer <span>votre commande</span></h1>
+            <p>Remplissez vos informations pour être contacté</p>
+        </div>
+
+        <div class="summary-box" id="summaryBox"></div>
+
+        <div class="alert" id="formAlert"></div>
+
+        <form id="confirmForm">
+            <div class="form-row">
+                <div class="form-group"><label>Nom complet <span class="req">*</span></label><input type="text" id="clientName" placeholder="Votre nom complet" required></div>
+                <div class="form-group"><label>Téléphone <span class="req">*</span></label><input type="tel" id="clientPhone" placeholder="+237 6XX XXX XXX" required></div>
+            </div>
+            <div class="form-group"><label>Adresse <span class="req">*</span></label><input type="text" id="clientAddress" placeholder="Ex: Bastos, Yaoundé" required></div>
+            <div class="form-group"><label>Message (optionnel)</label><textarea id="clientMessage" rows="2" placeholder="Précisez vos besoins..."></textarea></div>
+
+            <div class="info-box">
+                <i data-lucide="info" style="width:1rem;height:1rem;flex-shrink:0;margin-top:1px"></i>
+                <span>Ces informations seront transmises aux prestataires pour qu'ils vous contactent.</span>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="submitBtn"><i data-lucide="send"></i> Envoyer la commande</button>
+            <a href="cart.html" class="btn btn-outline"><i data-lucide="arrow-left"></i> Retour au panier</a>
+        </form>
+    </div>
+</div>
+
+<script>
+var SUPABASE_URL = 'https://cwubxwbzzuigctvgdygv.supabase.co';
+var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dWJ4d2J6enVpZ2N0dmdkeWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzI2MTgsImV4cCI6MjA5MzgwODYxOH0.0mwBNo_S5yItQQjq2at9GNRN74ooZRBJIbZGDH9L2uk';
+var sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+lucide.createIcons();
+init();
+
+function getCart() { try { return JSON.parse(localStorage.getItem('camservices_cart')||'[]'); } catch(e) { return []; } }
+function clearCart() { localStorage.removeItem('camservices_cart'); }
+function fmt(p) { return new Intl.NumberFormat('fr-FR',{style:'currency',currency:'XAF',maximumFractionDigits:0}).format(p||0); }
+
+async function init() {
+    var cart = getCart();
+    if (cart.length === 0) { window.location.href = 'cart.html'; return; }
+
+    var { data } = await sb.auth.getSession();
+    if (!data.session) { window.location.href = 'login-client.html'; return; }
+
+    var total = 0;
+    for (var i = 0; i < cart.length; i++) total += cart[i].price || 0;
+
+    document.getElementById('summaryBox').innerHTML = 
+        '<div class="summary-row"><span>Services</span><span>' + cart.length + '</span></div>' +
+        '<div class="summary-row total"><span>Total estimé</span><span>' + fmt(total) + '</span></div>';
+}
+
+document.getElementById('confirmForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var cart = getCart();
+    if (cart.length === 0) return;
+
+    var { data: sessionData } = await sb.auth.getSession();
+    if (!sessionData.session) { window.location.href = 'login-client.html'; return; }
+
+    var clientName = document.getElementById('clientName').value.trim();
+    var clientPhone = document.getElementById('clientPhone').value.trim();
+    var clientAddress = document.getElementById('clientAddress').value.trim();
+    var clientMessage = document.getElementById('clientMessage').value.trim();
+
+    if (!clientName || !clientPhone || !clientAddress) {
+        var a = document.getElementById('formAlert');
+        a.innerHTML = 'Veuillez remplir tous les champs obligatoires.';
+        a.className = 'alert error';
+        return;
+    }
+
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span> Envoi en cours...';
+
+    try {
+        var clientClientId = null;
+        var { data: clientProfile } = await sb.from('users_clients').select('id').eq('auth_id', sessionData.session.user.id).single();
+        if (clientProfile) clientClientId = clientProfile.id;
+
+        var orders = [];
+        for (var i = 0; i < cart.length; i++) {
+            orders.push({
+                client_client_id: clientClientId,
+                service_id: cart[i].serviceId,
+                provider_id: cart[i].providerId || null,
+                total_amount: cart[i].price || 0,
+                status: 'pending',
+                client_name: clientName,
+                client_phone: clientPhone,
+                client_address: clientAddress,
+                client_message: clientMessage || null
+            });
+        }
+
+        var { error } = await sb.from('orders').insert(orders);
+        if (error) throw error;
+
+        clearCart();
+
+        var a = document.getElementById('formAlert');
+        a.innerHTML = '✅ Commande envoyée avec succès ! Redirection...';
+        a.className = 'alert success';
+
+        setTimeout(function() { window.location.href = 'cart.html?success=true'; }, 2000);
+
+    } catch (err) {
+        var a = document.getElementById('formAlert');
+        a.innerHTML = 'Erreur : ' + err.message;
+        a.className = 'alert error';
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="send"></i> Envoyer la commande';
+    }
+});
+</script>
+</body>
+</html>

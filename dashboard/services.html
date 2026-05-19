@@ -4,504 +4,341 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mes Services — CamServices Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Allison&family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/dashboard.css">
-        <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="css/ultra-responsive.css">
+    <script src="js/ultra-responsive.js"></script>
+     <script src="js/bottom-navbar.js"></script>
+    <link rel="stylesheet" href="css/bottom-navbar.css">
     <style>
-        /* ═══ MODAL STYLES ═══ */
-        .modal-overlay {
-            position: fixed; inset: 0; z-index: 9000;
-            background: rgba(26,23,20,.45); backdrop-filter: blur(4px);
-            display: flex; align-items: center; justify-content: center;
-            padding: 24px; animation: modalFadeIn .25s ease;
+        :root {
+            --primary: #22C55E; --primary-hover: #16A34A;
+            --primary-light: #F0FDF4; --primary-dim: rgba(34,197,94,0.08);
+            --text-primary: #111827; --text-secondary: #4B5563; --text-muted: #6B7280;
+            --surface: #F9FAFB; --border: #E5E7EB; --border-light: #F3F4F6;
+            --accent: #F59E0B; --accent-hover: #D97706;
+            --accent-light: #FFFBEB; --accent-dim: rgba(245,158,11,0.08);
+            --error: #EF4444; --error-light: #FEF2F2;
+            --blue: #3B82F6; --blue-light: #EFF6FF;
+            --purple: #7C3AED; --purple-light: #F5F3FF;
+            --sidebar-w: 260px;
+            --ease: cubic-bezier(0.16,1,0.3,1);
+            --radius-sm: 8px; --radius: 12px; --radius-lg: 16px; --radius-xl: 20px;
+            --shadow-xs: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow: 0 4px 16px rgba(0,0,0,0.06);
+            --shadow-lg: 0 12px 40px rgba(0,0,0,0.1);
         }
-        .modal-content {
-            background: var(--white, #fff); border-radius: var(--radius-xl, 16px);
-            box-shadow: 0 20px 60px rgba(26,23,20,.18);
-            width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto;
-            animation: modalSlideUp .3s cubic-bezier(.22,1,.36,1);
+        
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',-apple-system,sans-serif; background:var(--surface); color:var(--text-primary); display:flex; min-height:100vh; -webkit-font-smoothing:antialiased; line-height:1.5; }
+        ::selection { background:var(--primary-dim); color:var(--text-primary); }
+        ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes spin { to { transform:rotate(360deg) } }
+        @keyframes slideUp { from { opacity:0; transform:translateY(20px) } to { opacity:1; transform:translateY(0) } }
+        
+        /* ═══ SIDEBAR ═══ */
+        .sidebar { width:var(--sidebar-w); background:#fff; border-right:1px solid var(--border-light); padding:28px 20px; display:flex; flex-direction:column; position:fixed; top:0; left:0; bottom:0; z-index:100; overflow-y:auto; transition:transform .3s; }
+        .sidebar-logo { font-weight:800; font-size:1.2rem; margin-bottom:32px; text-decoration:none; color:var(--text-primary); display:flex; align-items:center; gap:4px; }
+        .sidebar-logo img { height:32px; }
+        .sidebar-user { display:flex; align-items:center; gap:12px; padding:14px; background:var(--surface); border-radius:var(--radius); margin-bottom:24px; border:1px solid var(--border-light); }
+        .sidebar-avatar { width:42px; height:42px; border-radius:50%; background:var(--text-primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.875rem; overflow:hidden; flex-shrink:0; }
+        .sidebar-avatar img { width:100%; height:100%; object-fit:cover; }
+        .sidebar-user-info { flex:1; min-width:0; }
+        .sidebar-user-name { font-weight:600; font-size:.875rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .sidebar-user-role { font-size:.75rem; color:var(--text-muted); }
+        .verify-badge { display:inline-flex; align-items:center; gap:4px; background:var(--primary); color:#fff; padding:3px 10px; border-radius:100px; font-size:.6875rem; font-weight:600; margin-top:6px; }
+        .sidebar-nav { list-style:none; flex:1; }
+        .sidebar-nav li { margin-bottom:2px; }
+        .sidebar-nav a { display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:var(--radius-sm); font-size:.875rem; font-weight:500; color:var(--text-secondary); text-decoration:none; transition:all .2s; }
+        .sidebar-nav a:hover { background:var(--surface); color:var(--text-primary); }
+        .sidebar-nav a.active { background:var(--primary); color:#fff !important; font-weight:600; }
+        .sidebar-nav a i { width:1.125rem; height:1.125rem; }
+        .sidebar-nav .badge { margin-left:auto; background:var(--accent); color:#fff; padding:2px 8px; border-radius:100px; font-size:.6875rem; font-weight:700; }
+        .sidebar-divider { border:none; border-top:1px solid var(--border-light); margin:16px 0; }
+        .sidebar-footer a { display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:var(--radius-sm); font-size:.875rem; color:var(--text-secondary); text-decoration:none; }
+        .sidebar-footer a:hover { color:var(--error); background:var(--error-light); }
+        
+        /* ═══ MAIN ═══ */
+        .main-content { flex:1; margin-left:var(--sidebar-w); padding:32px; max-width:calc(100vw - var(--sidebar-w)); }
+        .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:32px; flex-wrap:wrap; gap:16px; }
+        .page-title { font-weight:800; font-size:1.75rem; letter-spacing:-.03em; }
+        .page-title .accent { color:var(--primary); }
+        .page-subtitle { font-size:.9375rem; color:var(--text-secondary); margin-top:4px; }
+        
+        /* ═══ CARD & TABLE ═══ */
+        .card { background:#fff; border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:0; margin-bottom:24px; box-shadow:var(--shadow-xs); overflow:hidden; }
+        .table-wrapper { overflow-x:auto; }
+        table { width:100%; border-collapse:collapse; min-width:800px; }
+        th { text-align:left; font-size:.75rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); padding:16px; border-bottom:2px solid var(--border-light); background:var(--surface); }
+        td { padding:16px; border-bottom:1px solid var(--border-light); font-size:.875rem; }
+        tr:hover td { background:var(--surface); }
+        .price-cell { font-weight:700; color:var(--text-primary); }
+        .service-cell { display:flex; align-items:center; gap:12px; }
+        .service-icon { width:40px; height:40px; border-radius:var(--radius-sm); background:var(--primary-dim); color:var(--primary); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .service-desc-preview { font-size:.8125rem; color:var(--text-muted); }
+        .category-tag { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:100px; font-size:.75rem; font-weight:500; background:var(--surface); color:var(--text-secondary); border:1px solid var(--border-light); }
+        .status-badge { display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:100px; font-size:.75rem; font-weight:600; }
+        .status-active { background:var(--primary-light); color:var(--primary); }
+        .status-inactive { background:var(--surface); color:var(--text-muted); }
+        
+        /* ═══ BUTTONS ═══ */
+        .btn { display:inline-flex; align-items:center; gap:8px; font-family:'Inter',sans-serif; font-weight:600; font-size:.875rem; padding:10px 20px; border-radius:var(--radius-sm); border:none; cursor:pointer; text-decoration:none; transition:all .2s; }
+        .btn i { width:1.125rem; height:1.125rem; }
+        .btn-primary { background:var(--primary); color:#fff; }
+        .btn-primary:hover { background:var(--primary-hover); transform:translateY(-1px); }
+        .btn-secondary { background:#fff; color:var(--text-primary); border:1.5px solid var(--border); }
+        .btn-secondary:hover { border-color:var(--primary); color:var(--primary); }
+        .btn-sm { padding:6px 14px; font-size:.8125rem; }
+        .btn-icon { width:34px; height:34px; border-radius:var(--radius-sm); border:1px solid var(--border); background:#fff; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-muted); transition:all .2s; }
+        .btn-icon:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-light); }
+        .btn-icon.danger:hover { border-color:var(--error); color:var(--error); background:var(--error-light); }
+        .btn-icon.warning:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-light); }
+        
+        /* ═══ MODAL ═══ */
+        .modal-overlay { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:20px; animation:fadeIn .2s; }
+        .modal { background:#fff; border-radius:var(--radius-xl); padding:32px; width:100%; max-width:560px; max-height:85vh; overflow-y:auto; box-shadow:var(--shadow-lg); animation:slideUp .3s var(--ease); }
+        .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+        .modal-title { font-weight:700; font-size:1.125rem; display:flex; align-items:center; gap:10px; }
+        .modal-close { background:none; border:none; cursor:pointer; color:var(--text-muted); padding:6px; border-radius:var(--radius-sm); }
+        .modal-close:hover { background:var(--surface); color:var(--text-primary); }
+        .form-group { margin-bottom:16px; }
+        .form-group label { display:block; font-size:.8125rem; font-weight:600; color:var(--text-primary); margin-bottom:6px; }
+        .form-group input,.form-group select,.form-group textarea { width:100%; padding:11px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.875rem; color:var(--text-primary); outline:none; transition:all .2s; background:#fff; }
+        .form-group input:focus,.form-group select:focus,.form-group textarea:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-dim); }
+        .form-group textarea { min-height:80px; resize:vertical; }
+        .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+        .form-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:24px; }
+        
+        /* ═══ LOADING & EMPTY ═══ */
+        .loading-spinner { text-align:center; padding:64px; }
+        .spinner { width:32px; height:32px; border:3px solid var(--border-light); border-top-color:var(--primary); border-radius:50%; margin:0 auto 16px; animation:spin .7s linear infinite; }
+        .empty-state { text-align:center; padding:64px 20px; }
+        .empty-state .empty-icon { display:block; margin:0 auto 16px; color:var(--border); }
+        .empty-state h3 { font-weight:700; font-size:1.125rem; color:var(--text-primary); margin-bottom:8px; }
+        .empty-state p { font-size:.875rem; color:var(--text-muted); margin-bottom:20px; }
+        
+        /* ═══ TOAST ═══ */
+        .toast { position:fixed; bottom:24px; right:24px; z-index:999; padding:14px 20px; border-radius:var(--radius); font-weight:600; font-size:.875rem; color:#fff; box-shadow:var(--shadow-lg); display:flex; align-items:center; gap:10px; animation:slideUp .3s var(--ease); }
+        .toast.success { background:var(--primary); }
+        .toast.error { background:var(--error); }
+        .toast.info { background:var(--text-primary); }
+        
+        /* ═══ MOBILE ═══ */
+        .menu-toggle { display:none; position:fixed; top:16px; left:16px; z-index:101; background:#fff; border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; cursor:pointer; }
+        @media (max-width:960px) {
+            .menu-toggle { display:flex; align-items:center; justify-content:center; }
+            .sidebar { transform:translateX(-100%); }
+            .sidebar.open { transform:translateX(0); }
+            .main-content { margin-left:0; padding:20px; padding-top:68px; }
         }
-        .modal-header {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 24px 24px 16px; border-bottom: 1px solid var(--rule, #E8E2DA);
-        }
-        .modal-title { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: 700; }
-        .modal-close {
-            background: none; border: none; cursor: pointer; color: var(--muted, #8A8279);
-            padding: 6px; border-radius: 8px; transition: background .2s;
-        }
-        .modal-close:hover { background: var(--cream, #FAF8F5); }
-        .modal-content form { padding: 24px; }
-        .modal-content .form-group { margin-bottom: 16px; }
-        .modal-content .form-group label {
-            display: block; font-size: .8rem; font-weight: 600;
-            margin-bottom: 6px; color: var(--ink, #1A1714);
-        }
-        .modal-content .form-group input,
-        .modal-content .form-group select,
-        .modal-content .form-group textarea {
-            width: 100%; padding: 10px 14px;
-            border: 1.5px solid var(--rule, #E8E2DA); border-radius: var(--radius, 10px);
-            font-family: var(--ff-body, 'Outfit'); font-size: .88rem;
-            color: var(--ink, #1A1714); background: var(--white, #fff);
-            outline: none; transition: border-color .2s;
-        }
-        .modal-content .form-group input:focus,
-        .modal-content .form-group select:focus,
-        .modal-content .form-group textarea:focus {
-            border-color: var(--gold, #C4943E);
-            box-shadow: 0 0 0 3px rgba(196,148,62,.08);
-        }
-        .modal-content .form-group textarea { min-height: 80px; resize: vertical; }
-        .modal-content .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .modal-content .form-actions { display: flex; gap: 12px; padding-top: 8px; justify-content: flex-end; }
-        @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes modalSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @media (max-width: 600px) {
-            .modal-content { max-width: 100%; margin: 12px; }
-            .modal-content .form-row { grid-template-columns: 1fr; }
+        @media (max-width:600px) {
+            .page-header { flex-direction:column; align-items:flex-start; }
+            .form-row { grid-template-columns:1fr; }
         }
     </style>
 </head>
 <body>
 
-<button class="menu-toggle" onclick="toggleSidebar()">
-    <i data-lucide="menu"></i>
-</button>
+<button class="menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
 
-<!-- ═══ SIDEBAR ═══ -->
 <aside class="sidebar" id="sidebar">
-  <img src="../asset/logo camservices.svg" alt="" srcset="">    <div class="sidebar-user">
+    <a href="index.html" class="sidebar-logo">
+        <img src="../asset/logo.svg" alt="CamServices" style="height: 82px;">
+    </a>
+    <div class="sidebar-user">
         <div class="sidebar-avatar" id="sidebarAvatar"></div>
         <div class="sidebar-user-info">
             <div class="sidebar-user-name" id="sidebarName">Chargement...</div>
             <div class="sidebar-user-role" id="sidebarRole">Prestataire</div>
-            <span class="verify-badge" id="verifyBadge" style="display:none">
-                <i data-lucide="shield-check" style="width:.7rem;height:.7rem"></i> Vérifié
-            </span>
+            <span class="verify-badge" id="verifyBadge" style="display:none"><i data-lucide="shield-check" style="width:.7rem;height:.7rem"></i> Vérifié</span>
         </div>
     </div>
     <ul class="sidebar-nav">
-        <li><a href="../dashboard/index.html" id="nav-overview"><i data-lucide="layout-dashboard"></i> Vue d'ensemble</a></li>
-        <li><a href="../dashboard/services.html" class="active" id="nav-services"><i data-lucide="briefcase"></i> Mes services <span class="badge" id="serviceBadge">0</span></a></li>
-        <li><a href="../dashboard/orders.html" id="nav-orders"><i data-lucide="shopping-bag"></i> Commandes <span class="badge" id="orderBadge">0</span></a></li>
-        <li><a href="../dashboard/pricing.html" id="nav-pricing"><i data-lucide="tags"></i> Grille tarifaire</a></li>
-        <li><a href="../dashboard/portfolio.html" id="nav-portfolio"><i data-lucide="image"></i> Portfolio</a></li>
-        <li><a href="../dashboard/activities.html" id="nav-activities"><i data-lucide="award"></i> Activités</a></li>
+        <li><a href="../dashboard/index.html"><i data-lucide="layout-dashboard"></i> Vue d'ensemble</a></li>
+        <li><a href="../dashboard/services.html" class="active"><i data-lucide="briefcase"></i> Mes services <span class="badge" id="serviceBadge">0</span></a></li>
+        <li><a href="../dashboard/orders.html"><i data-lucide="shopping-bag"></i> Commandes <span class="badge" id="orderBadge">0</span></a></li>
+        <li><a href="../dashboard/pricing.html"><i data-lucide="tags"></i> Grille tarifaire</a></li>
+        <li><a href="../dashboard/portfolio.html"><i data-lucide="image"></i> Portfolio</a></li>
+        <li><a href="../dashboard/activities.html"><i data-lucide="award"></i> Activités</a></li>
     </ul>
     <hr class="sidebar-divider">
     <ul class="sidebar-nav">
-        <li><a href="../dashboard/profile.html" id="nav-profile"><i data-lucide="user-circle"></i> Mon profil</a></li>
-        <li><a href="../dashboard/analytics.html" id="nav-analytics"><i data-lucide="bar-chart-3"></i> Statistiques</a></li>
+        <li><a href="../dashboard/profile.html"><i data-lucide="user-circle"></i> Mon profil</a></li>
+        <li><a href="../dashboard/analytics.html"><i data-lucide="bar-chart-3"></i> Statistiques</a></li>
     </ul>
-    <div class="sidebar-footer">
-        <a href="../landing.html" onclick="logout();return false"><i data-lucide="log-out"></i> Déconnexion</a>
-    </div>
+    <div class="sidebar-footer"><a href="../landing.html" onclick="logout();return false"><i data-lucide="log-out"></i> Déconnexion</a></div>
 </aside>
 
-<!-- ═══ MAIN CONTENT ═══ -->
 <main class="main-content">
     <div class="page-header">
         <div>
-            <h1 class="page-title">Mes <span class="script">services</span></h1>
+            <h1 class="page-title">Mes <span class="accent">services</span></h1>
             <p class="page-subtitle">Gérez vos offres de services</p>
         </div>
-        <a href="service-registration.html" class="btn btn-primary">
-            <i data-lucide="plus"></i> Nouveau service
-        </a>
+        <a href="service-registration.html" class="btn btn-primary"><i data-lucide="plus"></i> Nouveau service</a>
     </div>
 
     <div class="card">
         <div class="table-wrapper" id="servicesTable">
-            <div class="loading-spinner">
-                <div class="spinner"></div>
-                <p>Chargement de vos services...</p>
-            </div>
+            <div class="loading-spinner"><div class="spinner"></div><p>Chargement...</p></div>
         </div>
     </div>
 </main>
 
-<div id="modalContainer" style="display:none"></div>
+<div id="modalContainer"></div>
 
-<!-- ═══ SCRIPTS ═══ -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/global.js"></script>
 <script>
-// ============================================================
-//  SERVICES — Script complet et autonome
-//  Table : public.services
-// ============================================================
-
-// ─── A. SUPABASE ─────────────────────────────────────────────
-const SUPABASE_URL  = 'https://cwubxwbzzuigctvgdygv.supabase.co';
+const SUPABASE_URL = 'https://cwubxwbzzuigctvgdygv.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dWJ4d2J6enVpZ2N0dmdkeWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzI2MTgsImV4cCI6MjA5MzgwODYxOH0.0mwBNo_S5yItQQjq2at9GNRN74ooZRBJIbZGDH9L2uk';
-
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-let currentUser = null;
-let services    = [];
+let currentUser=null, services=[];
 
-// ─── B. AUTH + SIDEBAR ───────────────────────────────────────
-async function initDashboard() {
-    const { data: { user: authUser } } = await sb.auth.getUser();
-    if (!authUser) { window.location.href = '../login.html'; return; }
+function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); }
+async function logout(){ await sb.auth.signOut(); window.location.href='../landing.html'; }
+function formatPrice(p){ return new Intl.NumberFormat('fr-FR').format(p||0)+' FCFA'; }
+function formatDate(d){ return d?new Date(d).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'—'; }
+function esc(t){ const d=document.createElement('div'); d.textContent=t||''; return d.innerHTML; }
 
-    const { data: profile } = await sb.from('users').select('*').eq('id', authUser.id).maybeSingle();
-
-    currentUser = profile || {
-        id: authUser.id, email: authUser.email,
-        full_name: authUser.user_metadata?.full_name || authUser.email.split('@')[0],
-        role: 'prestataire', is_verified: false, profile_photo_url: null
-    };
-
-    const nameEl = document.getElementById('sidebarName');
-    const roleEl = document.getElementById('sidebarRole');
-    const avatarEl = document.getElementById('sidebarAvatar');
-    const badgeEl = document.getElementById('verifyBadge');
-
-    if (nameEl)  nameEl.textContent = currentUser.full_name || currentUser.email;
-    if (roleEl)  roleEl.textContent = ({ client:'Client', prestataire:'Prestataire', admin:'Admin' })[currentUser.role] || 'Prestataire';
-    if (badgeEl) badgeEl.style.display = currentUser.is_verified ? 'inline-flex' : 'none';
-    if (avatarEl) {
-        if (currentUser.profile_photo_url) {
-            avatarEl.style.backgroundImage = `url(${currentUser.profile_photo_url})`;
-            avatarEl.style.backgroundSize = 'cover';
-        } else {
-            avatarEl.textContent = (currentUser.full_name || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
-        }
-    }
-    await loadSidebarCounts();
-    lucide.createIcons();
+function showToast(msg,type='info'){
+    const existing=document.querySelector('.toast'); if(existing) existing.remove();
+    const icons={success:'check-circle',error:'x-circle',info:'info'};
+    const t=document.createElement('div'); t.className=`toast ${type}`;
+    t.innerHTML=`<i data-lucide="${icons[type]}" style="width:1.125rem;height:1.125rem"></i> ${msg}`;
+    document.body.appendChild(t); lucide.createIcons();
+    setTimeout(()=>{t.style.opacity='0';t.style.transform='translateY(16px)';t.style.transition='all .3s';setTimeout(()=>t.remove(),300)},3500);
 }
 
-function setActiveNav(page) {
-    document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
-    const el = document.getElementById('nav-' + page);
-    if (el) el.classList.add('active');
-}
-function toggleSidebar() { const s = document.getElementById('sidebar'); if (s) s.classList.toggle('open'); }
-async function logout() { await sb.auth.signOut(); window.location.href = '../landing.html'; }
-
-async function loadSidebarCounts() {
-    if (!currentUser) return;
-    const { count: svcCount } = await sb.from('services').select('id', { count:'exact', head:true }).eq('user_id', currentUser.id);
-    const { count: ordCount } = await sb.from('orders').select('id', { count:'exact', head:true }).eq('provider_id', currentUser.id).in('status', ['pending','confirmed','in_progress']);
-    const svcBadge = document.getElementById('serviceBadge');
-    const ordBadge = document.getElementById('orderBadge');
-    if (svcBadge) svcBadge.textContent = svcCount || 0;
-    if (ordBadge) ordBadge.textContent = ordCount || 0;
-}
-
-// ─── C. REQUÊTE SUPABASE — services ─────────────────────────
-async function getMyServices() {
-    if (!currentUser) return [];
-    const { data, error } = await sb
-        .from('services')
-        .select('*')
-        .eq('user_id', currentUser.id)
-        .order('created_at', { ascending: false });
-    if (error) { console.error('getMyServices:', error); return []; }
-    return data || [];
-}
-
-// ─── D. HELPERS ──────────────────────────────────────────────
-function escapeHtml(text) {
-    if (!text) return '';
-    const d = document.createElement('div'); d.textContent = text; return d.innerHTML;
-}
-
-function formatPrice(amount) {
-    if (amount == null || isNaN(amount)) return '—';
-    return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
-}
-
-function formatDate(dateStr) {
-    if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString('fr-FR', { day:'numeric', month:'short', year:'numeric' });
-}
-
-function formatPricingType(type) {
-    return ({ fixed:"Prix fixe", hourly:"À l'heure", daily:'À la journée', project:'Par projet' })[type] || type;
-}
-
-function getCategoryIcon(category) {
-    const icons = {
-        'Plomberie':'wrench', 'Électricité':'zap', 'Ménage':'home', 'Photographie':'camera',
-        'Développement web':'monitor', 'Cours particuliers':'book-open', 'Transport':'car',
-        'Design':'palette', 'Beauté':'sparkles', 'Bâtiment':'hard-hat'
-    };
-    return `<i data-lucide="${icons[category] || 'briefcase'}" style="width:1.2rem;height:1.2rem"></i>`;
-}
-
-// ─── E. TOAST ────────────────────────────────────────────────
-(function(){ const s=document.createElement('style'); s.textContent='@keyframes slideInR{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}'; document.head.appendChild(s); })();
-
-function showToast(message, type = 'info') {
-    let w = document.getElementById('_tw');
-    if (!w) { w = document.createElement('div'); w.id = '_tw'; w.style.cssText = 'position:fixed;top:24px;right:24px;z-index:10000;display:flex;flex-direction:column;gap:10px;pointer-events:none;'; document.body.appendChild(w); }
-    const icons = { success:'check-circle', error:'alert-circle', info:'info', warning:'alert-triangle' };
-    const colors = { success:'var(--green)', error:'var(--red)', info:'var(--gold)', warning:'#F59E0B' };
-    const t = document.createElement('div');
-    t.style.cssText = `display:flex;align-items:center;gap:10px;padding:14px 20px;background:var(--white);border:1px solid var(--rule);border-radius:var(--radius);box-shadow:var(--shadow-lg);font-size:.85rem;font-family:var(--ff-body);color:var(--ink);pointer-events:auto;min-width:280px;animation:slideInR .3s ease;border-left:4px solid ${colors[type]};`;
-    t.innerHTML = `<i data-lucide="${icons[type]}" style="width:1.1rem;height:1.1rem;color:${colors[type]};flex-shrink:0"></i><span style="flex:1">${message}</span><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:0"><i data-lucide="x" style="width:.9rem;height:.9rem"></i></button>`;
-    w.appendChild(t); lucide.createIcons();
-    setTimeout(() => { t.style.transition='opacity .3s,transform .3s'; t.style.opacity='0'; t.style.transform='translateX(20px)'; setTimeout(()=>t.remove(),300); }, 4000);
-}
-
-// ─── F. MODAL + CONFIRM ─────────────────────────────────────
-function openModal(htmlContent) {
-    const c = document.getElementById('modalContainer'); if (!c) return;
-    c.innerHTML = `<div class="modal-overlay" onclick="closeModal()"><div class="modal-content" onclick="event.stopPropagation()">${htmlContent}</div></div>`;
-    c.style.display = 'block'; document.body.style.overflow = 'hidden'; lucide.createIcons();
-}
-function closeModal() {
-    const c = document.getElementById('modalContainer');
-    if (c) { c.innerHTML = ''; c.style.display = 'none'; } document.body.style.overflow = '';
-}
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-
-function confirmAction(message) {
-    return new Promise(resolve => {
-        openModal(`
-            <div class="modal-header">
-                <h3 class="modal-title"><i data-lucide="alert-triangle" style="width:1.2rem;height:1.2rem;color:var(--red)"></i> Confirmation</h3>
-                <button class="modal-close" onclick="closeModal()"><i data-lucide="x"></i></button>
-            </div>
-            <p style="padding:20px 24px;font-size:.9rem;color:var(--ink-2)">${message}</p>
-            <div class="form-actions" style="padding:0 24px 24px;gap:12px">
-                <button class="btn btn-secondary" id="confirmNo">Annuler</button>
-                <button class="btn btn-primary" style="background:var(--red)" id="confirmYes"><i data-lucide="trash-2" style="width:.9rem;height:.9rem"></i> Confirmer</button>
-            </div>`);
-        document.getElementById('confirmYes').onclick = () => { closeModal(); resolve(true); };
-        document.getElementById('confirmNo').onclick  = () => { closeModal(); resolve(false); };
+function confirmAction(msg){
+    return new Promise(resolve=>{
+        const overlay=document.createElement('div'); overlay.className='modal-overlay';
+        overlay.onclick=e=>{ if(e.target===overlay){ overlay.remove(); resolve(false); } };
+        overlay.innerHTML=`<div class="modal"><div class="modal-header"><h3 class="modal-title"><i data-lucide="help-circle" style="color:var(--accent);width:1.25rem;height:1.25rem"></i> Confirmation</h3><button class="modal-close" id="mc"><i data-lucide="x"></i></button></div><p style="color:var(--text-secondary);line-height:1.6">${msg}</p><div class="form-actions"><button class="btn btn-secondary" id="btnNo">Annuler</button><button class="btn btn-primary" id="btnYes">Confirmer</button></div></div>`;
+        document.body.appendChild(overlay); lucide.createIcons();
+        document.getElementById('btnYes').onclick=()=>{overlay.remove();resolve(true)};
+        document.getElementById('btnNo').onclick=()=>{overlay.remove();resolve(false)};
+        document.getElementById('mc').onclick=()=>{overlay.remove();resolve(false)};
     });
 }
 
-// ─── G. RENDU TABLEAU ────────────────────────────────────────
-function renderServices() {
-    const container = document.getElementById('servicesTable');
+async function initDashboard(){
+    const {data:{user}}=await sb.auth.getUser();
+    if(!user){ window.location.href='../login.html'; return; }
+    currentUser=user;
+    const {data:profile}=await sb.from('users').select('*').eq('id',user.id).maybeSingle();
+    const u=profile||{full_name:user.email?.split('@')[0],role:'prestataire',is_verified:false};
+    document.getElementById('sidebarName').textContent=u.full_name||'Utilisateur';
+    document.getElementById('sidebarRole').textContent={prestataire:'Prestataire',client:'Client'}[u.role]||'Prestataire';
+    document.getElementById('verifyBadge').style.display=u.is_verified?'inline-flex':'none';
+    const av=document.getElementById('sidebarAvatar');
+    if(u.profile_photo_url) av.innerHTML=`<img src="${u.profile_photo_url}" alt="">`;
+    else av.textContent=(u.full_name||'U').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    await loadCounts(); lucide.createIcons();
+}
 
-    if (services.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <i data-lucide="package" class="empty-icon" style="width:4rem;height:4rem"></i>
-                <h3>Aucun service créé</h3>
-                <p>Créez votre premier service pour commencer à recevoir des commandes.</p>
-                <button class="btn btn-primary" onclick="openServiceModal()"><i data-lucide="plus"></i> Créer un service</button>
-            </div>`;
+async function loadCounts(){
+    const [svc,ord]=await Promise.all([
+        sb.from('services').select('id',{count:'exact',head:true}).eq('user_id',currentUser.id),
+        sb.from('orders').select('id',{count:'exact',head:true}).eq('provider_id',currentUser.id).in('status',['pending','confirmed','in_progress'])
+    ]);
+    document.getElementById('serviceBadge').textContent=svc.count||0;
+    document.getElementById('orderBadge').textContent=ord.count||0;
+}
+
+async function getMyServices(){
+    if(!currentUser) return[];
+    const {data,error}=await sb.from('services').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false});
+    return error?[]:data||[];
+}
+
+function renderServices(){
+    const c=document.getElementById('servicesTable');
+    if(!services.length){
+        c.innerHTML=`<div class="empty-state"><div class="empty-icon"><i data-lucide="package" style="width:3rem;height:3rem"></i></div><h3>Aucun service créé</h3><p>Créez votre premier service pour commencer à recevoir des commandes.</p><button class="btn btn-primary" onclick="openServiceModal()"><i data-lucide="plus"></i> Créer un service</button></div>`;
         lucide.createIcons(); return;
     }
-
-    container.innerHTML = `
-        <table>
-            <thead><tr>
-                <th>Service</th><th>Catégorie</th><th>Type de prix</th><th>Prix</th><th>Statut</th><th>Créé le</th><th>Actions</th>
-            </tr></thead>
-            <tbody>
-                ${services.map(s => `<tr>
-                    <td>
-                        <div class="service-cell">
-                            <div class="service-icon">${getCategoryIcon(s.category)}</div>
-                            <div>
-                                <strong>${escapeHtml(s.title)}</strong>
-                                <div class="service-desc-preview">${escapeHtml((s.description || '').substring(0, 60))}${s.description && s.description.length > 60 ? '...' : ''}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td><span class="category-tag">${escapeHtml(s.category)}</span></td>
-                    <td>${formatPricingType(s.pricing_type)}</td>
-                    <td class="price-cell">${formatPrice(s.price)}</td>
-                    <td><span class="status-badge ${s.is_active ? 'status-completed' : 'status-cancelled'}">${s.is_active ? 'Actif' : 'Inactif'}</span></td>
-                    <td>${formatDate(s.created_at)}</td>
-                    <td>
-                        <div class="action-group">
-                            <button class="btn-icon" onclick="openServiceModal('${s.id}')" title="Modifier"><i data-lucide="pencil" style="width:1rem;height:1rem"></i></button>
-                            <button class="btn-icon" onclick="toggleServiceStatus('${s.id}')" title="${s.is_active ? 'Désactiver' : 'Activer'}"><i data-lucide="${s.is_active ? 'eye-off' : 'eye'}" style="width:1rem;height:1rem"></i></button>
-                            <button class="btn-icon danger" onclick="deleteService('${s.id}')" title="Supprimer"><i data-lucide="trash-2" style="width:1rem;height:1rem"></i></button>
-                        </div>
-                    </td>
-                </tr>`).join('')}
-            </tbody>
-        </table>`;
+    const icons={'Plomberie':'wrench','Électricité':'zap','Ménage':'home','Photographie':'camera','Développement web':'monitor','Cours particuliers':'book-open','Transport':'car','Design':'palette','Beauté':'sparkles','Bâtiment':'hard-hat'};
+    const types={fixed:"Prix fixe",hourly:"À l'heure",daily:'À la journée',project:'Par projet'};
+    c.innerHTML=`<table><thead><tr><th>Service</th><th>Catégorie</th><th>Type de prix</th><th>Prix</th><th>Statut</th><th>Créé le</th><th>Actions</th></tr></thead><tbody>${services.map(s=>`<tr>
+        <td><div class="service-cell"><div class="service-icon"><i data-lucide="${icons[s.category]||'briefcase'}" style="width:1.25rem;height:1.25rem"></i></div><div><strong>${esc(s.title)}</strong><div class="service-desc-preview">${esc((s.description||'').substring(0,60))}${s.description&&s.description.length>60?'...':''}</div></div></div></td>
+        <td><span class="category-tag">${esc(s.category)}</span></td>
+        <td>${types[s.pricing_type]||s.pricing_type}</td>
+        <td class="price-cell">${formatPrice(s.price)}</td>
+        <td><span class="status-badge ${s.is_active?'status-active':'status-inactive'}">${s.is_active?'Actif':'Inactif'}</span></td>
+        <td>${formatDate(s.created_at)}</td>
+        <td><div style="display:flex;gap:4px">
+            <button class="btn-icon" onclick="openServiceModal('${s.id}')" title="Modifier"><i data-lucide="pencil" style="width:.875rem;height:.875rem"></i></button>
+            <button class="btn-icon warning" onclick="toggleStatus('${s.id}')" title="${s.is_active?'Désactiver':'Activer'}"><i data-lucide="${s.is_active?'eye-off':'eye'}" style="width:.875rem;height:.875rem"></i></button>
+            <button class="btn-icon danger" onclick="deleteService('${s.id}')" title="Supprimer"><i data-lucide="trash-2" style="width:.875rem;height:.875rem"></i></button>
+        </div></td>
+    </tr>`).join('')}</tbody></table>`;
     lucide.createIcons();
 }
 
-// ─── H. MODAL CRUD — CRÉER / MODIFIER ───────────────────────
-async function openServiceModal(id = null) {
-    const isEdit = !!id;
-    let service = {
-        title: '', category: 'Plomberie', price: '', pricing_type: 'fixed',
-        description: '', duration_minutes: '', is_active: true, image_url: ''
-    };
-
-    if (isEdit) {
-        const found = services.find(s => s.id === id);
-        if (found) service = { ...service, ...found };
-    }
-
-    const categories = ['Plomberie','Électricité','Ménage','Photographie','Développement web','Cours particuliers','Transport','Design','Beauté','Bâtiment'];
-
-    const html = `
-        <div class="modal-header">
-            <h3 class="modal-title">
-                <i data-lucide="${isEdit ? 'pencil' : 'plus'}" style="width:1.2rem;height:1.2rem"></i>
-                ${isEdit ? 'Modifier le service' : 'Nouveau service'}
-            </h3>
-            <button class="modal-close" onclick="closeModal()"><i data-lucide="x"></i></button>
-        </div>
-        <form id="serviceForm">
-            <input type="hidden" name="id" value="${id || ''}">
-            <input type="hidden" name="is_active" value="${service.is_active !== false}">
-
-            <div class="form-group">
-                <label>Titre du service *</label>
-                <input type="text" name="title" value="${escapeHtml(service.title)}" placeholder="Ex: Plombier professionnel" required>
-            </div>
-
+async function openServiceModal(id=null){
+    const isEdit=!!id;
+    let s={title:'',category:'Plomberie',price:'',pricing_type:'fixed',description:'',duration_minutes:'',is_active:true,image_url:''};
+    if(isEdit){ const f=services.find(x=>x.id===id); if(f) s={...s,...f}; }
+    const cats=['Plomberie','Électricité','Ménage','Photographie','Développement web','Cours particuliers','Transport','Design','Beauté','Bâtiment'];
+    
+    const overlay=document.createElement('div'); overlay.className='modal-overlay';
+    overlay.onclick=e=>{ if(e.target===overlay) overlay.remove(); };
+    overlay.innerHTML=`<div class="modal">
+        <div class="modal-header"><h3 class="modal-title"><i data-lucide="${isEdit?'pencil':'plus'}" style="color:var(--primary);width:1.25rem;height:1.25rem"></i> ${isEdit?'Modifier':'Nouveau'} service</h3><button class="modal-close" onclick="this.closest('.modal-overlay').remove()"><i data-lucide="x"></i></button></div>
+        <form id="sf">
+            <div class="form-group"><label>Titre *</label><input name="title" value="${esc(s.title)}" placeholder="Ex: Plombier professionnel" required></div>
             <div class="form-row">
-                <div class="form-group">
-                    <label>Catégorie *</label>
-                    <select name="category" required>
-                        ${categories.map(c => `<option value="${c}" ${service.category === c ? 'selected' : ''}>${c}</option>`).join('')}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Type de prix *</label>
-                    <select name="pricing_type" required id="pricingType">
-                        <option value="fixed"   ${service.pricing_type === 'fixed' ? 'selected' : ''}>Prix fixe</option>
-                        <option value="hourly"  ${service.pricing_type === 'hourly' ? 'selected' : ''}>Taux horaire</option>
-                        <option value="daily"   ${service.pricing_type === 'daily' ? 'selected' : ''}>Taux journalier</option>
-                        <option value="project" ${service.pricing_type === 'project' ? 'selected' : ''}>Par projet</option>
-                    </select>
-                </div>
+                <div class="form-group"><label>Catégorie *</label><select name="category">${cats.map(c=>`<option value="${c}" ${s.category===c?'selected':''}>${c}</option>`).join('')}</select></div>
+                <div class="form-group"><label>Type de prix *</label><select name="pricing_type" id="pt"><option value="fixed" ${s.pricing_type==='fixed'?'selected':''}>Prix fixe</option><option value="hourly" ${s.pricing_type==='hourly'?'selected':''}>Taux horaire</option><option value="daily" ${s.pricing_type==='daily'?'selected':''}>Taux journalier</option><option value="project" ${s.pricing_type==='project'?'selected':''}>Par projet</option></select></div>
             </div>
-
             <div class="form-row">
-                <div class="form-group">
-                    <label>Prix (FCFA) *</label>
-                    <input type="number" name="price" value="${service.price}" placeholder="Ex: 15000" required min="100" step="100">
-                </div>
-                <div class="form-group" id="durationGroup" style="display:${['hourly','daily'].includes(service.pricing_type) ? 'block' : 'none'}">
-                    <label>Durée estimée (Heures)</label>
-                    <input type="number" name="duration_minutes" value="${service.duration_minutes || ''}" placeholder="Ex: 60" min="15" step="15">
-                </div>
+                <div class="form-group"><label>Prix (FCFA) *</label><input type="number" name="price" value="${s.price}" placeholder="15000" required min="100"></div>
+                <div class="form-group" id="dg" style="display:${['hourly','daily'].includes(s.pricing_type)?'block':'none'}"><label>Durée estimée (Heures)</label><input type="number" name="duration_minutes" value="${s.duration_minutes||''}" placeholder="60" min="15" step="15"></div>
             </div>
-
-            <div class="form-group">
-                <label>Description</label>
-                <textarea name="description" rows="4" placeholder="Décrivez votre service en détail...">${escapeHtml(service.description || '')}</textarea>
-            </div>
-
-            <div class="form-group">
-                <label>URL de l'image <span style="font-weight:400;color:var(--muted)">(optionnel)</span></label>
-                <input type="url" name="image_url" value="${escapeHtml(service.image_url || '')}" placeholder="https://exemple.com/photo.jpg">
-            </div>
-
-            <div class="form-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
-                <button type="submit" class="btn btn-primary">
-                    <i data-lucide="${isEdit ? 'save' : 'plus'}"></i> ${isEdit ? 'Enregistrer' : 'Créer le service'}
-                </button>
-            </div>
-        </form>`;
-
-    openModal(html);
-
-    // Afficher/masquer durée selon type de prix
-    document.getElementById('pricingType').addEventListener('change', function() {
-        document.getElementById('durationGroup').style.display = ['hourly','daily'].includes(this.value) ? 'block' : 'none';
-    });
-
-    // ── SUBMIT : INSERT ou UPDATE dans services ──────────────
-    document.getElementById('serviceForm').addEventListener('submit', async function(e) {
+            <div class="form-group"><label>Description</label><textarea name="description" rows="3">${esc(s.description||'')}</textarea></div>
+            <div class="form-group"><label>URL image</label><input type="url" name="image_url" value="${esc(s.image_url||'')}" placeholder="https://..."></div>
+            <div class="form-actions"><button type="button" class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Annuler</button><button type="submit" class="btn btn-primary"><i data-lucide="${isEdit?'save':'plus'}"></i> ${isEdit?'Enregistrer':'Créer'}</button></div>
+        </form>
+    </div>`;
+    document.body.appendChild(overlay); lucide.createIcons();
+    document.getElementById('pt').addEventListener('change',function(){ document.getElementById('dg').style.display=['hourly','daily'].includes(this.value)?'block':'none'; });
+    
+    document.getElementById('sf').addEventListener('submit',async function(e){
         e.preventDefault();
-        const fd   = new FormData(this);
-        const data = Object.fromEntries(fd.entries());
-
-        // Nettoyage pour correspondre au schéma services
-        data.title            = data.title.trim();
-        data.price            = parseFloat(data.price);
-        data.description      = data.description.trim() || null;
-        data.image_url        = data.image_url.trim() || null;
-        data.duration_minutes = data.duration_minutes ? parseInt(data.duration_minutes, 10) : null;
-        data.is_active        = data.is_active !== 'false';
-
-        // Ne pas envoyer duration_minutes si le type ne le justifie pas
-        if (!['hourly','daily'].includes(data.pricing_type)) {
-            data.duration_minutes = null;
-        }
-
-        delete data.id;
-
-        try {
-            if (isEdit) {
-                const { error } = await sb.from('services').update(data).eq('id', id);
-                if (error) throw error;
-                showToast('Service mis à jour avec succès', 'success');
-            } else {
-                data.user_id = currentUser.id;
-                const { error } = await sb.from('services').insert([data]);
-                if (error) throw error;
-                showToast('Service créé avec succès', 'success');
-            }
-            closeModal();
-            services = await getMyServices();
-            renderServices();
-            await loadSidebarCounts();
-        } catch (err) {
-            console.error('Erreur services :', err);
-            if (err.code === '23503') {
-                showToast("Erreur de profil utilisateur. Complétez votre inscription d'abord.", 'error');
-            } else if (err.code === '23514') {
-                showToast('Type de prix invalide. Choisissez parmi les options proposées.', 'error');
-            } else {
-                showToast('Erreur : ' + (err.message || 'Réessayez.'), 'error');
-            }
-        }
+        const fd=new FormData(this), data=Object.fromEntries(fd.entries());
+        data.price=parseFloat(data.price); data.title=data.title.trim();
+        data.description=data.description.trim()||null; data.image_url=data.image_url.trim()||null;
+        data.duration_minutes=data.duration_minutes?parseInt(data.duration_minutes):null;
+        if(!['hourly','daily'].includes(data.pricing_type)) data.duration_minutes=null;
+        try{
+            if(isEdit){ await sb.from('services').update(data).eq('id',id); showToast('Service mis à jour','success'); }
+            else { data.user_id=currentUser.id; await sb.from('services').insert([data]); showToast('Service créé','success'); }
+            overlay.remove(); services=await getMyServices(); renderServices(); await loadCounts();
+        }catch(err){ showToast('Erreur: '+err.message,'error'); }
     });
 }
 
-// ─── I. TOGGLE ACTIF / INACTIF ───────────────────────────────
-async function toggleServiceStatus(id) {
-    const service = services.find(s => s.id === id);
-    if (!service) return;
-
-    const newStatus = !service.is_active;
-    try {
-        const { error } = await sb.from('services').update({ is_active: newStatus }).eq('id', id);
-        if (error) throw error;
-        services = await getMyServices();
-        renderServices();
-        await loadSidebarCounts();
-        showToast(newStatus ? 'Service activé' : 'Service désactivé', 'info');
-    } catch (err) {
-        showToast('Erreur : ' + err.message, 'error');
-    }
+async function toggleStatus(id){
+    const s=services.find(x=>x.id===id); if(!s) return;
+    await sb.from('services').update({is_active:!s.is_active}).eq('id',id);
+    services=await getMyServices(); renderServices(); await loadCounts();
+    showToast(s.is_active?'Service désactivé':'Service activé','info');
 }
 
-// ─── J. SUPPRIMER ────────────────────────────────────────────
-async function deleteService(id) {
-    const ok = await confirmAction('Êtes-vous sûr de vouloir supprimer ce service ? Cette action est irréversible.');
-    if (!ok) return;
-
-    try {
-        const { error } = await sb.from('services').delete().eq('id', id);
-        if (error) throw error;
-        services = await getMyServices();
-        renderServices();
-        await loadSidebarCounts();
-        showToast('Service supprimé', 'info');
-    } catch (err) {
-        showToast('Erreur : ' + err.message, 'error');
-    }
+async function deleteService(id){
+    if(!await confirmAction('Supprimer définitivement ce service ?')) return;
+    await sb.from('services').delete().eq('id',id);
+    services=await getMyServices(); renderServices(); await loadCounts();
+    showToast('Service supprimé','info');
 }
 
-// ─── K. DÉMARRAGE ────────────────────────────────────────────
-async function loadServices() {
+async function loadServices(){
     await initDashboard();
-    setActiveNav('services');
-    services = await getMyServices();
+    services=await getMyServices();
     renderServices();
 }
 

@@ -2,693 +2,477 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Mon Profil — CamServices Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Allison&family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="css/dashboard.css">
-        <link rel="stylesheet" href="../css/global.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        :root {
+            --primary: #22C55E; --primary-hover: #16A34A; --primary-light: #F0FDF4; --primary-dim: rgba(34,197,94,0.08);
+            --text-primary: #111827; --text-secondary: #4B5563; --text-muted: #6B7280;
+            --background: #FFFFFF; --surface: #F9FAFB; --border: #E5E7EB; --border-light: #F3F4F6;
+            --accent: #F59E0B; --accent-hover: #D97706; --accent-light: #FFFBEB; --accent-dim: rgba(245,158,11,0.08);
+            --error: #EF4444; --error-light: #FEF2F2; --blue: #3B82F6; --blue-light: #EFF6FF;
+            --shadow-xs: 0 1px 2px rgba(0,0,0,0.05); --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07); --shadow-lg: 0 10px 15px rgba(0,0,0,0.1); --shadow-xl: 0 20px 60px rgba(0,0,0,0.1);
+            --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 24px;
+            --ease: cubic-bezier(0.16, 1, 0.3, 1);
+            --bottom-nav-h: 72px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--surface); color: var(--text-primary); min-height:100vh; display:flex;
+            -webkit-font-smoothing: antialiased;
+        }
+        @keyframes fadeSlide { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        @keyframes slideInRight { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
+        @keyframes slideUpBottom { from { transform:translateY(100%); } to { transform:translateY(0); } }
 
+        /* ═══ SIDEBAR (Desktop only) ═══ */
+        .sidebar { width:260px; background:#FFFFFF; border-right:1px solid var(--border-light); display:flex; flex-direction:column; position:fixed; top:0; left:0; bottom:0; z-index:100; padding:24px 16px; overflow-y:auto; transition:transform .3s var(--ease); }
+        .sidebar-logo { display:flex; align-items:center; padding:0 12px 24px; }
+        .sidebar-logo img { height:32px; }
+        .sidebar-user { display:flex; align-items:center; gap:12px; padding:16px 12px; background:var(--surface); border-radius:var(--radius-md); margin-bottom:24px; }
+        .sidebar-avatar { width:40px; height:40px; border-radius:50%; background:var(--primary-dim); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.875rem; color:var(--primary); flex-shrink:0; background-size:cover; }
+        .sidebar-user-info { flex:1; min-width:0; }
+        .sidebar-user-name { font-weight:600; font-size:.875rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .sidebar-user-role { font-size:.75rem; color:var(--text-muted); }
+        .verify-badge { display:inline-flex; align-items:center; gap:4px; font-size:.6875rem; font-weight:600; color:var(--primary); background:var(--primary-dim); padding:2px 8px; border-radius:100px; margin-top:4px; }
+        .sidebar-nav { list-style:none; display:flex; flex-direction:column; gap:2px; }
+        .sidebar-nav li a { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--radius-sm); font-size:.875rem; font-weight:500; color:var(--text-secondary); text-decoration:none; transition:all .2s; }
+        .sidebar-nav li a:hover { background:var(--surface); color:var(--text-primary); }
+        .sidebar-nav li a.active { background:var(--primary-dim); color:var(--primary); font-weight:600; }
+        .sidebar-nav li a i { width:1.125rem; height:1.125rem; }
+        .badge { background:var(--accent); color:#FFFFFF; font-size:.6875rem; font-weight:700; padding:2px 7px; border-radius:10px; margin-left:auto; }
+        .sidebar-divider { border:none; border-top:1px solid var(--border-light); margin:16px 12px; }
+        .sidebar-footer { margin-top:auto; padding-top:16px; }
+        .sidebar-footer a { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--radius-sm); font-size:.875rem; font-weight:500; color:var(--text-muted); text-decoration:none; transition:all .2s; }
+        .sidebar-footer a:hover { color:var(--error); background:var(--error-light); }
+
+        /* ═══ MAIN ═══ */
+        .main-content { flex:1; margin-left:260px; padding:32px 32px 64px; min-height:100vh; }
+        .page-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:32px; flex-wrap:wrap; gap:16px; }
+        .page-title { font-weight:800; font-size:1.75rem; letter-spacing:-.03em; margin-bottom:6px; }
+        .page-title .accent { color:var(--primary); }
+        .page-subtitle { font-size:.9375rem; color:var(--text-secondary); }
+        .page-actions { display:flex; gap:12px; flex-wrap:wrap; }
+
+        .card { background:#FFFFFF; border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:24px; box-shadow:var(--shadow-xs); transition:all .3s; margin-bottom:20px; }
+        .card-header { margin-bottom:20px; }
+        .card-title { font-weight:700; font-size:1.0625rem; letter-spacing:-.01em; display:flex; align-items:center; gap:8px; }
+        .card-title i { color:var(--primary); width:1.2rem; height:1.2rem; }
+
+        .form-group { margin-bottom:20px; }
+        .form-group label { display:block; font-size:.8125rem; font-weight:600; color:var(--text-primary); margin-bottom:8px; letter-spacing:-.01em; }
+        .form-group input, .form-group select, .form-group textarea { width:100%; padding:12px 16px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.9375rem; color:var(--text-primary); outline:none; transition:all .25s; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-dim); }
+        .form-group textarea { min-height:100px; resize:vertical; line-height:1.6; }
+        .form-group input:disabled { background:var(--surface); color:var(--text-muted); cursor:not-allowed; }
+        .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+
+        .btn { display:inline-flex; align-items:center; gap:8px; font-family:'Inter',sans-serif; font-weight:600; font-size:.875rem; padding:11px 22px; border-radius:var(--radius-sm); border:none; cursor:pointer; transition:all .25s var(--ease); text-decoration:none; line-height:1; white-space:nowrap; }
+        .btn i { width:1.125rem; height:1.125rem; }
+        .btn-primary { background:var(--primary); color:#FFFFFF; box-shadow:0 1px 3px rgba(34,197,94,.2); }
+        .btn-primary:hover { background:var(--primary-hover); transform:translateY(-1px); box-shadow:0 4px 12px rgba(34,197,94,.3); }
+        .btn-secondary { background:#FFFFFF; color:var(--text-secondary); border:1.5px solid var(--border); }
+        .btn-secondary:hover { border-color:var(--text-primary); color:var(--text-primary); transform:translateY(-1px); }
+        .btn-sm { padding:8px 16px; font-size:.8125rem; }
+
+        .profile-photo-wrapper { position:relative; display:inline-block; margin-bottom:16px; }
+        .profile-photo { width:120px; height:120px; border-radius:50%; background:var(--text-primary); color:#FFFFFF; display:flex; align-items:center; justify-content:center; font-size:2.5rem; font-weight:700; overflow:hidden; border:3px solid var(--border); background-size:cover; background-position:center; }
+        .photo-upload-btn { position:absolute; bottom:0; right:0; width:36px; height:36px; background:var(--primary); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; border:2px solid #FFFFFF; transition:all .2s; color:#FFFFFF; }
+        .photo-upload-btn:hover { background:var(--primary-hover); transform:scale(1.1); }
+        .photo-upload-btn i { width:1rem; height:1rem; }
+
+        .status-badge { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:100px; font-size:.75rem; font-weight:600; }
+        .status-verified { background:var(--primary-light); color:var(--primary); }
+        .status-pending { background:#FFF7ED; color:#F59E0B; }
+        .status-unverified { background:var(--surface); color:var(--text-muted); }
+
+        .skill-tag { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; background:var(--primary-dim); color:var(--primary); border-radius:100px; font-size:.8125rem; font-weight:600; margin:3px; }
+        .skill-tag button { background:none; border:none; cursor:pointer; color:var(--primary); padding:0; display:flex; opacity:.7; }
+        .skill-tag button:hover { opacity:1; }
+        .skills-input-wrapper { border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:10px 14px; display:flex; flex-wrap:wrap; gap:6px; align-items:center; min-height:50px; transition:all .25s; }
+        .skills-input-wrapper:focus-within { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-dim); }
+        .skills-input { border:none; outline:none; flex:1; min-width:120px; padding:6px 0; font-family:'Inter',sans-serif; font-size:.9375rem; }
+
+        .modal-overlay { position:fixed; inset:0; z-index:9000; background:rgba(17,24,39,.5); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; padding:24px; animation:fadeIn .25s ease; }
+        .modal-content { background:#FFFFFF; border-radius:var(--radius-xl); box-shadow:var(--shadow-xl); width:100%; max-width:560px; max-height:90vh; overflow-y:auto; animation:fadeSlide .3s var(--ease); }
+        .modal-header { display:flex; align-items:center; justify-content:space-between; padding:24px 28px 20px; border-bottom:1px solid var(--border-light); }
+        .modal-title { display:flex; align-items:center; gap:12px; font-size:1.125rem; font-weight:700; }
+        .modal-close { background:none; border:none; cursor:pointer; color:var(--text-muted); padding:8px; border-radius:var(--radius-sm); transition:all .2s; }
+        .modal-close:hover { background:var(--surface); color:var(--text-primary); }
+        .modal-body { padding:24px 28px 28px; }
+        .form-actions { display:flex; gap:12px; justify-content:flex-end; padding-top:8px; }
+
+        /* ═══════════════════════════════════════════
+           BOTTOM NAVBAR MOBILE
+           ═══════════════════════════════════════════ */
+        .bottom-navbar {
+            display: none;
+            position: fixed; bottom:0; left:0; right:0; z-index:150;
+            background: rgba(255,255,255,0.95); backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top:1px solid var(--border-light);
+            padding:6px 4px; padding-bottom:max(6px, env(safe-area-inset-bottom));
+            box-shadow:0 -4px 20px rgba(0,0,0,0.06);
+            animation:slideUpBottom .4s var(--ease);
+        }
+        .bottom-nav-list { display:flex; align-items:center; justify-content:space-around; list-style:none; margin:0; padding:0; max-width:500px; margin:0 auto; }
+        .bottom-nav-item { flex:1; text-align:center; }
+        .bottom-nav-link {
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+            gap:3px; padding:6px 4px; text-decoration:none;
+            color:var(--text-muted); font-size:.625rem; font-weight:500;
+            font-family:'Inter',sans-serif; transition:all .2s; border-radius:12px;
+            position:relative; min-height:48px; -webkit-tap-highlight-color:transparent;
+        }
+        .bottom-nav-link i { width:1.5rem; height:1.5rem; transition:all .2s; }
+        .bottom-nav-link span { line-height:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+        .bottom-nav-link.active { color:var(--primary); font-weight:600; }
+        .bottom-nav-link.active::before { content:''; position:absolute; top:0; left:50%; transform:translateX(-50%); width:24px; height:3px; background:var(--primary); border-radius:0 0 3px 3px; }
+        .bottom-nav-link:active { transform:scale(.95); background:var(--border-light); }
+        .bottom-nav-badge { position:absolute; top:2px; right:calc(50% - 22px); background:var(--accent); color:#fff; font-size:.625rem; font-weight:700; padding:2px 6px; border-radius:10px; min-width:18px; text-align:center; }
+        
+        .more-menu-dropdown {
+            position:fixed; bottom:calc(var(--bottom-nav-h) + 12px + env(safe-area-inset-bottom));
+            right:12px; background:#fff; border:1px solid var(--border-light);
+            border-radius:16px; box-shadow:0 8px 32px rgba(0,0,0,.12);
+            padding:8px; z-index:160; min-width:180px; animation:fadeSlide .3s var(--ease);
+        }
+        .more-menu-dropdown a {
+            display:flex; align-items:center; gap:12px; padding:12px 16px;
+            text-decoration:none; color:var(--text-primary); font-size:.875rem;
+            font-weight:500; font-family:'Inter',sans-serif; border-radius:12px; transition:background .2s;
+        }
+        .more-menu-dropdown a:hover { background:var(--surface); }
+        .more-menu-dropdown a i { width:1.25rem; height:1.25rem; color:var(--text-muted); }
+
+        /* ═══ RESPONSIVE ═══ */
+        @media (min-width:1024px) { .bottom-navbar { display:none !important; } .more-menu-dropdown { display:none !important; } }
+        
+        @media (max-width:1023px) {
+            .sidebar { display:none !important; }
+            .bottom-navbar { display:block; }
+            .main-content { margin-left:0 !important; padding:20px 16px; padding-bottom:calc(var(--bottom-nav-h) + 24px + env(safe-area-inset-bottom)) !important; }
+            .page-header { flex-direction:column; align-items:stretch; }
+            .page-actions { width:100%; }
+            .page-actions .btn { flex:1; justify-content:center; }
+            .page-title { font-size:1.5rem; }
+        }
+        
+        @media (max-width:767px) {
+            .main-content { padding:16px 12px; padding-bottom:calc(var(--bottom-nav-h) + 20px + env(safe-area-inset-bottom)) !important; }
+            .card { padding:20px; }
+            .form-row { grid-template-columns:1fr; }
+            .bottom-nav-link { font-size:.5625rem; gap:2px; }
+            .bottom-nav-link i { width:1.35rem; height:1.35rem; }
+        }
+        
+        @media (max-width:424px) {
+            .main-content { padding:12px 8px; padding-bottom:calc(var(--bottom-nav-h) + 16px + env(safe-area-inset-bottom)) !important; }
+            .card { padding:16px; border-radius:12px; }
+            .page-title { font-size:1.25rem; }
+            .profile-photo { width:100px; height:100px; font-size:2rem; }
+            .bottom-nav-link { font-size:.5rem; }
+            .bottom-nav-link i { width:1.25rem; height:1.25rem; }
+            .bottom-navbar { padding:4px 2px; }
+            .btn { padding:8px 16px; font-size:.8125rem; }
+            .form-group input, .form-group select, .form-group textarea { padding:10px 14px; font-size:.875rem; }
+        }
+    </style>
 </head>
 <body>
 
-<button class="menu-toggle" onclick="toggleSidebar()">
-    <i data-lucide="menu"></i>
-</button>
-
-<!-- ═══ SIDEBAR ═══ -->
+<!-- ═══ SIDEBAR (Desktop) ═══ -->
 <aside class="sidebar" id="sidebar">
-  <img src="../asset/logo camservices.svg" alt="" srcset="">    
+    <div class="sidebar-logo">
+        <img src="../asset/logo.svg" alt="CamServices" style="height: 82px;">
+    </div>
     <div class="sidebar-user">
         <div class="sidebar-avatar" id="sidebarAvatar"></div>
         <div class="sidebar-user-info">
             <div class="sidebar-user-name" id="sidebarName">Chargement...</div>
-            <div class="sidebar-user-role" id="sidebarRole">Prestataire</div>
-            <span class="verify-badge" id="verifyBadge" style="display:none">
-                <i data-lucide="shield-check" style="width:.7rem;height:.7rem"></i> Vérifié
-            </span>
+            <div class="sidebar-user-role">Prestataire</div>
+            <span class="verify-badge" id="verifyBadge" style="display:none"><i data-lucide="shield-check"></i> Vérifié</span>
         </div>
     </div>
-    
     <ul class="sidebar-nav">
-        <li><a href="../dashboard/index.html" id="nav-overview"><i data-lucide="layout-dashboard"></i> Vue d'ensemble</a></li>
-        <li><a href="../dashboard/services.html" id="nav-services"><i data-lucide="briefcase"></i> Mes services <span class="badge" id="serviceBadge">0</span></a></li>
-        <li><a href="../dashboard/orders.html" id="nav-orders"><i data-lucide="shopping-bag"></i> Commandes <span class="badge" id="orderBadge">0</span></a></li>
-        <li><a href="../dashboard/pricing.html" id="nav-pricing"><i data-lucide="tags"></i> Grille tarifaire</a></li>
-        <li><a href="../dashboard/portfolio.html" id="nav-portfolio"><i data-lucide="image"></i> Portfolio</a></li>
-        <li><a href="../dashboard/activities.html" id="nav-activities"><i data-lucide="award"></i> Activités</a></li>
+        <li><a href="../dashboard/index.html"><i data-lucide="layout-dashboard"></i> Vue d'ensemble</a></li>
+        <li><a href="../dashboard/services.html"><i data-lucide="briefcase"></i> Mes services <span class="badge" id="serviceBadge">0</span></a></li>
+        <li><a href="../dashboard/orders.html"><i data-lucide="shopping-bag"></i> Commandes <span class="badge" id="orderBadge">0</span></a></li>
+        <li><a href="../dashboard/pricing.html"><i data-lucide="tags"></i> Grille tarifaire</a></li>
+        <li><a href="../dashboard/portfolio.html"><i data-lucide="image"></i> Portfolio</a></li>
+        <li><a href="../dashboard/activities.html"><i data-lucide="award"></i> Activités</a></li>
     </ul>
-    
     <hr class="sidebar-divider">
-    
     <ul class="sidebar-nav">
-        <li><a href="../dashboard/profile.html" class="active" id="nav-profile"><i data-lucide="user-circle"></i> Mon profil</a></li>
-        <li><a href="../dashboard/analytics.html" id="nav-analytics"><i data-lucide="bar-chart-3"></i> Statistiques</a></li>
+        <li><a href="../dashboard/profile.html" class="active"><i data-lucide="user-circle"></i> Mon profil</a></li>
+        <li><a href="../dashboard/analytics.html"><i data-lucide="bar-chart-3"></i> Statistiques</a></li>
     </ul>
-    
-    <div class="sidebar-footer">
-        <a href="../landing.html" onclick="logout();return false"><i data-lucide="log-out"></i> Déconnexion</a>
-    </div>
+    <div class="sidebar-footer"><a href="../landing.html" onclick="logout();return false"><i data-lucide="log-out"></i> Déconnexion</a></div>
 </aside>
 
-<!-- ═══ MAIN CONTENT ═══ -->
+<!-- ═══ MAIN ═══ -->
 <main class="main-content">
     <div class="page-header">
         <div>
-            <h1 class="page-title">Mon <span class="script">profil</span></h1>
+            <h1 class="page-title">Mon <span class="accent">profil</span></h1>
             <p class="page-subtitle">Gérez vos informations personnelles et professionnelles</p>
         </div>
-        <div class="page-actions" style="display:flex;gap:12px">
-            <button class="btn btn-secondary btn-sm" onclick="previewProfile()">
-                <i data-lucide="eye"></i> Aperçu public
-            </button>
-            <button class="btn btn-primary" form="profileForm" type="submit">
-                <i data-lucide="save"></i> Enregistrer
-            </button>
+        <div class="page-actions">
+            <button class="btn btn-secondary btn-sm" onclick="previewProfile()"><i data-lucide="eye"></i> Aperçu</button>
+            <button class="btn btn-primary" onclick="saveAllProfile()"><i data-lucide="save"></i> Enregistrer</button>
         </div>
     </div>
-    
-    <div style="display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start">
-        
-        <!-- Colonne gauche : Photo + Badge -->
-        <div style="display:flex;flex-direction:column;gap:24px">
+
+    <div class="profile-layout">
+        <!-- Colonne gauche -->
+        <div class="profile-sidebar">
             <div class="card" style="text-align:center">
-                <div style="position:relative;display:inline-block;margin-bottom:16px">
-                    <div id="profilePhotoPreview" style="width:120px;height:120px;border-radius:50%;background:var(--ink);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:2.5rem;font-weight:700;margin:0 auto;overflow:hidden;border:3px solid var(--rule)">
-                        <span id="photoInitials">--</span>
-                    </div>
-                    <label for="profilePhotoInput" style="position:absolute;bottom:0;right:0;width:36px;height:36px;background:var(--ink);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--white);transition:all .2s">
-                        <i data-lucide="camera" style="width:1rem;height:1rem;color:var(--white)"></i>
-                    </label>
+                <div class="profile-photo-wrapper">
+                    <div class="profile-photo" id="profilePhotoPreview"><span id="photoInitials">--</span></div>
+                    <label for="profilePhotoInput" class="photo-upload-btn"><i data-lucide="camera"></i></label>
                     <input type="file" id="profilePhotoInput" accept="image/*" style="display:none" onchange="handlePhotoChange(event)">
                 </div>
                 <h3 style="font-weight:700;font-size:1.1rem" id="displayName">--</h3>
-                <p style="font-size:.8rem;color:var(--muted)" id="displayUsername">@--</p>
-                
-                <div style="margin-top:12px">
-                    <span class="status-badge status-completed" id="verifiedBadge" style="display:none">
-                        <i data-lucide="shield-check" style="width:.8rem;height:.8rem"></i> Profil vérifié
-                    </span>
-                    <span class="status-badge status-pending" id="pendingBadge" style="display:none">
-                        <i data-lucide="clock" style="width:.8rem;height:.8rem"></i> Vérification en cours
-                    </span>
-                    <span class="status-badge status-cancelled" id="unverifiedBadge">
-                        <i data-lucide="shield-off" style="width:.8rem;height:.8rem"></i> Non vérifié
-                    </span>
-                </div>
+                <p style="font-size:.8125rem;color:var(--text-muted)" id="displayUsername">@--</p>
+                <div style="margin-top:12px" id="profileStatusBadge"></div>
             </div>
-            
-            <!-- Carte vérification -->
+
             <div class="card">
-                <h4 style="font-weight:700;font-size:.9rem;margin-bottom:12px;display:flex;align-items:center;gap:8px">
-                    <i data-lucide="shield-check" style="width:1rem;height:1rem;color:var(--gold)"></i>
-                    Badge certifié
+                <h4 style="font-weight:700;font-size:.9375rem;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+                    <i data-lucide="shield-check" style="color:var(--primary)"></i> Badge certifié
                 </h4>
-                <p style="font-size:.78rem;color:var(--muted);line-height:1.6;margin-bottom:16px">
-                    Le badge certifié augmente la confiance des clients et votre visibilité sur la plateforme.
+                <p style="font-size:.8125rem;color:var(--text-secondary);line-height:1.6;margin-bottom:16px">
+                    Le badge certifié augmente la confiance des clients et votre visibilité.
                 </p>
-                <div id="verificationSection">
-                    <!-- Dynamique selon statut -->
-                </div>
+                <div id="verificationSection"></div>
             </div>
         </div>
-        
-        <!-- Colonne droite : Formulaire -->
-        <div style="display:flex;flex-direction:column;gap:24px">
-            
-            <!-- Informations personnelles -->
+
+        <!-- Colonne droite -->
+        <div class="profile-main">
             <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Informations personnelles</h3>
+                <div class="card-header"><h3 class="card-title"><i data-lucide="user"></i> Informations personnelles</h3></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Nom complet *</label><input type="text" id="inputFullName" placeholder="Ex: Jean Dupont" required></div>
+                    <div class="form-group"><label>Nom d'utilisateur *</label><input type="text" id="inputUsername" placeholder="Ex: jeandupont" required></div>
                 </div>
-                <form id="profileForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Nom complet *</label>
-                            <input type="text" name="full_name" id="inputFullName" 
-                                   placeholder="Ex: Jean Dupont" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Nom d'utilisateur *</label>
-                            <input type="text" name="username" id="inputUsername" 
-                                   placeholder="Ex: jeandupont" required>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Email</label>
-                            <input type="email" id="inputEmail" 
-                                   placeholder="votre@email.com" disabled 
-                                   style="background:var(--cream);color:var(--muted);cursor:not-allowed">
-                            <span style="font-size:.7rem;color:var(--muted);margin-top:4px;display:block">
-                                L'email ne peut pas être modifié
-                            </span>
-                        </div>
-                        <div class="form-group">
-                            <label>Téléphone *</label>
-                            <input type="tel" name="phone" id="inputPhone" 
-                                   placeholder="Ex: +237 6XX XXX XXX" required>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Bio / Présentation</label>
-                        <textarea name="bio" id="inputBio" rows="4" 
-                                  placeholder="Présentez-vous en quelques mots..."></textarea>
-                        <span style="font-size:.7rem;color:var(--muted);margin-top:4px;display:block">
-                            Maximum 500 caractères. Décrivez votre expérience et ce qui vous rend unique.
-                        </span>
-                    </div>
-                </form>
+                <div class="form-row">
+                    <div class="form-group"><label>Email</label><input type="email" id="inputEmail" disabled></div>
+                    <div class="form-group"><label>Téléphone *</label><input type="tel" id="inputPhone" placeholder="+237 6XX XXX XXX" required></div>
+                </div>
+                <div class="form-group"><label>Bio / Présentation</label><textarea id="inputBio" rows="3" placeholder="Présentez-vous en quelques mots..."></textarea></div>
             </div>
-            
-            <!-- Adresse -->
+
             <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Adresse</h3>
+                <div class="card-header"><h3 class="card-title"><i data-lucide="map-pin"></i> Adresse</h3></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Ville *</label><select id="inputCity" required><option value="">Sélectionnez votre ville</option><option>Yaoundé</option><option>Douala</option><option>Bafoussam</option><option>Bamenda</option><option>Maroua</option><option>Garoua</option><option>Ngaoundéré</option><option>Kribi</option><option>Limbe</option><option>Buea</option><option>Ebolowa</option><option>Bertoua</option></select></div>
+                    <div class="form-group"><label>Quartier *</label><input type="text" id="inputNeighborhood" placeholder="Ex: Bastos, Bonapriso..." required></div>
                 </div>
-                <form id="addressForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Ville *</label>
-                            <select name="city" id="inputCity" required>
-                                <option value="">Sélectionnez votre ville</option>
-                                <option value="Yaoundé">Yaoundé</option>
-                                <option value="Douala">Douala</option>
-                                <option value="Bafoussam">Bafoussam</option>
-                                <option value="Bamenda">Bamenda</option>
-                                <option value="Maroua">Maroua</option>
-                                <option value="Garoua">Garoua</option>
-                                <option value="Ngaoundéré">Ngaoundéré</option>
-                                <option value="Kribi">Kribi</option>
-                                <option value="Limbe">Limbe</option>
-                                <option value="Buea">Buea</option>
-                                <option value="Ebolowa">Ebolowa</option>
-                                <option value="Bertoua">Bertoua</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Quartier *</label>
-                            <input type="text" name="neighborhood" id="inputNeighborhood" 
-                                   placeholder="Ex: Bastos, Bonapriso..." required>
-                        </div>
-                    </div>
-                </form>
             </div>
-            
-            <!-- Profil professionnel -->
+
             <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Profil professionnel</h3>
-                </div>
-                <form id="professionalForm">
-                    <div class="form-group">
-                        <label>Situation actuelle</label>
-                        <select name="employment_status" id="inputEmploymentStatus">
-                            <option value="">Sélectionnez votre statut</option>
-                            <option value="employed">Employé(e)</option>
-                            <option value="self_employed">Travailleur indépendant</option>
-                            <option value="unemployed">Sans emploi</option>
-                            <option value="student">Étudiant(e)</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Domaine(s) d'expertise</label>
-                        <div class="skills-input-wrapper" id="skillsWrapper">
-                            <div id="skillsTags"></div>
-                            <input type="text" class="skills-input" id="skillsInput" 
-                                   placeholder="Tapez et appuyez sur Entrée...">
-                        </div>
-                        <input type="hidden" name="domain_expertise" id="domainExpertise">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Formation</label>
-                        <input type="text" name="education" id="inputEducation" 
-                               placeholder="Ex: Licence en génie civil, CAP électricien...">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Activités parallèles / Autres compétences</label>
-                        <textarea name="side_activities" id="inputSideActivities" rows="3" 
-                                  placeholder="Ex: J'anime des formations le week-end, photographie amateur..."></textarea>
-                    </div>
-                </form>
+                <div class="card-header"><h3 class="card-title"><i data-lucide="briefcase"></i> Profil professionnel</h3></div>
+                <div class="form-group"><label>Situation actuelle</label><select id="inputEmploymentStatus"><option value="">Sélectionnez votre statut</option><option value="employed">Employé(e)</option><option value="self_employed">Travailleur indépendant</option><option value="unemployed">Sans emploi</option><option value="student">Étudiant(e)</option></select></div>
+                <div class="form-group"><label>Domaine(s) d'expertise</label><div class="skills-input-wrapper" id="skillsWrapper"><div id="skillsTags" style="display:flex;flex-wrap:wrap;gap:4px"></div><input type="text" class="skills-input" id="skillsInput" placeholder="Tapez et appuyez sur Entrée..."></div></div>
+                <div class="form-group"><label>Formation</label><input type="text" id="inputEducation" placeholder="Ex: Licence en génie civil..."></div>
+                <div class="form-group"><label>Activités parallèles</label><textarea id="inputSideActivities" rows="2" placeholder="Ex: J'anime des formations..."></textarea></div>
             </div>
-            
-            <!-- Sécurité -->
+
             <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Sécurité</h3>
+                <div class="card-header"><h3 class="card-title"><i data-lucide="lock"></i> Sécurité</h3></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Nouveau mot de passe</label><input type="password" id="inputPassword" placeholder="Laissez vide pour ne pas changer" minlength="8"></div>
+                    <div class="form-group"><label>Confirmer</label><input type="password" id="inputPasswordConfirm" placeholder="Confirmez le mot de passe"></div>
                 </div>
-                <form id="securityForm">
-                    <div class="form-group">
-                        <label>Nouveau mot de passe</label>
-                        <input type="password" name="password" id="inputPassword" 
-                               placeholder="Laissez vide pour ne pas changer" minlength="8">
-                    </div>
-                    <div class="form-group">
-                        <label>Confirmer le mot de passe</label>
-                        <input type="password" name="password_confirm" id="inputPasswordConfirm" 
-                               placeholder="Confirmez le nouveau mot de passe" minlength="8">
-                    </div>
-                </form>
             </div>
-            
-            <!-- Bouton sauvegarde en bas -->
+
             <div style="display:flex;justify-content:flex-end;gap:12px">
-                <button class="btn btn-secondary" onclick="resetForm()">
-                    <i data-lucide="rotate-ccw"></i> Réinitialiser
-                </button>
-                <button class="btn btn-primary" onclick="saveAllProfile()">
-                    <i data-lucide="save"></i> Enregistrer toutes les modifications
-                </button>
+                <button class="btn btn-secondary" onclick="resetForm()"><i data-lucide="rotate-ccw"></i> Réinitialiser</button>
+                <button class="btn btn-primary" onclick="saveAllProfile()"><i data-lucide="save"></i> Enregistrer tout</button>
             </div>
         </div>
     </div>
 </main>
 
-<div id="modalContainer"></div>
+<!-- ═══ BOTTOM NAVBAR (Mobile) ═══ -->
+<nav class="bottom-navbar" id="bottomNavbar" aria-label="Navigation principale">
+    <div class="bottom-nav-list">
+        <div class="bottom-nav-item">
+            <a href="../dashboard/index.html" class="bottom-nav-link" data-nav-id="nav-overview" aria-label="Accueil">
+                <i data-lucide="layout-dashboard"></i><span>Accueil</span>
+            </a>
+        </div>
+        <div class="bottom-nav-item">
+            <a href="../dashboard/services.html" class="bottom-nav-link" data-nav-id="nav-services" aria-label="Services">
+                <i data-lucide="briefcase"></i><span>Services</span>
+                <span class="bottom-nav-badge" id="bottom-serviceBadge" style="display:none">0</span>
+            </a>
+        </div>
+        <div class="bottom-nav-item">
+            <a href="../dashboard/orders.html" class="bottom-nav-link" data-nav-id="nav-orders" aria-label="Commandes">
+                <i data-lucide="shopping-bag"></i><span>Commandes</span>
+                <span class="bottom-nav-badge" id="bottom-orderBadge" style="display:none">0</span>
+            </a>
+        </div>
+        <div class="bottom-nav-item">
+            <a href="../dashboard/pricing.html" class="bottom-nav-link" data-nav-id="nav-pricing" aria-label="Tarifs">
+                <i data-lucide="tags"></i><span>Tarifs</span>
+            </a>
+        </div>
+        <div class="bottom-nav-item">
+            <a href="#" class="bottom-nav-link" data-nav-id="nav-more" id="moreMenuTrigger" aria-label="Plus">
+                <i data-lucide="more-horizontal"></i><span>Plus</span>
+            </a>
+        </div>
+    </div>
+</nav>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../config.js"></script>
-<script src="js/dashboard-auth.js"></script>
-<script src="js/dashboard-common.js"></script>
-<script src="../js/global.js"></script>
+<div id="modalContainer" style="display:none"></div>
+
+<style>
+    /* Layout spécifique à la page profil */
+    .profile-layout { display:grid; grid-template-columns:300px 1fr; gap:24px; align-items:start; }
+    .profile-sidebar { display:flex; flex-direction:column; gap:20px; }
+    .profile-main { display:flex; flex-direction:column; gap:20px; }
+    
+    @media (max-width:900px) {
+        .profile-layout { grid-template-columns:1fr; }
+        .profile-sidebar { order:-1; }
+    }
+</style>
 
 <script>
-    let profileData = {};
-    let skills = [];
-    let newPhotoFile = null;
-    
-    async function loadProfile() {
-        await initDashboard();
-        setActiveNav('profile');
-        
-        // Charger les données complètes du profil
-        const { data } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', currentUser.id)
-            .single();
-        
-        if (data) {
-            profileData = data;
-            currentUser = data; // Mettre à jour le currentUser global
-        }
-        
-        populateForm();
-        updateSidebar();
-        updatePhotoPreview();
-        updateVerificationSection();
-        renderSkills();
-        lucide.createIcons();
-    }
-    
-    function populateForm() {
-        // Infos personnelles
-        document.getElementById('inputFullName').value = profileData.full_name || '';
-        document.getElementById('inputUsername').value = profileData.username || '';
-        document.getElementById('inputEmail').value = profileData.email || '';
-        document.getElementById('inputPhone').value = profileData.phone || '';
-        document.getElementById('inputBio').value = profileData.bio || '';
-        
-        // Adresse
-        document.getElementById('inputCity').value = profileData.city || '';
-        document.getElementById('inputNeighborhood').value = profileData.neighborhood || '';
-        
-        // Profil pro
-        document.getElementById('inputEmploymentStatus').value = profileData.employment_status || '';
-        document.getElementById('inputEducation').value = profileData.education || '';
-        document.getElementById('inputSideActivities').value = profileData.side_activities || '';
-        
-        // Skills
-        if (profileData.domain_expertise && Array.isArray(profileData.domain_expertise)) {
-            skills = [...profileData.domain_expertise];
-        }
-        
-        // Display info
-        document.getElementById('displayName').textContent = profileData.full_name || '--';
-        document.getElementById('displayUsername').textContent = '@' + (profileData.username || '--');
-        updatePhotoPreview();
-    }
-    
-    function updatePhotoPreview() {
-        const container = document.getElementById('profilePhotoPreview');
-        const initials = document.getElementById('photoInitials');
-        
-        if (newPhotoFile) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                container.style.backgroundImage = `url(${e.target.result})`;
-                container.style.backgroundSize = 'cover';
-                container.style.backgroundPosition = 'center';
-                initials.style.display = 'none';
-            };
-            reader.readAsDataURL(newPhotoFile);
-        } else if (profileData.profile_photo_url) {
-            container.style.backgroundImage = `url(${profileData.profile_photo_url})`;
-            container.style.backgroundSize = 'cover';
-            container.style.backgroundPosition = 'center';
-            initials.style.display = 'none';
-        } else {
-            container.style.backgroundImage = '';
-            container.style.background = 'var(--ink)';
-            initials.style.display = 'block';
-            initials.textContent = (profileData.full_name || 'U')
-                .split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-        }
-    }
-    
-    function handlePhotoChange(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        
-        // Validation
-        if (file.size > 5 * 1024 * 1024) {
-            showToast('La photo ne doit pas dépasser 5 Mo', 'error');
-            return;
-        }
-        
-        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-            showToast('Format accepté : JPG, PNG, WebP', 'error');
-            return;
-        }
-        
-        newPhotoFile = file;
-        updatePhotoPreview();
-    }
-    
-    function updateVerificationSection() {
-        const section = document.getElementById('verificationSection');
-        
-        // Masquer tous les badges
-        document.getElementById('verifiedBadge').style.display = 'none';
-        document.getElementById('pendingBadge').style.display = 'none';
-        document.getElementById('unverifiedBadge').style.display = 'none';
-        
-        if (profileData.is_verified) {
-            document.getElementById('verifiedBadge').style.display = 'inline-flex';
-            section.innerHTML = `
-                <div style="background:var(--green-light);border-radius:var(--radius);padding:16px;text-align:center">
-                    <i data-lucide="check-circle" style="width:2rem;height:2rem;color:var(--green);margin-bottom:8px"></i>
-                    <p style="font-weight:600;font-size:.85rem;color:var(--green)">Profil vérifié</p>
-                    <p style="font-size:.75rem;color:var(--muted);margin-top:4px">
-                        Votre pièce d'identité a été validée. Le badge certifié est actif.
-                    </p>
-                </div>
-            `;
-        } else if (profileData.verification_status === 'pending') {
-            document.getElementById('pendingBadge').style.display = 'inline-flex';
-            section.innerHTML = `
-                <div style="background:#FFF7ED;border-radius:var(--radius);padding:16px;text-align:center">
-                    <i data-lucide="clock" style="width:2rem;height:2rem;color:#F59E0B;margin-bottom:8px"></i>
-                    <p style="font-weight:600;font-size:.85rem;color:#F59E0B">Vérification en cours</p>
-                    <p style="font-size:.75rem;color:var(--muted);margin-top:4px">
-                        Votre document est en cours d'examen. Délai moyen : 24-48h.
-                    </p>
-                </div>
-            `;
-        } else {
-            document.getElementById('unverifiedBadge').style.display = 'inline-flex';
-            section.innerHTML = `
-                <button class="btn btn-primary btn-sm" onclick="openVerificationModal()" style="width:100%">
-                    <i data-lucide="shield-check" style="width:.9rem;height:.9rem"></i>
-                    Demander la vérification
-                </button>
-            `;
-        }
-        
-        lucide.createIcons();
-    }
-    
-    async function openVerificationModal() {
-        const html = `
-            <div class="modal-header">
-                <h3 class="modal-title">
-                    <i data-lucide="shield-check" style="width:1.2rem;height:1.2rem;color:var(--gold)"></i>
-                    Demande de vérification
-                </h3>
-                <button class="modal-close" onclick="closeModal()">
-                    <i data-lucide="x"></i>
-                </button>
-            </div>
-            <form id="verificationForm">
-                <div style="background:var(--gold-dim);border-radius:var(--radius);padding:16px;margin-bottom:20px;display:flex;align-items:flex-start;gap:10px">
-                    <i data-lucide="info" style="width:1.1rem;height:1.1rem;color:var(--gold);flex-shrink:0;margin-top:1px"></i>
-                    <p style="font-size:.82rem;color:var(--ink);line-height:1.5">
-                        Pour obtenir le badge certifié, veuillez fournir une pièce d'identité valide.
-                        Votre document sera traité sous 24-48h.
-                    </p>
-                </div>
-                
-                <div class="form-group">
-                    <label>Type de document *</label>
-                    <select name="id_document_type" required>
-                        <option value="">Sélectionnez le type</option>
-                        <option value="cni">Carte Nationale d'Identité (CNI)</option>
-                        <option value="passport">Passeport</option>
-                        <option value="permit">Permis de conduire</option>
-                        <option value="other">Autre document officiel</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>Photo du document *</label>
-                    <div style="border:2px dashed var(--rule);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;position:relative;transition:all .2s" 
-                         id="docUploadZone"
-                         onmouseover="this.style.borderColor='var(--gold)';this.style.background='var(--gold-dim)'"
-                         onmouseout="this.style.borderColor='var(--rule)';this.style.background='transparent'">
-                        <i data-lucide="upload" style="width:2rem;height:2rem;color:var(--faint);margin-bottom:8px"></i>
-                        <p style="font-size:.82rem;color:var(--muted)">Cliquez pour téléverser</p>
-                        <p style="font-size:.7rem;color:var(--faint)">Photo claire du recto · JPG/PNG · Max 10 Mo</p>
-                        <input type="file" name="id_document" accept="image/*" required 
-                               style="position:absolute;inset:0;opacity:0;cursor:pointer"
-                               onchange="handleDocPreview(event)">
-                    </div>
-                    <div id="docPreview" style="margin-top:8px;display:none"></div>
-                </div>
-                
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i data-lucide="send"></i> Envoyer pour vérification
-                    </button>
-                </div>
-            </form>
-        `;
-        
-        openModal(html);
-        
-        document.getElementById('verificationForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            const docFile = formData.get('id_document');
-            
-            if (!docFile || !docFile.size) {
-                showToast('Veuillez sélectionner un document', 'error');
-                return;
-            }
-            
-            try {
-                // Upload du document
-                const fileName = `verification/${currentUser.id}/${Date.now()}_${docFile.name}`;
-                const { error: uploadError } = await supabase.storage
-                    .from('id-documents')
-                    .upload(fileName, docFile);
-                
-                if (uploadError) throw uploadError;
-                
-                const { data: { publicUrl } } = supabase.storage
-                    .from('id-documents')
-                    .getPublicUrl(fileName);
-                
-                // Mettre à jour le profil
-                await supabase.from('users').update({
-                    id_document_url: publicUrl,
-                    id_document_type: formData.get('id_document_type'),
-                    verification_status: 'pending'
-                }).eq('id', currentUser.id);
-                
-                closeModal();
-                profileData.verification_status = 'pending';
-                profileData.id_document_url = publicUrl;
-                updateVerificationSection();
-                showToast('Document envoyé pour vérification', 'success');
-            } catch (error) {
-                showToast('Erreur: ' + error.message, 'error');
-            }
-        });
-    }
-    
-    function handleDocPreview(event) {
-        const file = event.target.files[0];
-        const preview = document.getElementById('docPreview');
-        
-        if (file) {
-            preview.style.display = 'flex';
-            preview.style.alignItems = 'center';
-            preview.style.gap = '10px';
-            preview.innerHTML = `
-                <i data-lucide="check-circle" style="width:1rem;height:1rem;color:var(--green)"></i>
-                <span style="font-size:.8rem;font-weight:500;color:var(--green)">${file.name}</span>
-            `;
-            lucide.createIcons();
-        }
-    }
-    
-    // Skills management
-    function renderSkills() {
-        const container = document.getElementById('skillsTags');
-        container.innerHTML = skills.map((s, i) => `
-            <span class="skill-tag">
-                ${s}
-                <button type="button" onclick="removeSkill(${i})" style="background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;padding:0;display:flex;align-items:center">
-                    <i data-lucide="x" style="width:.7rem;height:.7rem"></i>
-                </button>
-            </span>
-        `).join('');
-        lucide.createIcons();
-    }
-    
-    function removeSkill(index) {
-        skills.splice(index, 1);
-        renderSkills();
-    }
-    
-    document.addEventListener('DOMContentLoaded', () => {
-        const skillsInput = document.getElementById('skillsInput');
-        if (skillsInput) {
-            skillsInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const value = this.value.trim();
-                    if (value && !skills.includes(value)) {
-                        skills.push(value);
-                        renderSkills();
-                    }
-                    this.value = '';
-                }
-            });
-        }
-    });
-    
-    async function saveAllProfile() {
-        // Rassembler toutes les données
-        const personalData = {
-            full_name: document.getElementById('inputFullName').value,
-            username: document.getElementById('inputUsername').value,
-            phone: document.getElementById('inputPhone').value,
-            bio: document.getElementById('inputBio').value
-        };
-        
-        const addressData = {
-            city: document.getElementById('inputCity').value,
-            neighborhood: document.getElementById('inputNeighborhood').value
-        };
-        
-        const professionalData = {
-            employment_status: document.getElementById('inputEmploymentStatus').value,
-            domain_expertise: skills,
-            education: document.getElementById('inputEducation').value,
-            side_activities: document.getElementById('inputSideActivities').value
-        };
-        
-        const securityData = {
-            password: document.getElementById('inputPassword').value,
-            password_confirm: document.getElementById('inputPasswordConfirm').value
-        };
-        
-        // Validation
-        if (!personalData.full_name || !personalData.username || !personalData.phone) {
-            showToast('Veuillez remplir tous les champs obligatoires', 'error');
-            return;
-        }
-        
-        if (!addressData.city || !addressData.neighborhood) {
-            showToast('Veuillez renseigner votre adresse complète', 'error');
-            return;
-        }
-        
-        // Vérifier les mots de passe
-        if (securityData.password) {
-            if (securityData.password !== securityData.password_confirm) {
-                showToast('Les mots de passe ne correspondent pas', 'error');
-                return;
-            }
-            if (securityData.password.length < 8) {
-                showToast('Le mot de passe doit contenir au moins 8 caractères', 'error');
-                return;
-            }
-        }
-        
-        try {
-            // Upload photo si nouvelle
-            let photoUrl = profileData.profile_photo_url;
-            if (newPhotoFile) {
-                const fileName = `profile-photos/${currentUser.id}/${Date.now()}_${newPhotoFile.name}`;
-                const { error: uploadError } = await supabase.storage
-                    .from('profile-photos')
-                    .upload(fileName, newPhotoFile);
-                
-                if (uploadError) throw uploadError;
-                
-                const { data: { publicUrl } } = supabase.storage
-                    .from('profile-photos')
-                    .getPublicUrl(fileName);
-                photoUrl = publicUrl;
-            }
-            
-            // Mettre à jour le profil
-            const updateData = {
-                ...personalData,
-                ...addressData,
-                ...professionalData,
-                profile_photo_url: photoUrl
-            };
-            
-            const { error } = await supabase.from('users')
-                .update(updateData)
-                .eq('id', currentUser.id);
-            
-            if (error) throw error;
-            
-            // Mettre à jour le mot de passe si fourni
-            if (securityData.password) {
-                const { error: pwdError } = await supabase.auth.updateUser({
-                    password: securityData.password
-                });
-                if (pwdError) throw pwdError;
-            }
-            
-            // Rafraîchir
-            profileData = { ...profileData, ...updateData };
-            currentUser = { ...currentUser, ...updateData };
-            updateSidebar();
-            updatePhotoPreview();
-            showToast('Profil mis à jour avec succès', 'success');
-            
-        } catch (error) {
-            showToast('Erreur: ' + error.message, 'error');
-        }
-    }
-    
-    function resetForm() {
-        populateForm();
-        renderSkills();
-        newPhotoFile = null;
-        updatePhotoPreview();
-        showToast('Formulaire réinitialisé', 'info');
-    }
-    
-    function previewProfile() {
-        window.open(`../profile.html?id=${currentUser.id}`, '_blank');
-    }
-    
-    // Démarrer
-    loadProfile();
+const SUPABASE_URL = 'https://cwubxwbzzuigctvgdygv.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dWJ4d2J6enVpZ2N0dmdkeWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzI2MTgsImV4cCI6MjA5MzgwODYxOH0.0mwBNo_S5yItQQjq2at9GNRN74ooZRBJIbZGDH9L2uk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let currentUser = null, profileData = {}, skills = [], newPhotoFile = null;
+
+// ═══ BOTTOM NAV ═══
+function setActiveBottomNav(navId) { document.querySelectorAll('.bottom-nav-link').forEach(l=>l.classList.remove('active')); const link=document.querySelector(`[data-nav-id="${navId}"]`); if(link) link.classList.add('active'); }
+function syncBadges() { const svc=document.getElementById('serviceBadge'),ord=document.getElementById('orderBadge'),bSvc=document.getElementById('bottom-serviceBadge'),bOrd=document.getElementById('bottom-orderBadge'); if(svc&&bSvc){bSvc.textContent=svc.textContent;bSvc.style.display=parseInt(svc.textContent)>0?'inline':'none';} if(ord&&bOrd){bOrd.textContent=ord.textContent;bOrd.style.display=parseInt(ord.textContent)>0?'inline':'none';} }
+let moreMenuOpen=false;
+document.addEventListener('DOMContentLoaded',()=>{ const trigger=document.getElementById('moreMenuTrigger'); if(trigger) trigger.addEventListener('click',function(e){e.preventDefault(); moreMenuOpen?(closeMoreMenu()):openMoreMenu(); }); });
+function openMoreMenu(){ closeMoreMenu(); const menu=document.createElement('div'); menu.className='more-menu-dropdown'; menu.id='moreMenuDropdown'; menu.innerHTML=[{href:'../dashboard/portfolio.html',icon:'image',label:'Portfolio'},{href:'../dashboard/activities.html',icon:'award',label:'Activités'},{href:'../dashboard/profile.html',icon:'user-circle',label:'Profil'},{href:'../dashboard/analytics.html',icon:'bar-chart-3',label:'Statistiques'}].map(i=>`<a href="${i.href}"><i data-lucide="${i.icon}"></i> ${i.label}</a>`).join(''); document.body.appendChild(menu); lucide.createIcons(); moreMenuOpen=true; setTimeout(()=>document.addEventListener('click',closeMoreMenuOnClickOutside),0); }
+function closeMoreMenu(){ const m=document.getElementById('moreMenuDropdown'); if(m) m.remove(); moreMenuOpen=false; document.removeEventListener('click',closeMoreMenuOnClickOutside); }
+function closeMoreMenuOnClickOutside(e){ const m=document.getElementById('moreMenuDropdown'),t=document.getElementById('moreMenuTrigger'); if(m&&!m.contains(e.target)&&e.target!==t) closeMoreMenu(); }
+function detectCurrentPage(){ const path=window.location.pathname,map={index:'nav-overview',services:'nav-services',orders:'nav-orders',pricing:'nav-pricing',portfolio:'nav-more',activities:'nav-more',profile:'nav-more',analytics:'nav-more'}; for(const[k,id] of Object.entries(map)){ if(path.includes(k)){ setActiveBottomNav(id); return; } } setActiveBottomNav('nav-overview'); }
+detectCurrentPage();
+
+// ═══ INIT ═══
+async function initDashboard() {
+    const { data: { user: authUser } } = await sb.auth.getUser();
+    if (!authUser) { window.location.href = '../login.html'; return; }
+    const { data: profile } = await sb.from('users').select('*').eq('id', authUser.id).maybeSingle();
+    currentUser = profile || { id: authUser.id, email: authUser.email, full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0], role: 'prestataire', is_verified: false };
+    updateSidebarUI();
+    const { count: svcCount } = await sb.from('services').select('id', { count:'exact', head:true }).eq('user_id', currentUser.id);
+    const { count: ordCount } = await sb.from('orders').select('id', { count:'exact', head:true }).eq('provider_id', currentUser.id).in('status', ['pending','confirmed','in_progress']);
+    document.getElementById('serviceBadge').textContent = svcCount || 0;
+    document.getElementById('orderBadge').textContent = ordCount || 0;
+    syncBadges();
+}
+
+function updateSidebarUI() {
+    document.getElementById('sidebarName').textContent = currentUser.full_name || currentUser.email;
+    document.getElementById('verifyBadge').style.display = currentUser.is_verified ? 'inline-flex' : 'none';
+    const avatar = document.getElementById('sidebarAvatar');
+    if (currentUser.profile_photo_url) { avatar.style.backgroundImage = `url(${currentUser.profile_photo_url})`; avatar.style.backgroundSize = 'cover'; avatar.textContent = ''; }
+    else { avatar.textContent = (currentUser.full_name || 'U').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+}
+
+async function logout() { await sb.auth.signOut(); window.location.href = '../landing.html'; }
+
+function esc(t) { const d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
+function showToast(msg, type='info') {
+    let w = document.getElementById('_tw'); if(!w){ w=document.createElement('div'); w.id='_tw'; w.style.cssText='position:fixed;top:24px;right:24px;z-index:10000;display:flex;flex-direction:column;gap:10px;pointer-events:none;'; document.body.appendChild(w); }
+    const colors={success:'#22C55E',error:'#EF4444',info:'#F59E0B'}, icons={success:'check-circle',error:'alert-circle',info:'info'};
+    const t=document.createElement('div'); t.style.cssText=`display:flex;align-items:center;gap:10px;padding:14px 20px;background:#fff;border:1px solid #E5E7EB;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.1);font-size:.875rem;color:#111827;pointer-events:auto;min-width:280px;animation:slideInRight .3s ease;border-left:4px solid ${colors[type]};`;
+    t.innerHTML=`<i data-lucide="${icons[type]}" style="width:1.125rem;height:1.125rem;color:${colors[type]};flex-shrink:0"></i><span style="flex:1">${msg}</span><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:#6B7280;padding:0"><i data-lucide="x" style="width:.9rem;height:.9rem"></i></button>`;
+    w.appendChild(t); lucide.createIcons(); setTimeout(()=>{t.style.transition='all .3s';t.style.opacity='0';t.style.transform='translateX(20px)';setTimeout(()=>t.remove(),300);},4000);
+}
+
+// ═══ PROFILE ═══
+async function loadProfile() { await initDashboard(); const { data } = await sb.from('users').select('*').eq('id', currentUser.id).single(); if (data) { profileData = data; currentUser = data; } populateForm(); updateSidebarUI(); updatePhotoPreview(); updateVerificationSection(); renderSkills(); lucide.createIcons(); }
+
+function populateForm() {
+    document.getElementById('inputFullName').value = profileData.full_name || '';
+    document.getElementById('inputUsername').value = profileData.username || '';
+    document.getElementById('inputEmail').value = profileData.email || '';
+    document.getElementById('inputPhone').value = profileData.phone || '';
+    document.getElementById('inputBio').value = profileData.bio || '';
+    document.getElementById('inputCity').value = profileData.city || '';
+    document.getElementById('inputNeighborhood').value = profileData.neighborhood || '';
+    document.getElementById('inputEmploymentStatus').value = profileData.employment_status || '';
+    document.getElementById('inputEducation').value = profileData.education || '';
+    document.getElementById('inputSideActivities').value = profileData.side_activities || '';
+    if (profileData.domain_expertise && Array.isArray(profileData.domain_expertise)) skills = [...profileData.domain_expertise];
+    document.getElementById('displayName').textContent = profileData.full_name || '--';
+    document.getElementById('displayUsername').textContent = '@' + (profileData.username || '--');
+}
+
+function updatePhotoPreview() {
+    const container = document.getElementById('profilePhotoPreview'), initials = document.getElementById('photoInitials');
+    if (newPhotoFile) { const reader = new FileReader(); reader.onload = function(e) { container.style.backgroundImage = `url(${e.target.result})`; container.style.backgroundSize = 'cover'; container.style.backgroundPosition = 'center'; initials.style.display = 'none'; }; reader.readAsDataURL(newPhotoFile); }
+    else if (profileData.profile_photo_url) { container.style.backgroundImage = `url(${profileData.profile_photo_url})`; container.style.backgroundSize = 'cover'; container.style.backgroundPosition = 'center'; initials.style.display = 'none'; }
+    else { container.style.backgroundImage = ''; container.style.background = 'var(--text-primary)'; initials.style.display = 'block'; initials.textContent = (profileData.full_name || 'U').split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase(); }
+}
+
+function handlePhotoChange(event) { const file = event.target.files[0]; if (!file) return; if (file.size > 5*1024*1024) { showToast('Photo max 5 Mo', 'error'); return; } if (!['image/jpeg','image/png','image/webp'].includes(file.type)) { showToast('Format: JPG, PNG, WebP', 'error'); return; } newPhotoFile = file; updatePhotoPreview(); }
+
+function updateVerificationSection() {
+    const section = document.getElementById('verificationSection'), badge = document.getElementById('profileStatusBadge');
+    if (profileData.is_verified) { badge.innerHTML = '<span class="status-badge status-verified"><i data-lucide="shield-check" style="width:.8rem;height:.8rem"></i> Profil vérifié</span>'; section.innerHTML = '<div style="background:var(--primary-light);border-radius:var(--radius-sm);padding:16px;text-align:center"><i data-lucide="check-circle" style="width:2rem;height:2rem;color:var(--primary);margin-bottom:8px"></i><p style="font-weight:600;font-size:.875rem;color:var(--primary)">Profil vérifié</p><p style="font-size:.75rem;color:var(--text-muted);margin-top:4px">Votre pièce d\'identité a été validée.</p></div>'; }
+    else if (profileData.verification_status === 'pending') { badge.innerHTML = '<span class="status-badge status-pending"><i data-lucide="clock" style="width:.8rem;height:.8rem"></i> Vérification en cours</span>'; section.innerHTML = '<div style="background:#FFF7ED;border-radius:var(--radius-sm);padding:16px;text-align:center"><i data-lucide="clock" style="width:2rem;height:2rem;color:#F59E0B;margin-bottom:8px"></i><p style="font-weight:600;font-size:.875rem;color:#F59E0B">Vérification en cours</p><p style="font-size:.75rem;color:var(--text-muted);margin-top:4px">Délai moyen : 24-48h.</p></div>'; }
+    else { badge.innerHTML = '<span class="status-badge status-unverified"><i data-lucide="shield-off" style="width:.8rem;height:.8rem"></i> Non vérifié</span>'; section.innerHTML = '<button class="btn btn-primary btn-sm" onclick="openVerificationModal()" style="width:100%"><i data-lucide="shield-check"></i> Demander la vérification</button>'; }
+    lucide.createIcons();
+}
+
+async function openVerificationModal() {
+    openModalHtml(`<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-header"><h3 class="modal-title"><i data-lucide="shield-check" style="color:var(--primary)"></i> Demande de vérification</h3><button class="modal-close" onclick="closeModal()"><i data-lucide="x"></i></button></div><div class="modal-body"><form id="verificationForm"><div style="background:var(--primary-dim);border-radius:var(--radius-sm);padding:16px;margin-bottom:20px;display:flex;align-items:flex-start;gap:10px"><i data-lucide="info" style="color:var(--primary);flex-shrink:0;margin-top:1px"></i><p style="font-size:.8125rem;color:var(--text-primary);line-height:1.5">Fournissez une pièce d'identité valide. Traitement sous 24-48h.</p></div><div class="form-group"><label>Type de document *</label><select name="id_document_type" required><option value="">Sélectionnez</option><option value="cni">CNI</option><option value="passport">Passeport</option><option value="permit">Permis</option><option value="other">Autre</option></select></div><div class="form-group"><label>Photo du document *</label><div style="border:2px dashed var(--border);border-radius:var(--radius-sm);padding:24px;text-align:center;cursor:pointer;position:relative;transition:all .2s" onmouseover="this.style.borderColor='var(--primary)';this.style.background='var(--primary-dim)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='transparent'"><i data-lucide="upload" style="width:2rem;height:2rem;color:var(--text-muted);margin-bottom:8px"></i><p style="font-size:.875rem;color:var(--text-secondary)">Cliquez pour téléverser</p><p style="font-size:.75rem;color:var(--text-muted)">JPG/PNG · Max 10 Mo</p><input type="file" name="id_document" accept="image/*" required style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="handleDocPreview(event)"></div><div id="docPreview" style="margin-top:8px;display:none"></div></div><div class="form-actions"><button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button><button type="submit" class="btn btn-primary"><i data-lucide="send"></i> Envoyer</button></div></form></div></div></div>`);
+    document.getElementById('verificationForm').addEventListener('submit', async function(e) { e.preventDefault(); const fd = new FormData(this), docFile = fd.get('id_document'); if (!docFile?.size) { showToast('Sélectionnez un document', 'error'); return; } try { const fileName = `verification/${currentUser.id}/${Date.now()}_${docFile.name}`; const { error: uploadError } = await sb.storage.from('id-documents').upload(fileName, docFile); if (uploadError) throw uploadError; const { data: { publicUrl } } = sb.storage.from('id-documents').getPublicUrl(fileName); await sb.from('users').update({ id_document_url: publicUrl, id_document_type: fd.get('id_document_type'), verification_status: 'pending' }).eq('id', currentUser.id); closeModal(); profileData.verification_status = 'pending'; profileData.id_document_url = publicUrl; updateVerificationSection(); showToast('Document envoyé !', 'success'); } catch(err) { showToast('Erreur: ' + err.message, 'error'); } });
+}
+
+function handleDocPreview(event) { const file = event.target.files[0], preview = document.getElementById('docPreview'); if (file) { preview.style.display = 'flex'; preview.style.alignItems = 'center'; preview.style.gap = '10px'; preview.innerHTML = `<i data-lucide="check-circle" style="color:var(--primary)"></i><span style="font-size:.8125rem;font-weight:500;color:var(--primary)">${file.name}</span>`; lucide.createIcons(); } }
+
+function renderSkills() { document.getElementById('skillsTags').innerHTML = skills.map((s,i) => `<span class="skill-tag">${esc(s)}<button onclick="removeSkill(${i})"><i data-lucide="x" style="width:.7rem;height:.7rem"></i></button></span>`).join(''); lucide.createIcons(); }
+function removeSkill(i) { skills.splice(i,1); renderSkills(); }
+document.addEventListener('DOMContentLoaded', () => { document.getElementById('skillsInput')?.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); const v = this.value.trim(); if (v && !skills.includes(v)) { skills.push(v); renderSkills(); } this.value = ''; } }); });
+
+async function saveAllProfile() {
+    const full_name = document.getElementById('inputFullName').value.trim(), username = document.getElementById('inputUsername').value.trim(), phone = document.getElementById('inputPhone').value.trim(), city = document.getElementById('inputCity').value, neighborhood = document.getElementById('inputNeighborhood').value.trim();
+    if (!full_name || !username || !phone) { showToast('Champs obligatoires manquants', 'error'); return; }
+    if (!city || !neighborhood) { showToast('Adresse complète requise', 'error'); return; }
+    const pwd = document.getElementById('inputPassword').value;
+    if (pwd) { if (pwd !== document.getElementById('inputPasswordConfirm').value) { showToast('Mots de passe différents', 'error'); return; } if (pwd.length < 8) { showToast('Mot de passe: 8 caractères min', 'error'); return; } }
+    try {
+        let photoUrl = profileData.profile_photo_url;
+        if (newPhotoFile) { const ext = newPhotoFile.name.split('.').pop(); const fileName = 'profile_' + currentUser.id.substring(0, 8) + '_' + Date.now() + '.' + ext; const { error: uploadError } = await sb.storage.from('profile-photos').upload(fileName, newPhotoFile, { cacheControl: '3600', upsert: true }); if (uploadError) throw uploadError; const { data: { publicUrl } } = sb.storage.from('profile-photos').getPublicUrl(fileName); photoUrl = publicUrl; }
+        const updateData = { full_name, username, phone, bio: document.getElementById('inputBio').value.trim(), city, neighborhood, employment_status: document.getElementById('inputEmploymentStatus').value, domain_expertise: skills, education: document.getElementById('inputEducation').value.trim(), side_activities: document.getElementById('inputSideActivities').value.trim(), profile_photo_url: photoUrl };
+        const { error } = await sb.from('users').update(updateData).eq('id', currentUser.id); if (error) throw error;
+        if (pwd) await sb.auth.updateUser({ password: pwd });
+        profileData = { ...profileData, ...updateData }; currentUser = { ...currentUser, ...updateData }; newPhotoFile = null;
+        updateSidebarUI(); updatePhotoPreview(); document.getElementById('profilePhotoInput').value = ''; showToast('Profil mis à jour !', 'success');
+    } catch(err) { showToast('Erreur: ' + err.message, 'error'); }
+}
+
+function resetForm() { populateForm(); renderSkills(); newPhotoFile = null; updatePhotoPreview(); showToast('Formulaire réinitialisé', 'info'); }
+function previewProfile() { window.open(`../profile.html?id=${currentUser.id}`, '_blank'); }
+function openModalHtml(html) { const c = document.getElementById('modalContainer'); c.innerHTML = html; c.style.display = 'block'; document.body.style.overflow = 'hidden'; lucide.createIcons(); }
+function closeModal() { const c = document.getElementById('modalContainer'); c.innerHTML = ''; c.style.display = 'none'; document.body.style.overflow = ''; }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+loadProfile();
+setInterval(syncBadges, 3000);
 </script>
 </body>
 </html>

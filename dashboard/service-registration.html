@@ -4,123 +4,121 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Créer un Service — CamServices</title>
-    <link href="https://fonts.googleapis.com/css2?family=Allison&family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="css/ultra-responsive.css">
+    <script src="js/ultra-responsive.js"></script>
+     <script src="js/bottom-navbar.js"></script>
+    <link rel="stylesheet" href="css/bottom-navbar.css">
     <style>
         :root {
-            --ink:#1A1714;--ink-2:#2E2A25;--muted:#8A8279;--faint:#C9C2B8;
-            --rule:#E8E2DA;--cream:#FAF8F5;--white:#FFFFFF;
-            --gold:#C4943E;--gold-light:#D4A94E;--gold-dim:rgba(196,148,62,.08);
-            --green:#3D8B5E;--green-light:#F0FDF4;--red:#DC2626;--red-light:#FEF2F2;
-   --ff-body: 'Inter', sans-serif;
-    --ff-heading: 'Outfit', sans-serif;            --ease:cubic-bezier(.22,1,.36,1);
-            --radius:10px;--radius-lg:16px;--radius-xl:20px;
-            --shadow:0 4px 20px rgba(26,23,20,.06);
-            --shadow-lg:0 12px 40px rgba(26,23,20,.1);
+            --primary: #22C55E; --primary-hover: #16A34A; --primary-light: #F0FDF4; --primary-dim: rgba(34,197,94,0.08);
+            --text-primary: #111827; --text-secondary: #4B5563; --text-muted: #6B7280;
+            --background: #FFFFFF; --surface: #F9FAFB; --border: #E5E7EB; --border-light: #F3F4F6;
+            --accent: #F59E0B; --accent-hover: #D97706; --accent-light: #FFFBEB; --accent-dim: rgba(245,158,11,0.08);
+            --error: #EF4444; --error-light: #FEF2F2;
+            --shadow-xs: 0 1px 2px rgba(0,0,0,0.05); --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07); --shadow-lg: 0 10px 15px rgba(0,0,0,0.1); --shadow-xl: 0 20px 60px rgba(0,0,0,0.1);
+            --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 24px;
+            --ease: cubic-bezier(0.16, 1, 0.3, 1);
         }
-        *{margin:0;padding:0;box-sizing:border-box;}
-        body{font-family:var(--ff-body);background:var(--cream);color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;-webkit-font-smoothing:antialiased;}
-        @keyframes fadeSlide{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes spin{to{transform:rotate(360deg)}}
-
-        .register-container{width:100%;max-width:720px;}
-        .register-card{background:var(--white);border:1px solid var(--rule);border-radius:var(--radius-xl);box-shadow:var(--shadow-lg);overflow:hidden;}
-
-        .register-header{padding:36px 36px 28px;text-align:center;border-bottom:1px solid var(--rule);background:var(--white);}
-        .register-logo{font-weight:800;font-size:1.2rem;color:var(--ink);text-decoration:none;display:inline-block;margin-bottom:8px;}
-        .register-logo .script{font-family:var(--ff-script);font-size:2.2rem;color:var(--gold);position:relative;top:3px;}
-        .register-header h1{font-weight:800;font-size:1.5rem;letter-spacing:-.03em;margin-bottom:4px;}
-        .register-header p{font-size:.85rem;color:var(--muted);font-weight:300;}
-
-        /* ═══ PROGRESS ═══ */
-        .progress-wrapper{padding:20px 36px;border-bottom:1px solid var(--rule);}
-        .progress-steps{display:flex;justify-content:space-between;position:relative;margin-bottom:10px;}
-        .progress-steps::before{content:'';position:absolute;top:18px;left:24px;right:24px;height:1px;background:var(--rule);z-index:0;}
-        .progress-step{display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;z-index:1;}
-        .step-dot{width:36px;height:36px;border-radius:50%;background:var(--white);border:2px solid var(--rule);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--muted);transition:all .3s var(--ease);}
-        .step-dot.active{background:var(--ink);border-color:var(--ink);color:var(--white);}
-        .step-dot.done{background:var(--green);border-color:var(--green);color:var(--white);}
-        .step-label{font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);transition:color .3s;}
-        .progress-step.active .step-label{color:var(--ink);}
-        .progress-step.done .step-label{color:var(--green);}
-        .progress-bar-track{height:3px;background:var(--rule);border-radius:2px;overflow:hidden;}
-        .progress-bar-fill{height:100%;background:var(--ink);border-radius:2px;transition:width .5s var(--ease);}
-
-        /* ═══ FORM BODY ═══ */
-        .register-body{padding:32px 36px;}
-        .form-step{display:none;animation:fadeSlide .4s var(--ease);}
-        .form-step.active{display:block;}
-        .step-title{font-weight:700;font-size:1.15rem;margin-bottom:4px;letter-spacing:-.02em;}
-        .step-desc{font-size:.82rem;color:var(--muted);font-weight:300;margin-bottom:24px;}
-
-        .form-group{margin-bottom:18px;}
-        .form-group label{display:block;font-size:.76rem;font-weight:600;color:var(--ink);margin-bottom:6px;}
-        .form-group label .req{color:var(--red);}
-        .form-group label .opt{font-weight:400;color:var(--muted);font-size:.7rem;margin-left:4px;}
-        .input-wrap{position:relative;}
-        .input-wrap input,.input-wrap select,.input-wrap textarea{
-            width:100%;padding:11px 14px 11px 40px;border:1.5px solid var(--rule);
-            border-radius:var(--radius);font-family:var(--ff-body);font-size:.88rem;
-            color:var(--ink);outline:none;transition:all .2s;background:var(--white);
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--surface); color: var(--text-primary); min-height:100vh;
+            display:flex; align-items:center; justify-content:center; padding:24px;
+            -webkit-font-smoothing: antialiased;
         }
-        .input-wrap textarea{padding:14px;min-height:80px;resize:vertical;}
-        .input-wrap select{appearance:none;cursor:pointer;padding-right:40px;
-            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238A8279' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-            background-repeat:no-repeat;background-position:right 14px center;
-        }
-        .input-wrap input:focus,.input-wrap select:focus,.input-wrap textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-dim);}
-        .input-wrap .input-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--faint);pointer-events:none;}
-        .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+        @keyframes fadeSlide { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+        @keyframes spin { to { transform:rotate(360deg); } }
 
-        /* ═══ UPLOAD ZONE ═══ */
-        .upload-zone{border:2px dashed var(--rule);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
-        .upload-zone:hover{border-color:var(--gold);background:var(--gold-dim);}
-        .upload-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;}
-        .upload-zone p{font-size:.8rem;color:var(--muted);}
-        .upload-zone .hint{font-size:.7rem;color:var(--faint);margin-top:4px;}
-        .upload-preview{margin-top:10px;display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--green);font-weight:500;}
+        .register-container { width:100%; max-width:720px; }
+        .register-card { background:#FFFFFF; border:1px solid var(--border-light); border-radius:var(--radius-xl); box-shadow:var(--shadow-xl); overflow:hidden; }
 
-        /* ═══ AGENDA ═══ */
-        .agenda-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:12px;}
-        .agenda-day{text-align:center;padding:8px 4px;border:1.5px solid var(--rule);border-radius:var(--radius);cursor:pointer;transition:all .2s;font-size:.75rem;font-weight:600;user-select:none;}
-        .agenda-day:hover{border-color:var(--gold);}
-        .agenda-day.selected{background:var(--ink);color:var(--white);border-color:var(--ink);}
-        .time-slots{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
-        .time-slot{padding:8px 14px;border:1.5px solid var(--rule);border-radius:20px;font-size:.75rem;cursor:pointer;transition:all .2s;font-weight:500;}
-        .time-slot:hover{border-color:var(--gold);}
-        .time-slot.selected{background:var(--gold);color:var(--white);border-color:var(--gold);}
+        .register-header { padding:40px 36px 32px; text-align:center; border-bottom:1px solid var(--border-light); }
+        .register-logo { font-weight:800; font-size:1.35rem; color:var(--text-primary); text-decoration:none; display:inline-block; margin-bottom:16px; letter-spacing:-.02em; }
+        .register-logo .accent { color:var(--primary); font-size:2.25rem; position:relative; top:3px; }
+        .register-header h1 { font-weight:800; font-size:1.6rem; letter-spacing:-.03em; margin-bottom:8px; }
+        .register-header p { font-size:.9375rem; color:var(--text-secondary); font-weight:400; }
 
-        /* ═══ ALERT ═══ */
-        .alert{padding:12px 14px;border-radius:var(--radius);font-size:.8rem;margin-bottom:16px;display:none;align-items:center;gap:8px;font-weight:500;}
-        .alert.error{background:var(--red-light);color:var(--red);display:flex;}
-        .alert.success{background:var(--green-light);color:var(--green);display:flex;}
+        .progress-wrapper { padding:24px 36px; border-bottom:1px solid var(--border-light); background:var(--surface); }
+        .progress-steps { display:flex; justify-content:space-between; position:relative; margin-bottom:12px; }
+        .progress-steps::before { content:''; position:absolute; top:18px; left:24px; right:24px; height:2px; background:var(--border); z-index:0; }
+        .progress-step { display:flex; flex-direction:column; align-items:center; gap:8px; position:relative; z-index:1; }
+        .step-dot { width:36px; height:36px; border-radius:50%; background:#FFFFFF; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:700; color:var(--text-muted); transition:all .3s var(--ease); }
+        .step-dot i { width:.9rem; height:.9rem; }
+        .step-dot.active { background:var(--primary); border-color:var(--primary); color:#FFFFFF; box-shadow:0 0 0 4px var(--primary-dim); }
+        .step-dot.done { background:var(--primary); border-color:var(--primary); color:#FFFFFF; }
+        .step-label { font-size:.6875rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); transition:color .3s; }
+        .progress-step.active .step-label { color:var(--primary); }
+        .progress-step.done .step-label { color:var(--primary); }
+        .progress-bar-track { height:4px; background:var(--border-light); border-radius:2px; overflow:hidden; }
+        .progress-bar-fill { height:100%; background:var(--primary); border-radius:2px; transition:width .5s var(--ease); }
 
-        /* ═══ ACTIONS ═══ */
-        .form-actions{display:flex;justify-content:space-between;align-items:center;margin-top:28px;gap:12px;}
-        .btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--ff-body);font-weight:600;font-size:.85rem;padding:11px 22px;border-radius:var(--radius);border:none;cursor:pointer;transition:all .3s var(--ease);text-decoration:none;}
-        .btn-primary{background:var(--ink);color:var(--white);}
-        .btn-primary:hover{background:var(--ink-2);}
-        .btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--rule);}
-        .btn-ghost:hover{border-color:var(--gold);color:var(--gold);}
-        .btn-save-draft{background:var(--gold-dim);color:var(--gold);border:1.5px solid var(--gold);}
-        .btn-save-draft:hover{background:var(--gold);color:var(--white);}
-        .btn:disabled{opacity:.5;cursor:not-allowed;}
+        .register-body { padding:36px; }
+        .form-step { display:none; animation:fadeSlide .4s var(--ease); }
+        .form-step.active { display:block; }
+        .step-title { font-weight:700; font-size:1.2rem; margin-bottom:6px; letter-spacing:-.02em; }
+        .step-desc { font-size:.9375rem; color:var(--text-secondary); margin-bottom:28px; }
 
-        /* ═══ MODAL ═══ */
-        .exit-modal-overlay{position:fixed;inset:0;background:rgba(26,23,20,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
-        .exit-modal{background:var(--white);border-radius:var(--radius-xl);padding:28px;width:100%;max-width:440px;box-shadow:var(--shadow-lg);}
-        .exit-modal h3{font-weight:700;font-size:1.1rem;margin-bottom:8px;}
-        .exit-modal p{font-size:.85rem;color:var(--muted);margin-bottom:20px;}
-        .exit-modal-actions{display:flex;flex-direction:column;gap:8px;}
+        .form-group { margin-bottom:20px; }
+        .form-group label { display:block; font-size:.8125rem; font-weight:600; color:var(--text-primary); margin-bottom:8px; }
+        .form-group label .req { color:var(--error); }
+        .form-group label .opt { font-weight:400; color:var(--text-muted); font-size:.75rem; margin-left:4px; }
+        .input-wrap { position:relative; }
+        .input-wrap input, .input-wrap select, .input-wrap textarea { width:100%; padding:12px 16px 12px 44px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.9375rem; color:var(--text-primary); outline:none; transition:all .25s; background:#FFFFFF; }
+        .input-wrap textarea { padding:14px 16px; min-height:90px; resize:vertical; line-height:1.6; }
+        .input-wrap select { appearance:none; cursor:pointer; padding-right:44px; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; }
+        .input-wrap input:focus, .input-wrap select:focus, .input-wrap textarea:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-dim); }
+        .input-wrap .input-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--text-muted); pointer-events:none; }
+        .input-wrap .input-icon i { width:1.125rem; height:1.125rem; }
+        .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 
-        @media(max-width:600px){
-            .register-body{padding:24px 20px;}
-            .register-header{padding:28px 20px 24px;}
-            .progress-wrapper{padding:16px 20px;}
-            .form-row{grid-template-columns:1fr;}
-            .agenda-grid{grid-template-columns:repeat(4,1fr);}
+        .upload-zone { border:2px dashed var(--border); border-radius:var(--radius-md); padding:28px; text-align:center; cursor:pointer; transition:all .25s; position:relative; background:var(--surface); }
+        .upload-zone:hover { border-color:var(--primary); background:var(--primary-dim); }
+        .upload-zone input[type="file"] { position:absolute; inset:0; opacity:0; cursor:pointer; }
+        .upload-zone p { font-size:.875rem; color:var(--text-secondary); font-weight:500; }
+        .upload-zone .hint { font-size:.75rem; color:var(--text-muted); margin-top:6px; }
+        .upload-preview { margin-top:12px; display:flex; align-items:center; gap:10px; font-size:.875rem; color:var(--primary); font-weight:600; }
+
+        .agenda-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; margin-bottom:16px; }
+        .agenda-day { text-align:center; padding:10px 4px; border:1.5px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; transition:all .2s; font-size:.8125rem; font-weight:600; user-select:none; }
+        .agenda-day:hover { border-color:var(--primary); }
+        .agenda-day.selected { background:var(--primary); color:#FFFFFF; border-color:var(--primary); }
+
+        .alert { padding:14px 16px; border-radius:var(--radius-sm); font-size:.875rem; margin-bottom:20px; display:none; align-items:flex-start; gap:10px; font-weight:500; }
+        .alert.error { background:var(--error-light); color:var(--error); display:flex; border:1px solid rgba(239,68,68,.2); }
+        .alert.success { background:var(--primary-light); color:var(--primary); display:flex; border:1px solid rgba(34,197,94,.2); }
+
+        .form-actions { display:flex; justify-content:space-between; align-items:center; margin-top:32px; gap:12px; }
+        .btn { display:inline-flex; align-items:center; gap:8px; font-family:'Inter',sans-serif; font-weight:600; font-size:.9375rem; padding:13px 26px; border-radius:var(--radius-sm); border:none; cursor:pointer; transition:all .3s var(--ease); text-decoration:none; line-height:1; white-space:nowrap; }
+        .btn i { width:1.125rem; height:1.125rem; }
+        .btn-primary { background:var(--primary); color:#FFFFFF; box-shadow:0 1px 3px rgba(34,197,94,.2); }
+        .btn-primary:hover { background:var(--primary-hover); transform:translateY(-1px); box-shadow:0 4px 12px rgba(34,197,94,.3); }
+        .btn-ghost { background:transparent; color:var(--text-secondary); border:1.5px solid var(--border); }
+        .btn-ghost:hover { border-color:var(--primary); color:var(--primary); transform:translateY(-1px); }
+        .btn-save-draft { background:var(--accent-dim); color:var(--accent); border:1.5px solid var(--accent); }
+        .btn-save-draft:hover { background:var(--accent); color:#FFFFFF; transform:translateY(-1px); }
+        .btn:disabled { opacity:.5; cursor:not-allowed; transform:none; box-shadow:none; }
+
+        .exit-modal-overlay { position:fixed; inset:0; background:rgba(17,24,39,.5); z-index:200; display:flex; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(6px); animation:fadeIn .2s ease; }
+        .exit-modal { background:#FFFFFF; border-radius:var(--radius-xl); padding:32px; width:100%; max-width:440px; box-shadow:var(--shadow-xl); animation:fadeSlide .3s var(--ease); }
+        .exit-modal h3 { font-weight:700; font-size:1.2rem; margin-bottom:12px; }
+        .exit-modal p { font-size:.9375rem; color:var(--text-secondary); margin-bottom:24px; line-height:1.6; }
+        .exit-modal-actions { display:flex; flex-direction:column; gap:10px; }
+
+        .summary-box { background:var(--surface); border-radius:var(--radius-md); padding:20px; font-size:.9375rem; line-height:2; }
+
+        @media (max-width:600px) {
+            .register-body { padding:28px 24px; }
+            .register-header { padding:32px 24px 28px; }
+            .progress-wrapper { padding:20px 24px; }
+            .form-row { grid-template-columns:1fr; }
+            .agenda-grid { grid-template-columns:repeat(4,1fr); }
+            .form-actions { flex-direction:column; }
+            .form-actions .btn { width:100%; justify-content:center; }
         }
     </style>
 </head>
@@ -128,216 +126,86 @@
 
 <div class="register-container">
     <div class="register-card">
-        <!-- Header -->
         <div class="register-header">
-            <a href="../dashboard/services.html" class="register-logo">Cam<span class="script">S</span>ervices</a>
+            <a href="../dashboard/services.html" class="register-logo">
+                <img src="../asset/logo.svg" alt="CamServices" style="height: 82px;">
+            </a>
             <h1>Créer un service</h1>
             <p>Décrivez votre offre en détail pour attirer des clients</p>
         </div>
 
-        <!-- Progress -->
         <div class="progress-wrapper">
             <div class="progress-steps">
-                <div class="progress-step active" data-step="1">
-                    <div class="step-dot"><i data-lucide="info"></i></div>
-                    <span class="step-label">Infos</span>
-                </div>
-                <div class="progress-step" data-step="2">
-                    <div class="step-dot"><i data-lucide="image"></i></div>
-                    <span class="step-label">Média</span>
-                </div>
-                <div class="progress-step" data-step="3">
-                    <div class="step-dot"><i data-lucide="calendar"></i></div>
-                    <span class="step-label">Agenda</span>
-                </div>
-                <div class="progress-step" data-step="4">
-                    <div class="step-dot"><i data-lucide="check"></i></div>
-                    <span class="step-label">Validation</span>
-                </div>
+                <div class="progress-step active" data-step="1"><div class="step-dot"><i data-lucide="info"></i></div><span class="step-label">Infos</span></div>
+                <div class="progress-step" data-step="2"><div class="step-dot"><i data-lucide="image"></i></div><span class="step-label">Média</span></div>
+                <div class="progress-step" data-step="3"><div class="step-dot"><i data-lucide="calendar"></i></div><span class="step-label">Agenda</span></div>
+                <div class="progress-step" data-step="4"><div class="step-dot"><i data-lucide="check"></i></div><span class="step-label">Validation</span></div>
             </div>
             <div class="progress-bar-track"><div class="progress-bar-fill" style="width:0%"></div></div>
         </div>
 
-        <!-- Form -->
         <form id="serviceForm" class="register-body">
             <div class="alert" id="formAlert"></div>
 
-            <!-- Étape 1 : Infos générales -->
+            <!-- Étape 1 -->
             <div class="form-step active" data-step="1">
                 <h2 class="step-title">Informations générales</h2>
                 <p class="step-desc">Décrivez votre service et sa tarification.</p>
-
-                <div class="form-group">
-                    <label>Titre du service <span class="req">*</span></label>
-                    <div class="input-wrap">
-                        <i data-lucide="file-text" class="input-icon" style="width:1rem;height:1rem"></i>
-                        <input type="text" name="title" placeholder="Ex: Plombier professionnel" required>
-                    </div>
+                <div class="form-group"><label>Titre du service <span class="req">*</span></label><div class="input-wrap"><span class="input-icon"><i data-lucide="file-text"></i></span><input type="text" name="title" placeholder="Ex: Plombier professionnel" required></div></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Catégorie <span class="req">*</span></label><div class="input-wrap"><span class="input-icon"><i data-lucide="folder"></i></span><select name="category" required><option value="">Sélectionnez</option><option>Plomberie</option><option>Électricité</option><option>Ménage</option><option>Photographie</option><option>Développement web</option><option>Cours particuliers</option><option>Transport</option><option>Design</option><option>Beauté</option><option>Bâtiment</option></select></div></div>
+                    <div class="form-group"><label>Type de prix <span class="req">*</span></label><div class="input-wrap"><span class="input-icon"><i data-lucide="tag"></i></span><select name="pricing_type" id="pricingType" required><option value="fixed">Prix fixe</option><option value="hourly">Taux horaire</option><option value="daily">Taux journalier</option><option value="project">Par projet</option></select></div></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group">
-                        <label>Catégorie <span class="req">*</span></label>
-                        <div class="input-wrap">
-                            <i data-lucide="folder" class="input-icon" style="width:1rem;height:1rem"></i>
-                            <select name="category" required>
-                                <option value="">Sélectionnez</option>
-                                <option>Plomberie</option><option>Électricité</option><option>Ménage</option>
-                                <option>Photographie</option><option>Développement web</option>
-                                <option>Cours particuliers</option><option>Transport</option>
-                                <option>Design</option><option>Beauté</option><option>Bâtiment</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Type de prix <span class="req">*</span></label>
-                        <div class="input-wrap">
-                            <i data-lucide="tag" class="input-icon" style="width:1rem;height:1rem"></i>
-                            <select name="pricing_type" id="pricingType" required>
-                                <option value="fixed">Prix fixe</option>
-                                <option value="hourly">Taux horaire</option>
-                                <option value="daily">Taux journalier</option>
-                                <option value="project">Par projet</option>
-                            </select>
-                        </div>
-                    </div>
+                    <div class="form-group"><label>Prix (FCFA) <span class="req">*</span></label><div class="input-wrap"><span class="input-icon"><i data-lucide="banknote"></i></span><input type="number" name="price" placeholder="Ex: 15000" required min="100" step="100"></div></div>
+                    <div class="form-group" id="durationGroup" style="display:none"><label>Durée (heures) <span class="opt">(optionnel)</span></label><div class="input-wrap"><span class="input-icon"><i data-lucide="clock"></i></span><input type="number" name="duration_hours" placeholder="Ex: 2" min="0.5" step="0.5"></div></div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Prix (FCFA) <span class="req">*</span></label>
-                        <div class="input-wrap">
-                            <i data-lucide="banknote" class="input-icon" style="width:1rem;height:1rem"></i>
-                            <input type="number" name="price" placeholder="Ex: 15000" required min="100" step="100">
-                        </div>
-                    </div>
-                    <div class="form-group" id="durationGroup" style="display:none">
-                        <label>Durée (heures) <span class="opt">(optionnel)</span></label>
-                        <div class="input-wrap">
-                            <i data-lucide="clock" class="input-icon" style="width:1rem;height:1rem"></i>
-                            <input type="number" name="duration_hours" placeholder="Ex: 2" min="0.5" step="0.5">
-                        </div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Description <span class="opt">(optionnel)</span></label>
-                    <div class="input-wrap">
-                        <i data-lucide="align-left" class="input-icon" style="width:1rem;height:1rem"></i>
-                        <textarea name="description" rows="4" placeholder="Décrivez votre service en détail..."></textarea>
-                    </div>
-                </div>
+                <div class="form-group"><label>Description <span class="opt">(optionnel)</span></label><div class="input-wrap"><span class="input-icon"><i data-lucide="align-left"></i></span><textarea name="description" rows="4" placeholder="Décrivez votre service en détail..."></textarea></div></div>
             </div>
 
-            <!-- Étape 2 : Média -->
+            <!-- Étape 2 -->
             <div class="form-step" data-step="2">
                 <h2 class="step-title">Image du service</h2>
                 <p class="step-desc">Ajoutez une image pour illustrer votre service.</p>
-
-                <div class="form-group">
-                    <label>URL de l'image <span class="opt">(optionnel)</span></label>
-                    <div class="input-wrap">
-                        <i data-lucide="link" class="input-icon" style="width:1rem;height:1rem"></i>
-                        <input type="url" name="image_url" id="imageUrlInput" placeholder="https://exemple.com/photo.jpg">
-                    </div>
-                </div>
-
-                <div style="text-align:center;margin:20px 0;font-size:.8rem;color:var(--faint)">— ou —</div>
-
-                <div class="form-group">
-                    <label>Uploader une image <span class="opt">(optionnel)</span></label>
-                    <div class="upload-zone" id="uploadZone">
-                        <i data-lucide="upload" style="width:2rem;height:2rem;color:var(--faint);margin-bottom:8px;display:block"></i>
-                        <p>Cliquez pour téléverser une image</p>
-                        <p class="hint">JPG, PNG, WebP · Max 5MB</p>
-                        <input type="file" name="image_file" id="imageFile" accept="image/*">
-                    </div>
-                    <div class="upload-preview" id="uploadPreview" style="display:none"></div>
-                </div>
-
-                <!-- Preview -->
-                <div id="imagePreviewContainer" style="margin-top:12px;display:none;">
-                    <p style="font-size:.75rem;font-weight:600;color:var(--muted);margin-bottom:6px">Aperçu :</p>
-                    <img id="imagePreview" src="" alt="Aperçu" style="max-width:100%;max-height:200px;border-radius:var(--radius);border:1px solid var(--rule);object-fit:cover;">
-                </div>
+                <div class="form-group"><label>URL de l'image <span class="opt">(optionnel)</span></label><div class="input-wrap"><span class="input-icon"><i data-lucide="link"></i></span><input type="url" name="image_url" id="imageUrlInput" placeholder="https://exemple.com/photo.jpg"></div></div>
+                <div style="text-align:center;margin:20px 0;font-size:.8125rem;color:var(--text-muted)">— ou —</div>
+                <div class="form-group"><label>Uploader une image <span class="opt">(optionnel)</span></label><div class="upload-zone" id="uploadZone"><i data-lucide="upload" style="width:2rem;height:2rem;color:var(--text-muted);margin-bottom:8px;display:block"></i><p>Cliquez pour téléverser une image</p><p class="hint">JPG, PNG, WebP · Max 5MB</p><input type="file" name="image_file" id="imageFile" accept="image/*"></div><div class="upload-preview" id="uploadPreview" style="display:none"></div></div>
+                <div id="imagePreviewContainer" style="margin-top:12px;display:none;"><p style="font-size:.75rem;font-weight:600;color:var(--text-muted);margin-bottom:6px">Aperçu :</p><img id="imagePreview" src="" alt="Aperçu" style="max-width:100%;max-height:200px;border-radius:var(--radius-sm);border:1px solid var(--border);object-fit:cover;"></div>
             </div>
 
-            <!-- Étape 3 : Agenda -->
+            <!-- Étape 3 -->
             <div class="form-step" data-step="3">
                 <h2 class="step-title">Jours et heures de travail</h2>
                 <p class="step-desc">Définissez vos disponibilités pour ce service.</p>
-
-                <div class="form-group">
-                    <label>Jours de travail</label>
-                    <div class="agenda-grid" id="daysGrid">
-                        <div class="agenda-day" data-day="Lun">Lun</div>
-                        <div class="agenda-day" data-day="Mar">Mar</div>
-                        <div class="agenda-day" data-day="Mer">Mer</div>
-                        <div class="agenda-day" data-day="Jeu">Jeu</div>
-                        <div class="agenda-day" data-day="Ven">Ven</div>
-                        <div class="agenda-day" data-day="Sam">Sam</div>
-                        <div class="agenda-day" data-day="Dim">Dim</div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Heures de début et fin</label>
-                    <div class="form-row">
-                        <div class="input-wrap">
-                            <i data-lucide="sunrise" class="input-icon" style="width:1rem;height:1rem"></i>
-                            <input type="time" name="time_start" id="timeStart" value="08:00">
-                        </div>
-                        <div class="input-wrap">
-                            <i data-lucide="sunset" class="input-icon" style="width:1rem;height:1rem"></i>
-                            <input type="time" name="time_end" id="timeEnd" value="18:00">
-                        </div>
-                    </div>
-                </div>
-
-                <input type="hidden" name="working_days" id="workingDays">
-                <input type="hidden" name="working_hours" id="workingHours">
+                <div class="form-group"><label>Jours de travail</label><div class="agenda-grid" id="daysGrid"><div class="agenda-day" data-day="Lun">Lun</div><div class="agenda-day" data-day="Mar">Mar</div><div class="agenda-day" data-day="Mer">Mer</div><div class="agenda-day" data-day="Jeu">Jeu</div><div class="agenda-day" data-day="Ven">Ven</div><div class="agenda-day" data-day="Sam">Sam</div><div class="agenda-day" data-day="Dim">Dim</div></div></div>
+                <div class="form-group"><label>Heures de début et fin</label><div class="form-row"><div class="input-wrap"><span class="input-icon"><i data-lucide="sunrise"></i></span><input type="time" name="time_start" id="timeStart" value="08:00"></div><div class="input-wrap"><span class="input-icon"><i data-lucide="sunset"></i></span><input type="time" name="time_end" id="timeEnd" value="18:00"></div></div></div>
+                <input type="hidden" name="working_days" id="workingDays"><input type="hidden" name="working_hours" id="workingHours">
             </div>
 
-            <!-- Étape 4 : Validation -->
+            <!-- Étape 4 -->
             <div class="form-step" data-step="4">
                 <h2 class="step-title">Récapitulatif</h2>
                 <p class="step-desc">Vérifiez les informations avant de publier.</p>
-
-                <div id="summaryBox" style="background:var(--cream);border-radius:var(--radius);padding:16px;font-size:.85rem;line-height:1.8;">
-                    <p><strong>Titre :</strong> <span id="sumTitle">—</span></p>
-                    <p><strong>Catégorie :</strong> <span id="sumCategory">—</span></p>
-                    <p><strong>Prix :</strong> <span id="sumPrice">—</span></p>
-                    <p><strong>Image :</strong> <span id="sumImage">—</span></p>
-                    <p><strong>Jours :</strong> <span id="sumDays">—</span></p>
-                    <p><strong>Horaires :</strong> <span id="sumHours">—</span></p>
-                </div>
+                <div class="summary-box"><p><strong>Titre :</strong> <span id="sumTitle">—</span></p><p><strong>Catégorie :</strong> <span id="sumCategory">—</span></p><p><strong>Prix :</strong> <span id="sumPrice">—</span></p><p><strong>Image :</strong> <span id="sumImage">—</span></p><p><strong>Jours :</strong> <span id="sumDays">—</span></p><p><strong>Horaires :</strong> <span id="sumHours">—</span></p></div>
             </div>
 
-            <!-- Actions -->
             <div class="form-actions">
                 <div style="display:flex;gap:8px;">
-                    <button type="button" class="btn btn-ghost" id="prevBtn" style="display:none">
-                        <i data-lucide="arrow-left" style="width:1rem;height:1rem"></i> Retour
-                    </button>
-                    <button type="button" class="btn btn-save-draft" id="draftBtn" style="display:none">
-                        <i data-lucide="save" style="width:1rem;height:1rem"></i> Brouillon
-                    </button>
+                    <button type="button" class="btn btn-ghost" id="prevBtn" style="display:none"><i data-lucide="arrow-left"></i> Retour</button>
+                    <button type="button" class="btn btn-save-draft" id="draftBtn" style="display:none"><i data-lucide="save"></i> Brouillon</button>
                 </div>
                 <div style="display:flex;gap:8px;">
-                    <button type="button" class="btn btn-ghost" id="exitBtn">
-                        <i data-lucide="x" style="width:1rem;height:1rem"></i> Quitter
-                    </button>
-                    <button type="button" class="btn btn-primary" id="nextBtn">
-                        Continuer <i data-lucide="arrow-right" style="width:1rem;height:1rem"></i>
-                    </button>
-                    <button type="submit" class="btn btn-primary" id="submitBtn" style="display:none">
-                        <i data-lucide="check" style="width:1rem;height:1rem"></i> Publier le service
-                    </button>
+                    <button type="button" class="btn btn-ghost" id="exitBtn"><i data-lucide="x"></i> Quitter</button>
+                    <button type="button" class="btn btn-primary" id="nextBtn">Continuer <i data-lucide="arrow-right"></i></button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn" style="display:none"><i data-lucide="check"></i> Publier le service</button>
                 </div>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Exit modal -->
 <div id="exitModalContainer"></div>
+
 <script src="../js/global.js"></script>
 <script src="./js/register-service.js"></script>
 </body>

@@ -150,17 +150,17 @@ function renderServices() {
     grid.innerHTML = list.map(function(s, i) {
         var p = s.provider || {};
         var initials = (p.full_name || '?').split(' ').map(function(n){return n[0];}).join('').substring(0,2).toUpperCase();
-        var emoji = categoryEmojis[s.category] || '🛠️';
         var hasImage = s.image_url && s.image_url.trim().length > 0;
 
         return '<a href="service-detail.html?id=' + s.id + '" class="service-card" style="animation-delay:' + (i * .04) + 's">'
             + '<div class="card-image">'
             + (hasImage 
                 ? '<img src="' + escapeHtml(s.image_url) + '" alt="' + escapeHtml(s.title) + '" loading="lazy" onerror="this.parentElement.classList.add(\'no-image\')">'
-                : '')
-            + '<span class="cat-emoji">' + emoji + '</span>'
+                // MODIF 2 : Icône Lucide à la place de l'emoji
+                : '<span class="card-image-fallback"><i data-lucide="image" style="width:3rem;height:3rem;opacity:.3;color:#fff"></i></span>')
             + '<span class="card-category">' + escapeHtml(s.category || 'Service') + '</span>'
-            + '<span class="card-price">' + formatPrice(s.price) + '</span>'
+            // MODIF 1 : Prix "À partir de"
+            + '<span class="card-price"> ' + formatPrice(s.price) + '</span>'
             + '</div>'
             + '<div class="card-body">'
             + '<h3 class="card-title">' + escapeHtml(s.title) + '</h3>'
@@ -168,7 +168,11 @@ function renderServices() {
             + '</div>'
             + '<div class="card-footer">'
             + '<div class="card-provider">'
-            + '<div class="card-avatar">' + (p.profile_photo_url ? '<img src="' + escapeHtml(p.profile_photo_url) + '" alt="" loading="lazy">' : initials) + '</div>'
+            // MODIF 3 : Avatar avec point vert
+            + '<div class="card-avatar" style="position:relative">' 
+            + (p.profile_photo_url ? '<img src="' + escapeHtml(p.profile_photo_url) + '" alt="" loading="lazy">' : initials) 
+            + '<span style="position:absolute;bottom:0;right:0;width:9px;height:9px;background:#22C55E;border-radius:50%;border:2px solid #fff;animation:pulse 2s infinite"></span>'
+            + '</div>'
             + '<div>'
             + '<div class="card-provider-name">' + escapeHtml(p.full_name || 'Prestataire') + '</div>'
             + '<div class="card-provider-loc"><i data-lucide="map-pin" style="width:.6rem;height:.6rem"></i> ' + escapeHtml(p.city || '') + '</div>'

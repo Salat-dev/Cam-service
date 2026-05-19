@@ -1,0 +1,275 @@
+/* ═══════════════════════════════════════════════════════════════
+   BOTTOM NAVBAR MOBILE - Modern Minimal SaaS
+   Remplace le menu toggle par une barre de navigation en bas
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ============================================================
+   1. BOTTOM NAVBAR CONTAINER
+   ============================================================ */
+.bottom-navbar {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 150;
+    background: #FFFFFF;
+    border-top: 1px solid #F3F4F6;
+    padding: 6px 8px;
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+/* ============================================================
+   2. BOTTOM NAV ITEMS
+   ============================================================ */
+.bottom-nav-list {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.bottom-nav-item {
+    flex: 1;
+    text-align: center;
+}
+
+.bottom-nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px 4px;
+    text-decoration: none;
+    color: #6B7280;
+    font-size: 0.625rem;
+    font-weight: 500;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    transition: all 0.2s ease;
+    border-radius: 12px;
+    position: relative;
+    min-height: 48px;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.bottom-nav-link i {
+    width: 1.5rem;
+    height: 1.5rem;
+    transition: all 0.2s ease;
+}
+
+.bottom-nav-link span {
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* ============================================================
+   3. ACTIVE STATE
+   ============================================================ */
+.bottom-nav-link.active {
+    color: #22C55E;
+    font-weight: 600;
+}
+
+.bottom-nav-link.active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 3px;
+    background: #22C55E;
+    border-radius: 0 0 3px 3px;
+}
+
+.bottom-nav-link.active i {
+    color: #22C55E;
+}
+
+/* ============================================================
+   4. HOVER & ACTIVE EFFECTS
+   ============================================================ */
+@media (hover: hover) {
+    .bottom-nav-link:hover {
+        color: #111827;
+        background: #F9FAFB;
+    }
+}
+
+.bottom-nav-link:active {
+    transform: scale(0.95);
+    background: #F3F4F6;
+}
+
+/* ============================================================
+   5. BADGE
+   ============================================================ */
+.bottom-nav-badge {
+    position: absolute;
+    top: 2px;
+    right: calc(50% - 20px);
+    background: #F59E0B;
+    color: #FFFFFF;
+    font-size: 0.625rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+    line-height: 1;
+}
+
+/* ============================================================
+   6. HIDE SIDEBAR & MENU TOGGLE ON MOBILE
+   ============================================================ */
+@media (max-width: 1023px) {
+    /* Cacher le menu toggle */
+    .menu-toggle {
+        display: none !important;
+    }
+    
+    /* Cacher la sidebar */
+    .sidebar {
+        display: none !important;
+    }
+    
+    /* Afficher la bottom navbar */
+    .bottom-navbar {
+        display: block;
+    }
+    
+    /* Ajuster le main content */
+    .main-content {
+        margin-left: 0 !important;
+        max-width: 100% !important;
+        padding: 20px 16px;
+        padding-bottom: calc(80px + env(safe-area-inset-bottom)) !important;
+    }
+    
+    /* Ajuster la navbar top */
+    .navbar {
+        padding: 0 16px;
+        height: 56px;
+    }
+    
+    /* Cacher les éléments desktop-only */
+    .desktop-only {
+        display: none !important;
+    }
+}
+
+@media (max-width: 424px) {
+    .bottom-nav-link {
+        font-size: 0.5625rem;
+        padding: 4px 2px;
+        gap: 2px;
+    }
+    
+    .bottom-nav-link i {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+    
+    .bottom-navbar {
+        padding: 4px 4px;
+    }
+    
+    .main-content {
+        padding-bottom: calc(72px + env(safe-area-inset-bottom)) !important;
+    }
+}
+
+/* ============================================================
+   7. DESKTOP - AFFICHER LA SIDEBAR
+   ============================================================ */
+@media (min-width: 1024px) {
+    .bottom-navbar {
+        display: none !important;
+    }
+    
+    .sidebar {
+        display: flex !important;
+    }
+    
+    .desktop-only {
+        display: block !important;
+    }
+}
+
+/* ============================================================
+   8. ANIMATIONS
+   ============================================================ */
+.bottom-navbar {
+    animation: slideUpBottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUpBottom {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+.bottom-nav-link {
+    animation: fadeInItem 0.5s ease backwards;
+}
+
+.bottom-nav-link:nth-child(1) { animation-delay: 0.05s; }
+.bottom-nav-link:nth-child(2) { animation-delay: 0.1s; }
+.bottom-nav-link:nth-child(3) { animation-delay: 0.15s; }
+.bottom-nav-link:nth-child(4) { animation-delay: 0.2s; }
+.bottom-nav-link:nth-child(5) { animation-delay: 0.25s; }
+
+@keyframes fadeInItem {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================================
+   9. RIPPLE EFFECT (optionnel)
+   ============================================================ */
+.bottom-nav-link {
+    overflow: hidden;
+}
+
+.bottom-nav-link::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    background-image: radial-gradient(circle, rgba(34, 197, 94, 0.2) 10%, transparent 10.01%);
+    background-repeat: no-repeat;
+    background-position: 50%;
+    transform: scale(10, 10);
+    opacity: 0;
+    transition: transform 0.5s, opacity 1s;
+}
+
+.bottom-nav-link:active::after {
+    transform: scale(0, 0);
+    opacity: 0.3;
+    transition: 0s;
+}

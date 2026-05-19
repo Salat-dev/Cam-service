@@ -4,70 +4,914 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portfolio — CamServices Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Allison&family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="css/dashboard.css">
-        <link rel="stylesheet" href="../css/global.css">
-
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="css/ultra-responsive.css">
+    <script src="js/ultra-responsive.js"></script>
+     <script src="js/bottom-navbar.js"></script>
+    <link rel="stylesheet" href="css/bottom-navbar.css">
     <style>
-        /* ═══ MODAL STYLES (fallback si absent du dashboard.css) ═══ */
-        .modal-overlay {
-            position: fixed; inset: 0; z-index: 9000;
-            background: rgba(26,23,20,.45); backdrop-filter: blur(4px);
-            display: flex; align-items: center; justify-content: center;
+        :root {
+            --primary: #22C55E;
+            --primary-hover: #16A34A;
+            --primary-light: #F0FDF4;
+            --primary-dim: rgba(34, 197, 94, 0.08);
+            --text-primary: #111827;
+            --text-secondary: #4B5563;
+            --text-muted: #6B7280;
+            --background: #FFFFFF;
+            --surface: #F9FAFB;
+            --border: #E5E7EB;
+            --border-light: #F3F4F6;
+            --accent: #F59E0B;
+            --accent-hover: #D97706;
+            --accent-light: #FFFBEB;
+            --accent-dim: rgba(245, 158, 11, 0.08);
+            --error: #EF4444;
+            --error-light: #FEF2F2;
+            --blue: #3B82F6;
+            --blue-light: #EFF6FF;
+            --purple: #8B5CF6;
+            --purple-light: #F5F3FF;
+            --shadow-xs: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 60px rgba(0,0,0,0.1);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --ease: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--surface);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            -webkit-font-smoothing: antialiased;
+            font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+        }
+        
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(40px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        /* ═══ SIDEBAR ═══ */
+        .sidebar {
+            width: 260px;
+            background: #FFFFFF;
+            border-right: 1px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 100;
+            padding: 24px 16px;
+            overflow-y: auto;
+            transition: transform 0.3s var(--ease);
+        }
+        
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            padding: 0 12px 24px;
+        }
+        
+        .sidebar-logo img {
+            height: 32px;
+        }
+        
+        .sidebar-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 12px;
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            margin-bottom: 24px;
+        }
+        
+        .sidebar-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-dim);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
+            color: var(--primary);
+            flex-shrink: 0;
+            background-size: cover;
+        }
+        
+        .sidebar-user-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .sidebar-user-name {
+            font-weight: 600;
+            font-size: 0.875rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .sidebar-user-role {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .verify-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            color: var(--primary);
+            background: var(--primary-dim);
+            padding: 2px 8px;
+            border-radius: 100px;
+            margin-top: 4px;
+        }
+        
+        .sidebar-nav {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .sidebar-nav li a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .sidebar-nav li a:hover {
+            background: var(--surface);
+            color: var(--text-primary);
+        }
+        
+        .sidebar-nav li a.active {
+            background: var(--primary-dim);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .sidebar-nav li a i {
+            width: 1.125rem;
+            height: 1.125rem;
+        }
+        
+        .badge {
+            background: var(--accent);
+            color: #FFFFFF;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 10px;
+            margin-left: auto;
+        }
+        
+        .sidebar-divider {
+            border: none;
+            border-top: 1px solid var(--border-light);
+            margin: 16px 12px;
+        }
+        
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 16px;
+        }
+        
+        .sidebar-footer a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .sidebar-footer a:hover {
+            color: var(--error);
+            background: var(--error-light);
+        }
+        
+        /* ═══ MAIN CONTENT ═══ */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 32px 32px 64px;
+            min-height: 100vh;
+        }
+        
+        .page-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        
+        .page-title {
+            font-weight: 800;
+            font-size: 1.75rem;
+            letter-spacing: -0.03em;
+            margin-bottom: 6px;
+        }
+        
+        .page-title .accent {
+            color: var(--primary);
+        }
+        
+        .page-subtitle {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+        }
+        
+        .page-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .filter-select {
+            padding: 10px 36px 10px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            background: #FFFFFF;
+            cursor: pointer;
+            outline: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+        }
+        
+        /* ═══ STATS ═══ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        
+        .stat-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
             padding: 24px;
-            animation: modalFadeIn .25s ease;
+            box-shadow: var(--shadow-xs);
+            transition: all 0.3s;
         }
+        
+        .stat-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        
+        .stat-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 14px;
+        }
+        
+        .stat-icon i {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+        
+        .stat-icon.blue { background: var(--blue-light); color: var(--blue); }
+        .stat-icon.accent { background: var(--accent-dim); color: var(--accent); }
+        .stat-icon.green { background: var(--primary-dim); color: var(--primary); }
+        .stat-icon.purple { background: var(--purple-light); color: var(--purple); }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+        
+        .stat-label {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-top: 4px;
+        }
+        
+        /* ═══ PORTFOLIO GRID ═══ */
+        .portfolio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .portfolio-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-xs);
+            transition: all 0.3s var(--ease);
+            animation: scaleIn 0.4s var(--ease);
+            position: relative;
+        }
+        
+        .portfolio-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-4px);
+            border-color: var(--primary);
+        }
+        
+        .portfolio-card.featured {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px var(--accent-dim), var(--shadow-md);
+        }
+        
+        .portfolio-card.featured::after {
+            content: '★ Vedette';
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: var(--accent);
+            color: #FFFFFF;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 100px;
+            z-index: 2;
+        }
+        
+        .portfolio-image {
+            height: 200px;
+            background: var(--surface);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .portfolio-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s;
+        }
+        
+        .portfolio-card:hover .portfolio-image img {
+            transform: scale(1.05);
+        }
+        
+        .portfolio-image .image-fallback {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--border);
+        }
+        
+        .portfolio-image .image-fallback i {
+            width: 3rem;
+            height: 3rem;
+        }
+        
+        .portfolio-image .media-type-badge {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            padding: 4px 10px;
+            border-radius: 100px;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            background: rgba(0,0,0,0.6);
+            color: #FFFFFF;
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .portfolio-body {
+            padding: 18px 20px;
+        }
+        
+        .portfolio-title {
+            font-weight: 700;
+            font-size: 0.9375rem;
+            margin-bottom: 6px;
+            letter-spacing: -0.01em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .portfolio-desc {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        
+        .portfolio-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .portfolio-tag {
+            font-size: 0.6875rem;
+            padding: 3px 8px;
+            border-radius: 100px;
+            background: var(--surface);
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        
+        .portfolio-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            border-top: 1px solid var(--border-light);
+        }
+        
+        .portfolio-order {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .portfolio-actions {
+            display: flex;
+            gap: 4px;
+        }
+        
+        /* ═══ BUTTONS ═══ */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 0.875rem;
+            padding: 11px 22px;
+            border-radius: var(--radius-sm);
+            border: none;
+            cursor: pointer;
+            transition: all 0.25s var(--ease);
+            text-decoration: none;
+            line-height: 1;
+            white-space: nowrap;
+        }
+        
+        .btn i {
+            width: 1.125rem;
+            height: 1.125rem;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: #FFFFFF;
+            box-shadow: 0 1px 3px rgba(34,197,94,0.2);
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(34,197,94,0.3);
+        }
+        
+        .btn-secondary {
+            background: #FFFFFF;
+            color: var(--text-secondary);
+            border: 1.5px solid var(--border);
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--text-primary);
+            color: var(--text-primary);
+            transform: translateY(-1px);
+        }
+        
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: #FFFFFF;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+        
+        .btn-icon:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-dim);
+        }
+        
+        .btn-icon.danger:hover {
+            border-color: var(--error);
+            color: var(--error);
+            background: var(--error-light);
+        }
+        
+        .btn-icon.star:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-light);
+        }
+        
+        .btn-icon.star.active {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-dim);
+        }
+        
+        /* ═══ MODAL ═══ */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9000;
+            background: rgba(17,24,39,0.5);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            animation: fadeIn 0.25s ease;
+        }
+        
         .modal-content {
-            background: var(--white, #fff); border-radius: var(--radius-xl, 16px);
-            box-shadow: 0 20px 60px rgba(26,23,20,.18);
-            width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto;
-            animation: modalSlideUp .3s cubic-bezier(.22,1,.36,1);
+            background: #FFFFFF;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            width: 100%;
+            max-width: 620px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: fadeSlide 0.3s var(--ease);
         }
+        
         .modal-header {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 24px 24px 16px; border-bottom: 1px solid var(--rule, #E8E2DA);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 28px 20px;
+            border-bottom: 1px solid var(--border-light);
         }
+        
         .modal-title {
-            display: flex; align-items: center; gap: 10px;
-            font-size: 1.1rem; font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.125rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
         }
+        
+        .modal-title i {
+            color: var(--primary);
+        }
+        
         .modal-close {
-            background: none; border: none; cursor: pointer; color: var(--muted, #8A8279);
-            padding: 6px; border-radius: 8px; transition: background .2s;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            padding: 8px;
+            border-radius: var(--radius-sm);
+            transition: all 0.2s;
         }
-        .modal-close:hover { background: var(--cream, #FAF8F5); }
-        .modal-content form { padding: 24px; }
-        .modal-content .form-group { margin-bottom: 16px; }
-        .modal-content .form-group label {
-            display: block; font-size: .8rem; font-weight: 600;
-            margin-bottom: 6px; color: var(--ink, #1A1714);
+        
+        .modal-close:hover {
+            background: var(--surface);
+            color: var(--text-primary);
         }
-        .modal-content .form-group input,
-        .modal-content .form-group select,
-        .modal-content .form-group textarea {
-            width: 100%; padding: 10px 14px;
-            border: 1.5px solid var(--rule, #E8E2DA); border-radius: var(--radius, 10px);
-            font-family: var(--ff-body, 'Outfit'); font-size: .88rem;
-            color: var(--ink, #1A1714); background: var(--white, #fff);
-            outline: none; transition: border-color .2s;
+        
+        .modal-body {
+            padding: 24px 28px 28px;
         }
-        .modal-content .form-group input:focus,
-        .modal-content .form-group select:focus,
-        .modal-content .form-group textarea:focus {
-            border-color: var(--gold, #C4943E);
-            box-shadow: 0 0 0 3px rgba(196,148,62,.08);
+        
+        .form-group {
+            margin-bottom: 20px;
         }
-        .modal-content .form-group textarea { min-height: 80px; resize: vertical; }
-        .modal-content .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .modal-content .form-actions {
-            display: flex; gap: 12px; padding-top: 8px; justify-content: flex-end;
+        
+        .form-group label {
+            display: block;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            letter-spacing: -0.01em;
         }
-        @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes modalSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @media (max-width: 600px) {
-            .modal-content { max-width: 100%; margin: 12px; }
-            .modal-content .form-row { grid-template-columns: 1fr; }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+            outline: none;
+            transition: all 0.25s;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-dim);
+        }
+        
+        .form-group textarea {
+            min-height: 90px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            padding-top: 8px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--surface);
+        }
+        
+        .checkbox-group:hover {
+            border-color: var(--accent);
+            background: var(--accent-light);
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+        
+        .tags-input-wrapper {
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            min-height: 48px;
+            transition: all 0.25s;
+        }
+        
+        .tags-input-wrapper:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-dim);
+        }
+        
+        .tag-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: var(--primary-dim);
+            color: var(--primary);
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .tag-item button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--primary);
+            padding: 0;
+            display: flex;
+            opacity: 0.7;
+        }
+        
+        .tag-item button:hover {
+            opacity: 1;
+        }
+        
+        .tags-input {
+            border: none;
+            outline: none;
+            flex: 1;
+            min-width: 100px;
+            padding: 6px 0;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem;
+        }
+        
+        /* ═══ LIGHTBOX ═══ */
+        .lightbox-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9500;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            cursor: pointer;
+            animation: fadeIn 0.2s ease;
+        }
+        
+        .lightbox-content {
+            max-width: 90vw;
+            max-height: 85vh;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+        
+        .lightbox-content img,
+        .lightbox-content video {
+            max-width: 100%;
+            max-height: 85vh;
+            border-radius: var(--radius-lg);
+            object-fit: contain;
+        }
+        
+        /* ═══ EMPTY STATE ═══ */
+        .empty-state {
+            text-align: center;
+            padding: 64px 24px;
+        }
+        
+        .empty-icon {
+            color: var(--border);
+            margin-bottom: 20px;
+        }
+        
+        .empty-state h3 {
+            font-weight: 700;
+            font-size: 1.25rem;
+            margin-bottom: 8px;
+        }
+        
+        .empty-state p {
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+            margin-bottom: 28px;
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .loading-spinner {
+            text-align: center;
+            padding: 80px 20px;
+        }
+        
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid var(--border-light);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin: 0 auto 16px;
+        }
+        
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 200;
+            background: #FFFFFF;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        /* ═══ RESPONSIVE ═══ */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .menu-toggle {
+                display: block;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .portfolio-grid {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .main-content {
+                padding: 20px 16px;
+            }
+            .page-header {
+                flex-direction: column;
+            }
+            .page-actions {
+                width: 100%;
+                flex-direction: column;
+            }
+            .page-actions .btn,
+            .page-actions .filter-select {
+                width: 100%;
+            }
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .portfolio-grid {
+                grid-template-columns: 1fr;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
         }
     </style>
 </head>
@@ -79,32 +923,34 @@
 
 <!-- ═══ SIDEBAR ═══ -->
 <aside class="sidebar" id="sidebar">
-  <img src="../asset/logo camservices.svg" alt="" srcset="">    
+    <div class="sidebar-logo">
+            <img src="../asset/logo.svg" alt="CamServices" style="height: 82px;">
+    </div>
     <div class="sidebar-user">
         <div class="sidebar-avatar" id="sidebarAvatar"></div>
         <div class="sidebar-user-info">
             <div class="sidebar-user-name" id="sidebarName">Chargement...</div>
             <div class="sidebar-user-role" id="sidebarRole">Prestataire</div>
             <span class="verify-badge" id="verifyBadge" style="display:none">
-                <i data-lucide="shield-check" style="width:.7rem;height:.7rem"></i> Vérifié
+                <i data-lucide="shield-check"></i> Vérifié
             </span>
         </div>
     </div>
     
     <ul class="sidebar-nav">
-        <li><a href="../dashboard/index.html" id="nav-overview"><i data-lucide="layout-dashboard"></i> Vue d'ensemble</a></li>
-        <li><a href="../dashboard/services.html" id="nav-services"><i data-lucide="briefcase"></i> Mes services <span class="badge" id="serviceBadge">0</span></a></li>
-        <li><a href="../dashboard/orders.html" id="nav-orders"><i data-lucide="shopping-bag"></i> Commandes <span class="badge" id="orderBadge">0</span></a></li>
-        <li><a href="../dashboard/pricing.html" id="nav-pricing"><i data-lucide="tags"></i> Grille tarifaire</a></li>
-        <li><a href="../dashboard/portfolio.html" class="active" id="nav-portfolio"><i data-lucide="image"></i> Portfolio</a></li>
-        <li><a href="../dashboard/activities.html" id="nav-activities"><i data-lucide="award"></i> Activités</a></li>
+        <li><a href="../dashboard/index.html"><i data-lucide="layout-dashboard"></i> Vue d'ensemble</a></li>
+        <li><a href="../dashboard/services.html"><i data-lucide="briefcase"></i> Mes services <span class="badge" id="serviceBadge">0</span></a></li>
+        <li><a href="../dashboard/orders.html"><i data-lucide="shopping-bag"></i> Commandes <span class="badge" id="orderBadge">0</span></a></li>
+        <li><a href="../dashboard/pricing.html"><i data-lucide="tags"></i> Grille tarifaire</a></li>
+        <li><a href="../dashboard/portfolio.html" class="active"><i data-lucide="image"></i> Portfolio</a></li>
+        <li><a href="../dashboard/activities.html"><i data-lucide="award"></i> Activités</a></li>
     </ul>
     
     <hr class="sidebar-divider">
     
     <ul class="sidebar-nav">
-        <li><a href="../dashboard/profile.html" id="nav-profile"><i data-lucide="user-circle"></i> Mon profil</a></li>
-        <li><a href="../dashboard/analytics.html" id="nav-analytics"><i data-lucide="bar-chart-3"></i> Statistiques</a></li>
+        <li><a href="../dashboard/profile.html"><i data-lucide="user-circle"></i> Mon profil</a></li>
+        <li><a href="../dashboard/analytics.html"><i data-lucide="bar-chart-3"></i> Statistiques</a></li>
     </ul>
     
     <div class="sidebar-footer">
@@ -116,12 +962,11 @@
 <main class="main-content">
     <div class="page-header">
         <div>
-            <h1 class="page-title">Mon <span class="script">portfolio</span></h1>
+            <h1 class="page-title">Mon <span class="accent">portfolio</span></h1>
             <p class="page-subtitle">Présentez vos plus belles réalisations pour attirer plus de clients</p>
         </div>
-        <div class="page-actions" style="display:flex;gap:12px">
-            <select id="categoryFilter" onchange="filterPortfolio()" 
-                    style="padding:9px 14px;border:1.5px solid var(--rule);border-radius:var(--radius);font-family:var(--ff-body);font-size:.82rem;color:var(--muted);background:var(--white);cursor:pointer;outline:none">
+        <div class="page-actions">
+            <select id="categoryFilter" onchange="filterPortfolio()" class="filter-select">
                 <option value="all">Toutes les catégories</option>
             </select>
             <button class="btn btn-primary" onclick="openPortfolioModal()">
@@ -131,32 +976,24 @@
     </div>
     
     <!-- Stats rapides -->
-    <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:24px">
+    <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-card-header">
-                <div class="stat-icon blue"><i data-lucide="image"></i></div>
-            </div>
+            <div class="stat-icon blue"><i data-lucide="image"></i></div>
             <div class="stat-value" id="totalItems">0</div>
             <div class="stat-label">Réalisations</div>
         </div>
         <div class="stat-card">
-            <div class="stat-card-header">
-                <div class="stat-icon gold"><i data-lucide="star"></i></div>
-            </div>
+            <div class="stat-icon accent"><i data-lucide="star"></i></div>
             <div class="stat-value" id="featuredCount">0</div>
             <div class="stat-label">En vedette</div>
         </div>
         <div class="stat-card">
-            <div class="stat-card-header">
-                <div class="stat-icon green"><i data-lucide="folder-open"></i></div>
-            </div>
+            <div class="stat-icon green"><i data-lucide="folder-open"></i></div>
             <div class="stat-value" id="categoryCount">0</div>
             <div class="stat-label">Catégories</div>
         </div>
         <div class="stat-card">
-            <div class="stat-card-header">
-                <div class="stat-icon purple"><i data-lucide="calendar"></i></div>
-            </div>
+            <div class="stat-icon purple"><i data-lucide="calendar"></i></div>
             <div class="stat-value" id="recentCount">0</div>
             <div class="stat-label">Ce mois</div>
         </div>
@@ -166,7 +1003,7 @@
     <div id="portfolioGrid">
         <div class="loading-spinner">
             <div class="spinner"></div>
-            <p>Chargement de votre portfolio...</p>
+            <p style="color:var(--text-muted)">Chargement de votre portfolio...</p>
         </div>
     </div>
 </main>
@@ -174,8 +1011,480 @@
 <div id="modalContainer" style="display:none"></div>
 
 <!-- ═══ SCRIPTS ═══ -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/global.js"></script>
-<script src="./js/portfolio.js"></script>
+<script>
+const SUPABASE_URL  = 'https://cwubxwbzzuigctvgdygv.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dWJ4d2J6enVpZ2N0dmdkeWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzI2MTgsImV4cCI6MjA5MzgwODYxOH0.0mwBNo_S5yItQQjq2at9GNRN74ooZRBJIbZGDH9L2uk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let currentUser = null;
+let portfolioItems = [];
+let currentFilter = 'all';
+
+// ═══ INIT ═══
+async function initDashboard() {
+    const { data: { user: authUser } } = await sb.auth.getUser();
+    if (!authUser) { window.location.href = '../login.html'; return; }
+
+    const { data: profile } = await sb.from('users').select('*').eq('id', authUser.id).maybeSingle();
+    currentUser = profile || {
+        id: authUser.id, email: authUser.email,
+        full_name: authUser.user_metadata?.full_name || authUser.email.split('@')[0],
+        role: 'prestataire', is_verified: false, profile_photo_url: null
+    };
+
+    document.getElementById('sidebarName').textContent = currentUser.full_name || currentUser.email;
+    document.getElementById('sidebarRole').textContent = 'Prestataire';
+    document.getElementById('verifyBadge').style.display = currentUser.is_verified ? 'inline-flex' : 'none';
+    
+    const avatar = document.getElementById('sidebarAvatar');
+    if (currentUser.profile_photo_url) {
+        avatar.style.backgroundImage = `url(${currentUser.profile_photo_url})`;
+        avatar.style.backgroundSize = 'cover';
+    } else {
+        avatar.textContent = (currentUser.full_name || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+    }
+
+    const { count: svcCount } = await sb.from('services').select('id', { count:'exact', head:true }).eq('user_id', currentUser.id);
+    const { count: ordCount } = await sb.from('orders').select('id', { count:'exact', head:true }).eq('provider_id', currentUser.id).in('status', ['pending','confirmed','in_progress']);
+    document.getElementById('serviceBadge').textContent = svcCount || 0;
+    document.getElementById('orderBadge').textContent = ordCount || 0;
+    
+    lucide.createIcons();
+}
+
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+}
+
+async function logout() {
+    await sb.auth.signOut();
+    window.location.href = '../landing.html';
+}
+
+// ═══ DATA ═══
+async function getPortfolioItems() {
+    if (!currentUser) return [];
+    const { data, error } = await sb
+        .from('portfolio_items')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('is_featured', { ascending: false })
+        .order('display_order')
+        .order('created_at', { ascending: false });
+    if (error) { console.error('getPortfolioItems:', error); return []; }
+    return data || [];
+}
+
+// ═══ HELPERS ═══
+function escapeHtml(text) {
+    if (!text) return '';
+    const d = document.createElement('div'); d.textContent = text; return d.innerHTML;
+}
+
+function showToast(message, type = 'info') {
+    let w = document.getElementById('_tw');
+    if (!w) {
+        w = document.createElement('div');
+        w.id = '_tw';
+        w.style.cssText = 'position:fixed;top:24px;right:24px;z-index:10000;display:flex;flex-direction:column;gap:10px;pointer-events:none;';
+        document.body.appendChild(w);
+    }
+    const colors = { success:'#22C55E', error:'#EF4444', info:'#F59E0B' };
+    const icons = { success:'check-circle', error:'alert-circle', info:'info' };
+    const t = document.createElement('div');
+    t.style.cssText = `display:flex;align-items:center;gap:10px;padding:14px 20px;background:#fff;border:1px solid #E5E7EB;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.1);font-size:.875rem;color:#111827;pointer-events:auto;min-width:280px;animation:slideInRight .3s ease;border-left:4px solid ${colors[type]};`;
+    t.innerHTML = `<i data-lucide="${icons[type]}" style="width:1.125rem;height:1.125rem;color:${colors[type]};flex-shrink:0"></i><span style="flex:1">${message}</span><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:#6B7280;padding:0"><i data-lucide="x" style="width:.9rem;height:.9rem"></i></button>`;
+    w.appendChild(t);
+    lucide.createIcons();
+    setTimeout(() => { t.style.transition='all .3s'; t.style.opacity='0'; t.style.transform='translateX(20px)'; setTimeout(()=>t.remove(),300); }, 4000);
+}
+
+// ═══ STATS ═══
+function updateStats() {
+    const now = new Date();
+    const thisMonth = now.getMonth();
+    const thisYear = now.getFullYear();
+    const categories = new Set(portfolioItems.map(i => i.category).filter(Boolean));
+    
+    document.getElementById('totalItems').textContent = portfolioItems.length;
+    document.getElementById('featuredCount').textContent = portfolioItems.filter(i => i.is_featured).length;
+    document.getElementById('categoryCount').textContent = categories.size;
+    document.getElementById('recentCount').textContent = portfolioItems.filter(i => {
+        const d = new Date(i.created_at);
+        return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+    }).length;
+}
+
+function filterPortfolio() {
+    currentFilter = document.getElementById('categoryFilter').value;
+    renderPortfolio();
+}
+
+// ═══ RENDER ═══
+function renderPortfolio() {
+    const container = document.getElementById('portfolioGrid');
+    const filtered = currentFilter === 'all' ? portfolioItems : portfolioItems.filter(i => i.category === currentFilter);
+
+    // Update category filter options
+    const categories = [...new Set(portfolioItems.map(i => i.category).filter(Boolean))];
+    const filter = document.getElementById('categoryFilter');
+    if (filter) {
+        filter.innerHTML = '<option value="all">Toutes les catégories</option>' +
+            categories.map(c => `<option value="${escapeHtml(c)}" ${currentFilter === c ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('');
+    }
+
+    if (portfolioItems.length === 0) {
+        container.innerHTML = `
+            <div class="card" style="grid-column:1/-1">
+                <div class="empty-state">
+                    <i data-lucide="camera" class="empty-icon" style="width:4rem;height:4rem"></i>
+                    <h3>Votre portfolio est vide</h3>
+                    <p>Ajoutez vos meilleures réalisations pour mettre en valeur votre travail et attirer plus de clients.</p>
+                    <button class="btn btn-primary" onclick="openPortfolioModal()">
+                        <i data-lucide="plus"></i> Ajouter ma première réalisation
+                    </button>
+                </div>
+            </div>`;
+        lucide.createIcons();
+        return;
+    }
+
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div class="card" style="grid-column:1/-1">
+                <div class="empty-state">
+                    <i data-lucide="filter" style="width:3rem;height:3rem;color:var(--border)"></i>
+                    <h3>Aucune réalisation trouvée</h3>
+                    <p>Aucun élément ne correspond au filtre sélectionné.</p>
+                    <button class="btn btn-secondary" onclick="document.getElementById('categoryFilter').value='all';filterPortfolio()">Afficher tout</button>
+                </div>
+            </div>`;
+        lucide.createIcons();
+        return;
+    }
+
+    container.innerHTML = filtered.map(item => `
+        <div class="portfolio-card ${item.is_featured ? 'featured' : ''}">
+            <div class="portfolio-image" onclick="openLightbox('${item.id}')">
+                ${item.media_url ? 
+                    (item.media_type === 'video' ? 
+                        `<div class="image-fallback"><i data-lucide="video"></i></div>
+                         <div class="media-type-badge"><i data-lucide="play" style="width:.7rem;height:.7rem"></i> Vidéo</div>` :
+                        `<img src="${escapeHtml(item.media_url)}" alt="${escapeHtml(item.title)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                         <div class="image-fallback" style="display:none"><i data-lucide="image"></i></div>`
+                    ) :
+                    `<div class="image-fallback"><i data-lucide="image"></i></div>`
+                }
+            </div>
+            <div class="portfolio-body">
+                <h3 class="portfolio-title">${escapeHtml(item.title)}</h3>
+                ${item.description ? `<p class="portfolio-desc">${escapeHtml(item.description)}</p>` : ''}
+                ${item.tags && item.tags.length > 0 ? `
+                    <div class="portfolio-tags">
+                        ${item.tags.map(tag => `<span class="portfolio-tag">${escapeHtml(tag)}</span>`).join('')}
+                    </div>
+                ` : ''}
+            </div>
+            <div class="portfolio-footer">
+                <span class="portfolio-order">
+                    <i data-lucide="layers" style="width:.8rem;height:.8rem"></i> 
+                    Ordre: ${item.display_order || 0}
+                </span>
+                <div class="portfolio-actions">
+                    <button class="btn-icon star ${item.is_featured ? 'active' : ''}" onclick="toggleFeatured('${item.id}')" title="${item.is_featured ? 'Retirer la vedette' : 'Mettre en vedette'}">
+                        <i data-lucide="star"></i>
+                    </button>
+                    <button class="btn-icon" onclick="openPortfolioModal('${item.id}')" title="Modifier">
+                        <i data-lucide="pencil"></i>
+                    </button>
+                    <button class="btn-icon danger" onclick="deletePortfolioItem('${item.id}')" title="Supprimer">
+                        <i data-lucide="trash-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    lucide.createIcons();
+}
+
+// ═══ LIGHTBOX ═══
+function openLightbox(id) {
+    const item = portfolioItems.find(i => i.id === id);
+    if (!item || !item.media_url) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'lightbox-overlay';
+    overlay.onclick = function() { overlay.remove(); };
+
+    const content = document.createElement('div');
+    content.className = 'lightbox-content';
+    content.onclick = function(e) { e.stopPropagation(); };
+
+    if (item.media_type === 'video') {
+        content.innerHTML = `<video src="${escapeHtml(item.media_url)}" controls autoplay style="max-width:100%;max-height:85vh;border-radius:12px"></video>`;
+    } else {
+        content.innerHTML = `<img src="${escapeHtml(item.media_url)}" alt="${escapeHtml(item.title)}">`;
+    }
+
+    overlay.appendChild(content);
+    document.body.appendChild(overlay);
+
+    document.addEventListener('keydown', function handler(e) {
+        if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', handler); }
+    });
+}
+
+// ═══ CRUD ═══
+function openPortfolioModal(id = null) {
+    const isEdit = !!id;
+    let item = {
+        title: '', description: '', category: '', media_url: '',
+        media_type: 'image', tags: [], is_featured: false, display_order: 0
+    };
+
+    if (isEdit) {
+        const found = portfolioItems.find(i => i.id === id);
+        if (found) item = { ...item, ...found };
+    }
+
+    const categories = [...new Set(portfolioItems.map(i => i.category).filter(Boolean))];
+
+    const html = `
+        <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+            <div class="modal-content" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <i data-lucide="${isEdit ? 'pencil' : 'plus-circle'}" style="width:1.3rem;height:1.3rem"></i>
+                        ${isEdit ? "Modifier la réalisation" : 'Nouvelle réalisation'}
+                    </h3>
+                    <button class="modal-close" onclick="closeModal()"><i data-lucide="x"></i></button>
+                </div>
+                <div class="modal-body">
+                    <form id="portfolioForm">
+                        <input type="hidden" name="id" value="${id || ''}">
+                        
+                        <div class="form-group">
+                            <label><i data-lucide="file-text" style="width:1rem;height:1rem;display:inline;vertical-align:middle;margin-right:4px"></i> Titre *</label>
+                            <input type="text" name="title" value="${escapeHtml(item.title)}" placeholder="Ex: Rénovation complète - Villa Moderne" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i data-lucide="folder" style="width:1rem;height:1rem;display:inline;vertical-align:middle;margin-right:4px"></i> Catégorie</label>
+                            <input type="text" name="category" value="${escapeHtml(item.category || '')}" list="categoryList" placeholder="Ex: Rénovation, Design...">
+                            <datalist id="categoryList">
+                                ${categories.map(c => `<option value="${escapeHtml(c)}">`).join('')}
+                            </datalist>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label><i data-lucide="link" style="width:1rem;height:1rem;display:inline;vertical-align:middle;margin-right:4px"></i> URL du média *</label>
+                                <input type="url" name="media_url" value="${escapeHtml(item.media_url || '')}" placeholder="https://..." required>
+                            </div>
+                            <div class="form-group">
+                                <label><i data-lucide="film" style="width:1rem;height:1rem;display:inline;vertical-align:middle;margin-right:4px"></i> Type de média</label>
+                                <select name="media_type">
+                                    <option value="image" ${item.media_type === 'image' ? 'selected' : ''}>Image</option>
+                                    <option value="video" ${item.media_type === 'video' ? 'selected' : ''}>Vidéo</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i data-lucide="align-left" style="width:1rem;height:1rem;display:inline;vertical-align:middle;margin-right:4px"></i> Description</label>
+                            <textarea name="description" rows="3" placeholder="Décrivez cette réalisation...">${escapeHtml(item.description || '')}</textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i data-lucide="tags" style="width:1rem;height:1rem;display:inline;vertical-align:middle;margin-right:4px"></i> Tags</label>
+                            <div class="tags-input-wrapper" id="tagsWrapper">
+                                ${(item.tags || []).map((tag, i) => `
+                                    <span class="tag-item">
+                                        ${escapeHtml(tag)}
+                                        <button type="button" onclick="this.parentElement.remove()"><i data-lucide="x" style="width:.7rem;height:.7rem"></i></button>
+                                    </span>
+                                `).join('')}
+                                <input type="text" class="tags-input" id="tagsInput" placeholder="Ajouter un tag...">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label><i data-lucide="layers" style="width:1rem;height:1rem;display:inline;vertical-align:middle;margin-right:4px"></i> Ordre d'affichage</label>
+                                <input type="number" name="display_order" value="${item.display_order || 0}" min="0">
+                            </div>
+                        </div>
+
+                        <label class="checkbox-group">
+                            <input type="checkbox" name="is_featured" ${item.is_featured ? 'checked' : ''}>
+                            <div>
+                                <div style="font-weight:600;font-size:.875rem">Mettre en vedette ⭐</div>
+                                <div style="font-size:.75rem;color:var(--text-muted)">Cette réalisation apparaîtra en priorité sur votre profil</div>
+                            </div>
+                        </label>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i data-lucide="save"></i> ${isEdit ? 'Enregistrer' : "Ajouter"}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>`;
+
+    openModalHtml(html);
+
+    // Tags input
+    const tagsInput = document.getElementById('tagsInput');
+    const tagsWrapper = document.getElementById('tagsWrapper');
+    
+    tagsInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            const value = this.value.trim();
+            if (value) {
+                const tag = document.createElement('span');
+                tag.className = 'tag-item';
+                tag.innerHTML = `${escapeHtml(value)} <button type="button" onclick="this.parentElement.remove()"><i data-lucide="x" style="width:.7rem;height:.7rem"></i></button>`;
+                tagsWrapper.insertBefore(tag, this);
+                this.value = '';
+                lucide.createIcons();
+            }
+        }
+    });
+
+    // Form submit
+    document.getElementById('portfolioForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const fd = new FormData(this);
+        const data = Object.fromEntries(fd.entries());
+        
+        // Get tags
+        const tagElements = tagsWrapper.querySelectorAll('.tag-item');
+        data.tags = Array.from(tagElements).map(t => t.textContent.trim()).filter(Boolean);
+        data.is_featured = this.querySelector('[name="is_featured"]').checked;
+        data.display_order = parseInt(data.display_order) || 0;
+
+        const editId = data.id;
+        delete data.id;
+
+        data.title = data.title.trim();
+        data.description = data.description.trim() || null;
+        data.category = data.category.trim() || null;
+
+        try {
+            if (isEdit) {
+                const { error } = await sb.from('portfolio_items').update(data).eq('id', editId);
+                if (error) throw error;
+                showToast('Réalisation mise à jour !', 'success');
+            } else {
+                data.user_id = currentUser.id;
+                const { error } = await sb.from('portfolio_items').insert([data]);
+                if (error) throw error;
+                showToast('Réalisation ajoutée !', 'success');
+            }
+            closeModal();
+            portfolioItems = await getPortfolioItems();
+            updateStats();
+            renderPortfolio();
+        } catch (err) {
+            showToast('Erreur : ' + (err.message || 'Réessayez.'), 'error');
+        }
+    });
+}
+
+async function toggleFeatured(id) {
+    const item = portfolioItems.find(i => i.id === id);
+    if (!item) return;
+
+    try {
+        const { error } = await sb.from('portfolio_items')
+            .update({ is_featured: !item.is_featured })
+            .eq('id', id);
+        if (error) throw error;
+        
+        portfolioItems = await getPortfolioItems();
+        updateStats();
+        renderPortfolio();
+        showToast(item.is_featured ? 'Vedette retirée' : 'Mis en vedette !', 'success');
+    } catch (err) {
+        showToast('Erreur : ' + err.message, 'error');
+    }
+}
+
+async function deletePortfolioItem(id) {
+    const item = portfolioItems.find(i => i.id === id);
+    if (!item) return;
+
+    const confirmHtml = `
+        <div class="modal-overlay" id="confirmOverlay">
+            <div class="modal-content" style="max-width:440px" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <h3 class="modal-title"><i data-lucide="alert-triangle" style="color:var(--error)"></i> Confirmation</h3>
+                    <button class="modal-close" onclick="document.getElementById('confirmOverlay').remove()"><i data-lucide="x"></i></button>
+                </div>
+                <div class="modal-body">
+                    <p style="color:var(--text-secondary);margin-bottom:24px">Supprimer définitivement "<strong>${escapeHtml(item.title)}</strong>" ? Cette action est irréversible.</p>
+                    <div class="form-actions">
+                        <button class="btn btn-secondary" onclick="document.getElementById('confirmOverlay').remove()">Annuler</button>
+                        <button class="btn btn-primary" style="background:var(--error)" id="confirmDeleteBtn">
+                            <i data-lucide="trash-2"></i> Supprimer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
+    document.body.insertAdjacentHTML('beforeend', confirmHtml);
+    lucide.createIcons();
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
+        document.getElementById('confirmOverlay').remove();
+        try {
+            const { error } = await sb.from('portfolio_items').delete().eq('id', id);
+            if (error) throw error;
+            portfolioItems = await getPortfolioItems();
+            updateStats();
+            renderPortfolio();
+            showToast('Réalisation supprimée', 'info');
+        } catch (err) {
+            showToast('Erreur : ' + err.message, 'error');
+        }
+    });
+}
+
+// ═══ MODAL HELPERS ═══
+function openModalHtml(html) {
+    const c = document.getElementById('modalContainer');
+    c.innerHTML = html;
+    c.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    lucide.createIcons();
+}
+
+function closeModal() {
+    const c = document.getElementById('modalContainer');
+    c.innerHTML = '';
+    c.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal();
+});
+
+// ═══ LOAD ═══
+async function loadPortfolio() {
+    await initDashboard();
+    portfolioItems = await getPortfolioItems();
+    updateStats();
+    renderPortfolio();
+}
+
+loadPortfolio();
+</script>
 </body>
 </html>

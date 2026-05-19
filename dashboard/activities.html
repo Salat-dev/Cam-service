@@ -4,64 +4,845 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Activités & Certifications — CamServices Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Allison&family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="css/dashboard.css">
-        <link rel="stylesheet" href="../css/global.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/ultra-responsive.css">
+    <script src="js/ultra-responsive.js"></script>
+    <script src="js/bottom-navbar.js"></script>
+    <link rel="stylesheet" href="css/bottom-navbar.css">
 
+        <script src="https://unpkg.com/lucide@latest"></script>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
-        /* ═══ MODAL STYLES ═══ */
+        :root {
+            --primary: #22C55E;
+            --primary-hover: #16A34A;
+            --primary-light: #F0FDF4;
+            --primary-dim: rgba(34, 197, 94, 0.08);
+            --text-primary: #111827;
+            --text-secondary: #4B5563;
+            --text-muted: #6B7280;
+            --background: #FFFFFF;
+            --surface: #F9FAFB;
+            --border: #E5E7EB;
+            --border-light: #F3F4F6;
+            --accent: #F59E0B;
+            --accent-hover: #D97706;
+            --accent-light: #FFFBEB;
+            --accent-dim: rgba(245, 158, 11, 0.08);
+            --error: #EF4444;
+            --error-light: #FEF2F2;
+            --blue: #3B82F6;
+            --blue-light: #EFF6FF;
+            --purple: #8B5CF6;
+            --purple-light: #F5F3FF;
+            --shadow-xs: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 60px rgba(0,0,0,0.1);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --ease: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--surface);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            -webkit-font-smoothing: antialiased;
+            font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+        }
+        
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(40px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        /* ═══ SIDEBAR ═══ */
+        .sidebar {
+            width: 260px;
+            background: #FFFFFF;
+            border-right: 1px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 100;
+            padding: 24px 16px;
+            overflow-y: auto;
+            transition: transform 0.3s var(--ease);
+        }
+        
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 12px 24px;
+            text-decoration: none;
+        }
+        
+        .sidebar-logo img {
+            height: 32px;
+        }
+        
+        .sidebar-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 12px;
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            margin-bottom: 24px;
+        }
+        
+        .sidebar-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-dim);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
+            color: var(--primary);
+            flex-shrink: 0;
+            background-size: cover;
+        }
+        
+        .sidebar-user-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .sidebar-user-name {
+            font-weight: 600;
+            font-size: 0.875rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .sidebar-user-role {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .verify-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            color: var(--primary);
+            background: var(--primary-dim);
+            padding: 2px 8px;
+            border-radius: 100px;
+            margin-top: 4px;
+        }
+        
+        .sidebar-nav {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .sidebar-nav li a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .sidebar-nav li a:hover {
+            background: var(--surface);
+            color: var(--text-primary);
+        }
+        
+        .sidebar-nav li a.active {
+            background: var(--primary-dim);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .sidebar-nav li a i {
+            width: 1.125rem;
+            height: 1.125rem;
+        }
+        
+        .badge {
+            background: var(--accent);
+            color: #FFFFFF;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 10px;
+            margin-left: auto;
+        }
+        
+        .sidebar-divider {
+            border: none;
+            border-top: 1px solid var(--border-light);
+            margin: 16px 12px;
+        }
+        
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 16px;
+        }
+        
+        .sidebar-footer a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .sidebar-footer a:hover {
+            color: var(--error);
+            background: var(--error-light);
+        }
+        
+        /* ═══ MAIN CONTENT ═══ */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 32px 32px 64px;
+            min-height: 100vh;
+        }
+        
+        .page-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        
+        .page-title {
+            font-weight: 800;
+            font-size: 1.75rem;
+            letter-spacing: -0.03em;
+            margin-bottom: 6px;
+        }
+        
+        .page-title .accent {
+            color: var(--primary);
+        }
+        
+        .page-subtitle {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+        }
+        
+        .page-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        /* ═══ STATS GRID ═══ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        
+        .stat-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow-xs);
+            transition: all 0.3s;
+        }
+        
+        .stat-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        
+        .stat-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 14px;
+        }
+        
+        .stat-icon i {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+        
+        .stat-icon.green { background: var(--primary-dim); color: var(--primary); }
+        .stat-icon.accent { background: var(--accent-dim); color: var(--accent); }
+        .stat-icon.blue { background: var(--blue-light); color: var(--blue); }
+        .stat-icon.purple { background: var(--purple-light); color: var(--purple); }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+        
+        .stat-label {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-top: 4px;
+        }
+        
+        /* ═══ ACTIVITY CARD ═══ */
+        .card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow-xs);
+            transition: all 0.3s;
+        }
+        
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+        
+        .activity-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .activity-icon i {
+            width: 1.4rem;
+            height: 1.4rem;
+        }
+        
+        .activity-title {
+            font-weight: 700;
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .activity-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .activity-type-badge {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 100px;
+        }
+        
+        .activity-description {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-top: 12px;
+        }
+        
+        .activity-doc-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 12px;
+            font-size: 0.8125rem;
+            color: var(--blue);
+            font-weight: 500;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .activity-doc-link:hover {
+            color: #2563EB;
+        }
+        
+        .action-group {
+            display: flex;
+            gap: 6px;
+        }
+        
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: #FFFFFF;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+        
+        .btn-icon:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-dim);
+        }
+        
+        .btn-icon.danger:hover {
+            border-color: var(--error);
+            color: var(--error);
+            background: var(--error-light);
+        }
+        
+        /* ═══ BUTTONS ═══ */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 0.875rem;
+            padding: 11px 22px;
+            border-radius: var(--radius-sm);
+            border: none;
+            cursor: pointer;
+            transition: all 0.25s var(--ease);
+            text-decoration: none;
+            line-height: 1;
+            white-space: nowrap;
+        }
+        
+        .btn i {
+            width: 1.125rem;
+            height: 1.125rem;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: #FFFFFF;
+            box-shadow: 0 1px 3px rgba(34,197,94,0.2);
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(34,197,94,0.3);
+        }
+        
+        .btn-secondary {
+            background: #FFFFFF;
+            color: var(--text-secondary);
+            border: 1.5px solid var(--border);
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--text-primary);
+            color: var(--text-primary);
+            transform: translateY(-1px);
+        }
+        
+        /* ═══ MODAL ═══ */
         .modal-overlay {
-            position: fixed; inset: 0; z-index: 9000;
-            background: rgba(26,23,20,.45); backdrop-filter: blur(4px);
-            display: flex; align-items: center; justify-content: center;
-            padding: 24px; animation: modalFadeIn .25s ease;
+            position: fixed;
+            inset: 0;
+            z-index: 9000;
+            background: rgba(17,24,39,0.5);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            animation: fadeIn 0.25s ease;
         }
+        
         .modal-content {
-            background: var(--white, #fff); border-radius: var(--radius-xl, 16px);
-            box-shadow: 0 20px 60px rgba(26,23,20,.18);
-            width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto;
-            animation: modalSlideUp .3s cubic-bezier(.22,1,.36,1);
+            background: #FFFFFF;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: fadeSlide 0.3s var(--ease);
         }
+        
         .modal-header {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 24px 24px 16px; border-bottom: 1px solid var(--rule, #E8E2DA);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 28px 20px;
+            border-bottom: 1px solid var(--border-light);
         }
-        .modal-title { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: 700; }
+        
+        .modal-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+        
+        .modal-title i {
+            color: var(--primary);
+        }
+        
         .modal-close {
-            background: none; border: none; cursor: pointer; color: var(--muted, #8A8279);
-            padding: 6px; border-radius: 8px; transition: background .2s;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            padding: 8px;
+            border-radius: var(--radius-sm);
+            transition: all 0.2s;
         }
-        .modal-close:hover { background: var(--cream, #FAF8F5); }
-        .modal-content form { padding: 24px; }
-        .modal-content .form-group { margin-bottom: 16px; }
-        .modal-content .form-group label {
-            display: block; font-size: .8rem; font-weight: 600;
-            margin-bottom: 6px; color: var(--ink, #1A1714);
+        
+        .modal-close:hover {
+            background: var(--surface);
+            color: var(--text-primary);
         }
-        .modal-content .form-group input,
-        .modal-content .form-group select,
-        .modal-content .form-group textarea {
-            width: 100%; padding: 10px 14px;
-            border: 1.5px solid var(--rule, #E8E2DA); border-radius: var(--radius, 10px);
-            font-family: var(--ff-body, 'Outfit'); font-size: .88rem;
-            color: var(--ink, #1A1714); background: var(--white, #fff);
-            outline: none; transition: border-color .2s;
+        
+        .modal-body {
+            padding: 24px 28px 28px;
         }
-        .modal-content .form-group input:focus,
-        .modal-content .form-group select:focus,
-        .modal-content .form-group textarea:focus {
-            border-color: var(--gold, #C4943E);
-            box-shadow: 0 0 0 3px rgba(196,148,62,.08);
+        
+        .form-group {
+            margin-bottom: 20px;
         }
-        .modal-content .form-group textarea { min-height: 80px; resize: vertical; }
-        .modal-content .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .modal-content .form-actions { display: flex; gap: 12px; padding-top: 8px; justify-content: flex-end; }
-        @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes modalSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @media (max-width: 600px) {
-            .modal-content { max-width: 100%; margin: 12px; }
-            .modal-content .form-row { grid-template-columns: 1fr; }
+        
+        .form-group label {
+            display: block;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            letter-spacing: -0.01em;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+            outline: none;
+            transition: all 0.25s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-dim);
+        }
+        
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            padding-top: 8px;
+        }
+        
+        /* Type selector */
+        .type-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        
+        .type-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 10px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.25s;
+            background: #FFFFFF;
+        }
+        
+        .type-option:hover {
+            border-color: var(--primary);
+            background: var(--primary-dim);
+        }
+        
+        .type-option input[type="radio"] {
+            display: none;
+        }
+        
+        .type-option.selected {
+            border-color: var(--primary);
+            background: var(--primary-dim);
+        }
+        
+        .type-option .type-icon {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            transition: color 0.25s;
+        }
+        
+        .type-option.selected .type-icon {
+            color: var(--primary);
+        }
+        
+        .type-option .type-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: color 0.25s;
+        }
+        
+        .type-option.selected .type-label {
+            color: var(--primary);
+        }
+        
+        /* ═══ EXIT MODAL ═══ */
+        .exit-modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9500;
+            background: rgba(17,24,39,0.5);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            animation: fadeIn 0.2s ease;
+        }
+        
+        .exit-modal {
+            background: #FFFFFF;
+            border-radius: var(--radius-xl);
+            padding: 32px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: var(--shadow-xl);
+            animation: fadeSlide 0.3s var(--ease);
+        }
+        
+        .exit-modal-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--accent-dim);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: var(--accent);
+        }
+        
+        .exit-modal-icon i {
+            width: 2rem;
+            height: 2rem;
+        }
+        
+        .exit-modal h3 {
+            font-weight: 700;
+            font-size: 1.2rem;
+            text-align: center;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+        
+        .exit-modal p {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+        
+        .exit-modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        /* ═══ EMPTY STATE ═══ */
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+        }
+        
+        .empty-icon {
+            color: var(--border);
+            margin-bottom: 20px;
+        }
+        
+        .empty-state h3 {
+            font-weight: 700;
+            font-size: 1.25rem;
+            margin-bottom: 8px;
+        }
+        
+        .empty-state p {
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+            margin-bottom: 28px;
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .loading-spinner {
+            text-align: center;
+            padding: 80px 20px;
+        }
+        
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid var(--border-light);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin: 0 auto 16px;
+        }
+        
+        .filter-select {
+            padding: 10px 36px 10px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            background: #FFFFFF;
+            cursor: pointer;
+            outline: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+        }
+        
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 200;
+            background: #FFFFFF;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        /* ═══ RESPONSIVE ═══ */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .menu-toggle {
+                display: block;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .type-selector {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .main-content {
+                padding: 20px 16px;
+            }
+            .page-header {
+                flex-direction: column;
+            }
+            .page-actions {
+                width: 100%;
+                flex-direction: column;
+            }
+            .page-actions .btn,
+            .page-actions .filter-select {
+                width: 100%;
+            }
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .modal-content {
+                margin: 12px;
+            }
+            .type-selector {
+                grid-template-columns: 1fr 1fr;
+            }
         }
     </style>
 </head>
@@ -74,7 +855,7 @@
 <!-- ═══ SIDEBAR ═══ -->
 <aside class="sidebar" id="sidebar">
     <a href="index.html" class="sidebar-logo">
-        <img src="../asset/logo camservices.svg" alt="" srcset="">
+            <img src="../asset/logo.svg" alt="CamServices" style="height: 82px;">
     </a>
     <div class="sidebar-user">
         <div class="sidebar-avatar" id="sidebarAvatar"></div>
@@ -82,22 +863,22 @@
             <div class="sidebar-user-name" id="sidebarName">Chargement...</div>
             <div class="sidebar-user-role" id="sidebarRole">Prestataire</div>
             <span class="verify-badge" id="verifyBadge" style="display:none">
-                <i data-lucide="shield-check" style="width:.7rem;height:.7rem"></i> Vérifié
+                <i data-lucide="shield-check"></i> Vérifié
             </span>
         </div>
     </div>
     <ul class="sidebar-nav">
-        <li><a href="../dashboard/index.html" id="nav-overview"><i data-lucide="layout-dashboard"></i> Vue d'ensemble</a></li>
-        <li><a href="../dashboard/services.html" id="nav-services"><i data-lucide="briefcase"></i> Mes services <span class="badge" id="serviceBadge">0</span></a></li>
-        <li><a href="../dashboard/orders.html" id="nav-orders"><i data-lucide="shopping-bag"></i> Commandes <span class="badge" id="orderBadge">0</span></a></li>
-        <li><a href="../dashboard/pricing.html" id="nav-pricing"><i data-lucide="tags"></i> Grille tarifaire</a></li>
-        <li><a href="../dashboard/portfolio.html" id="nav-portfolio"><i data-lucide="image"></i> Portfolio</a></li>
-        <li><a href="../dashboard/activities.html" class="active" id="nav-activities"><i data-lucide="award"></i> Activités</a></li>
+        <li><a href="../dashboard/index.html"><i data-lucide="layout-dashboard"></i> Vue d'ensemble</a></li>
+        <li><a href="../dashboard/services.html"><i data-lucide="briefcase"></i> Mes services <span class="badge" id="serviceBadge">0</span></a></li>
+        <li><a href="../dashboard/orders.html"><i data-lucide="shopping-bag"></i> Commandes <span class="badge" id="orderBadge">0</span></a></li>
+        <li><a href="../dashboard/pricing.html"><i data-lucide="tags"></i> Grille tarifaire</a></li>
+        <li><a href="../dashboard/portfolio.html"><i data-lucide="image"></i> Portfolio</a></li>
+        <li><a href="../dashboard/activities.html" class="active"><i data-lucide="award"></i> Activités</a></li>
     </ul>
     <hr class="sidebar-divider">
     <ul class="sidebar-nav">
-        <li><a href="../dashboard/profile.html" id="nav-profile"><i data-lucide="user-circle"></i> Mon profil</a></li>
-        <li><a href="../dashboard/analytics.html" id="nav-analytics"><i data-lucide="bar-chart-3"></i> Statistiques</a></li>
+        <li><a href="../dashboard/profile.html"><i data-lucide="user-circle"></i> Mon profil</a></li>
+        <li><a href="../dashboard/analytics.html"><i data-lucide="bar-chart-3"></i> Statistiques</a></li>
     </ul>
     <div class="sidebar-footer">
         <a href="../landing.html" onclick="logout();return false"><i data-lucide="log-out"></i> Déconnexion</a>
@@ -108,11 +889,11 @@
 <main class="main-content">
     <div class="page-header">
         <div>
-            <h1 class="page-title">Mes <span class="script">activités</span></h1>
+            <h1 class="page-title">Mes <span class="accent">activités</span></h1>
             <p class="page-subtitle">Certifications, formations, événements et autres accomplissements</p>
         </div>
-        <div class="page-actions" style="display:flex;gap:12px">
-            <select id="typeFilter" onchange="filterActivities()" style="padding:9px 14px;border:1.5px solid var(--rule);border-radius:var(--radius);font-family:var(--ff-body);font-size:.82rem;color:var(--muted);background:var(--white);cursor:pointer;outline:none">
+        <div class="page-actions">
+            <select id="typeFilter" onchange="filterActivities()" class="filter-select">
                 <option value="all">Tous les types</option>
                 <option value="certification">Certifications</option>
                 <option value="training">Formations</option>
@@ -121,31 +902,31 @@
                 <option value="award">Récompenses</option>
                 <option value="other">Autres</option>
             </select>
-            <button class="btn btn-primary" onclick="openActivityModal()">
+            <button class="btn btn-primary" onclick="openAddActivityPage()">
                 <i data-lucide="plus"></i> Ajouter une activité
             </button>
         </div>
     </div>
 
     <!-- Stats rapides -->
-    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px">
+    <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-card-header"><div class="stat-icon gold"><i data-lucide="award"></i></div></div>
+            <div class="stat-icon accent"><i data-lucide="award"></i></div>
             <div class="stat-value" id="totalActivities">0</div>
             <div class="stat-label">Activités totales</div>
         </div>
         <div class="stat-card">
-            <div class="stat-card-header"><div class="stat-icon green"><i data-lucide="certificate"></i></div></div>
+            <div class="stat-icon green"><i data-lucide="certificate"></i></div>
             <div class="stat-value" id="certificationCount">0</div>
             <div class="stat-label">Certifications</div>
         </div>
         <div class="stat-card">
-            <div class="stat-card-header"><div class="stat-icon blue"><i data-lucide="verified"></i></div></div>
+            <div class="stat-icon blue"><i data-lucide="verified"></i></div>
             <div class="stat-value" id="verifiedCount">0</div>
             <div class="stat-label">Vérifiées</div>
         </div>
         <div class="stat-card">
-            <div class="stat-card-header"><div class="stat-icon purple"><i data-lucide="calendar"></i></div></div>
+            <div class="stat-icon purple"><i data-lucide="calendar"></i></div>
             <div class="stat-value" id="thisYearCount">0</div>
             <div class="stat-label">Cette année</div>
         </div>
@@ -155,42 +936,28 @@
     <div id="activitiesList">
         <div class="loading-spinner">
             <div class="spinner"></div>
-            <p>Chargement de vos activités...</p>
+            <p style="color:var(--text-muted)">Chargement de vos activités...</p>
         </div>
     </div>
 </main>
 
 <div id="modalContainer" style="display:none"></div>
 
-<!-- ═══ SCRIPTS ═══ -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/global.js"></script>
-
 <script>
-// ============================================================
-//  ACTIVITIES — Script complet et autonome
-//  Table : public.provider_activities
-// ============================================================
-
-// ─── A. SUPABASE ─────────────────────────────────────────────
 const SUPABASE_URL  = 'https://cwubxwbzzuigctvgdygv.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dWJ4d2J6enVpZ2N0dmdkeWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzI2MTgsImV4cCI6MjA5MzgwODYxOH0.0mwBNo_S5yItQQjq2at9GNRN74ooZRBJIbZGDH9L2uk';
-
-
-
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-let currentUser   = null;
-let activities    = [];
+let currentUser = null;
+let activities = [];
 let currentFilter = 'all';
 
-// ─── B. AUTH + SIDEBAR ───────────────────────────────────────
+// ═══ AUTH + SIDEBAR ═══
 async function initDashboard() {
     const { data: { user: authUser } } = await sb.auth.getUser();
     if (!authUser) { window.location.href = '../login.html'; return; }
 
     const { data: profile } = await sb.from('users').select('*').eq('id', authUser.id).maybeSingle();
-
     currentUser = profile || {
         id: authUser.id, email: authUser.email,
         full_name: authUser.user_metadata?.full_name || authUser.email.split('@')[0],
@@ -202,13 +969,14 @@ async function initDashboard() {
     const avatarEl = document.getElementById('sidebarAvatar');
     const badgeEl = document.getElementById('verifyBadge');
 
-    if (nameEl)  nameEl.textContent = currentUser.full_name || currentUser.email;
-    if (roleEl)  roleEl.textContent = ({ client:'Client', prestataire:'Prestataire', admin:'Admin' })[currentUser.role] || 'Prestataire';
+    if (nameEl) nameEl.textContent = currentUser.full_name || currentUser.email;
+    if (roleEl) roleEl.textContent = 'Prestataire';
     if (badgeEl) badgeEl.style.display = currentUser.is_verified ? 'inline-flex' : 'none';
     if (avatarEl) {
         if (currentUser.profile_photo_url) {
             avatarEl.style.backgroundImage = `url(${currentUser.profile_photo_url})`;
             avatarEl.style.backgroundSize = 'cover';
+            avatarEl.textContent = '';
         } else {
             avatarEl.textContent = (currentUser.full_name || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
         }
@@ -223,15 +991,15 @@ async function initDashboard() {
     lucide.createIcons();
 }
 
-function setActiveNav(page) {
-    document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
-    const el = document.getElementById('nav-' + page);
-    if (el) el.classList.add('active');
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
 }
-function toggleSidebar() { const s = document.getElementById('sidebar'); if (s) s.classList.toggle('open'); }
-async function logout() { await sb.auth.signOut(); window.location.href = '../landing.html'; }
+async function logout() {
+    await sb.auth.signOut();
+    window.location.href = '../landing.html';
+}
 
-// ─── C. REQUÊTE SUPABASE — provider_activities ───────────────
+// ═══ GET ACTIVITIES ═══
 async function getActivities() {
     if (!currentUser) return [];
     const { data, error } = await sb
@@ -244,7 +1012,7 @@ async function getActivities() {
     return data || [];
 }
 
-// ─── D. HELPERS ──────────────────────────────────────────────
+// ═══ HELPERS ═══
 function escapeHtml(text) {
     if (!text) return '';
     const d = document.createElement('div'); d.textContent = text; return d.innerHTML;
@@ -254,73 +1022,47 @@ function formatDateRange(start, end) {
     if (!start) return '';
     const s = new Date(start).toLocaleDateString('fr-FR', { month:'short', year:'numeric' });
     if (!end) return s;
-    const e = new Date(end).toLocaleDateString('fr-FR', { month:'short', year:'numeric' });
-    return `${s} — ${e}`;
+    return `${s} — ${new Date(end).toLocaleDateString('fr-FR', { month:'short', year:'numeric' })}`;
 }
 
 function getActivityTypeConfig(type) {
     const c = {
-        certification:  { icon:'certificate',    label:'Certification',  color:'var(--gold)',  bg:'var(--gold-dim)' },
-        training:       { icon:'graduation-cap', label:'Formation',      color:'var(--blue)',  bg:'var(--blue-light,#EFF6FF)' },
-        event:          { icon:'calendar-check', label:'Événement',      color:'var(--purple,#8B5CF6)', bg:'var(--purple-light,#F5F3FF)' },
-        collaboration:  { icon:'users',          label:'Collaboration',  color:'var(--green)', bg:'var(--green-light,#F0FDF4)' },
-        award:          { icon:'trophy',         label:'Récompense',     color:'#F59E0B',      bg:'#FFFBEB' },
-        other:          { icon:'star',           label:'Autre',          color:'var(--muted)', bg:'var(--cream)' }
+        certification:  { icon:'certificate',    label:'Certification',  color:'#22C55E', bg:'#F0FDF4' },
+        training:       { icon:'graduation-cap', label:'Formation',      color:'#3B82F6', bg:'#EFF6FF' },
+        event:          { icon:'calendar-check', label:'Événement',      color:'#8B5CF6', bg:'#F5F3FF' },
+        collaboration:  { icon:'users',          label:'Collaboration',  color:'#22C55E', bg:'#F0FDF4' },
+        award:          { icon:'trophy',         label:'Récompense',     color:'#F59E0B', bg:'#FFFBEB' },
+        other:          { icon:'star',           label:'Autre',          color:'#6B7280', bg:'#F9FAFB' }
     };
     return c[type] || c.other;
 }
 
-// ─── E. TOAST ────────────────────────────────────────────────
-(function(){ const s=document.createElement('style'); s.textContent='@keyframes slideInR{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}'; document.head.appendChild(s); })();
-
+// ═══ TOAST ═══
 function showToast(message, type = 'info') {
     let w = document.getElementById('_tw');
-    if (!w) { w = document.createElement('div'); w.id = '_tw'; w.style.cssText = 'position:fixed;top:24px;right:24px;z-index:10000;display:flex;flex-direction:column;gap:10px;pointer-events:none;'; document.body.appendChild(w); }
-    const icons = { success:'check-circle', error:'alert-circle', info:'info', warning:'alert-triangle' };
-    const colors = { success:'var(--green)', error:'var(--red)', info:'var(--gold)', warning:'#F59E0B' };
+    if (!w) {
+        w = document.createElement('div');
+        w.id = '_tw';
+        w.style.cssText = 'position:fixed;top:24px;right:24px;z-index:10000;display:flex;flex-direction:column;gap:10px;pointer-events:none;';
+        document.body.appendChild(w);
+    }
+    const colors = { success:'#22C55E', error:'#EF4444', info:'#F59E0B' };
+    const icons = { success:'check-circle', error:'alert-circle', info:'info' };
     const t = document.createElement('div');
-    t.style.cssText = `display:flex;align-items:center;gap:10px;padding:14px 20px;background:var(--white);border:1px solid var(--rule);border-radius:var(--radius);box-shadow:var(--shadow-lg);font-size:.85rem;font-family:var(--ff-body);color:var(--ink);pointer-events:auto;min-width:280px;animation:slideInR .3s ease;border-left:4px solid ${colors[type]};`;
-    t.innerHTML = `<i data-lucide="${icons[type]}" style="width:1.1rem;height:1.1rem;color:${colors[type]};flex-shrink:0"></i><span style="flex:1">${message}</span><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:0"><i data-lucide="x" style="width:.9rem;height:.9rem"></i></button>`;
-    w.appendChild(t); lucide.createIcons();
-    setTimeout(() => { t.style.transition='opacity .3s,transform .3s'; t.style.opacity='0'; t.style.transform='translateX(20px)'; setTimeout(()=>t.remove(),300); }, 4000);
+    t.style.cssText = `display:flex;align-items:center;gap:10px;padding:14px 20px;background:#fff;border:1px solid #E5E7EB;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.1);font-size:.875rem;color:#111827;pointer-events:auto;min-width:280px;animation:slideInRight .3s ease;border-left:4px solid ${colors[type]};`;
+    t.innerHTML = `<i data-lucide="${icons[type]}" style="width:1.125rem;height:1.125rem;color:${colors[type]};flex-shrink:0"></i><span style="flex:1">${message}</span><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:#6B7280;padding:0"><i data-lucide="x" style="width:.9rem;height:.9rem"></i></button>`;
+    w.appendChild(t);
+    lucide.createIcons();
+    setTimeout(() => { t.style.transition='all .3s'; t.style.opacity='0'; t.style.transform='translateX(20px)'; setTimeout(()=>t.remove(),300); }, 4000);
 }
 
-// ─── F. MODAL + CONFIRM ─────────────────────────────────────
-function openModal(htmlContent) {
-    const c = document.getElementById('modalContainer'); if (!c) return;
-    c.innerHTML = `<div class="modal-overlay" onclick="closeModal()"><div class="modal-content" onclick="event.stopPropagation()">${htmlContent}</div></div>`;
-    c.style.display = 'block'; document.body.style.overflow = 'hidden'; lucide.createIcons();
-}
-function closeModal() {
-    const c = document.getElementById('modalContainer');
-    if (c) { c.innerHTML = ''; c.style.display = 'none'; } document.body.style.overflow = '';
-}
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-
-function confirmAction(message) {
-    return new Promise(resolve => {
-        openModal(`
-            <div class="modal-header">
-                <h3 class="modal-title"><i data-lucide="alert-triangle" style="width:1.2rem;height:1.2rem;color:var(--red)"></i> Confirmation</h3>
-                <button class="modal-close" onclick="closeModal()"><i data-lucide="x"></i></button>
-            </div>
-            <p style="padding:20px 24px;font-size:.9rem;color:var(--ink-2)">${message}</p>
-            <div class="form-actions" style="padding:0 24px 24px;gap:12px">
-                <button class="btn btn-secondary" id="confirmNo">Annuler</button>
-                <button class="btn btn-primary" style="background:var(--red)" id="confirmYes"><i data-lucide="trash-2" style="width:.9rem;height:.9rem"></i> Confirmer</button>
-            </div>`);
-        document.getElementById('confirmYes').onclick = () => { closeModal(); resolve(true); };
-        document.getElementById('confirmNo').onclick  = () => { closeModal(); resolve(false); };
-    });
-}
-
-// ─── G. STATS + FILTRE ──────────────────────────────────────
+// ═══ STATS + FILTRE ═══
 function updateStats() {
     const now = new Date();
-    document.getElementById('totalActivities').textContent   = activities.length;
+    document.getElementById('totalActivities').textContent = activities.length;
     document.getElementById('certificationCount').textContent = activities.filter(a => a.activity_type === 'certification').length;
-    document.getElementById('verifiedCount').textContent      = activities.filter(a => a.is_verified).length;
-    document.getElementById('thisYearCount').textContent      = activities.filter(a => new Date(a.created_at).getFullYear() === now.getFullYear()).length;
+    document.getElementById('verifiedCount').textContent = activities.filter(a => a.is_verified).length;
+    document.getElementById('thisYearCount').textContent = activities.filter(a => new Date(a.created_at).getFullYear() === now.getFullYear()).length;
 }
 
 function filterActivities() {
@@ -328,7 +1070,7 @@ function filterActivities() {
     renderActivities();
 }
 
-// ─── H. RENDU ────────────────────────────────────────────────
+// ═══ RENDER ═══
 function renderActivities() {
     const container = document.getElementById('activitiesList');
     const filtered = currentFilter === 'all' ? activities : activities.filter(a => a.activity_type === currentFilter);
@@ -337,265 +1079,424 @@ function renderActivities() {
         container.innerHTML = `
             <div class="card">
                 <div class="empty-state">
-                    <i data-lucide="award" class="empty-icon" style="width:5rem;height:5rem"></i>
+                    <i data-lucide="award" class="empty-icon" style="width:4rem;height:4rem"></i>
                     <h3>Aucune activité enregistrée</h3>
                     <p>Ajoutez vos certifications, formations et accomplissements pour renforcer votre crédibilité auprès des clients.</p>
-                    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:20px">
-                        <div style="text-align:center"><div style="width:48px;height:48px;border-radius:50%;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;margin:0 auto 8px"><i data-lucide="certificate" style="color:var(--gold)"></i></div><span style="font-size:.75rem;color:var(--muted)">Certification</span></div>
-                        <div style="text-align:center"><div style="width:48px;height:48px;border-radius:50%;background:var(--blue-light,#EFF6FF);display:flex;align-items:center;justify-content:center;margin:0 auto 8px"><i data-lucide="graduation-cap" style="color:var(--blue,#3B82F6)"></i></div><span style="font-size:.75rem;color:var(--muted)">Formation</span></div>
-                        <div style="text-align:center"><div style="width:48px;height:48px;border-radius:50%;background:var(--purple-light,#F5F3FF);display:flex;align-items:center;justify-content:center;margin:0 auto 8px"><i data-lucide="trophy" style="color:var(--purple,#8B5CF6)"></i></div><span style="font-size:.75rem;color:var(--muted)">Récompense</span></div>
-                        <div style="text-align:center"><div style="width:48px;height:48px;border-radius:50%;background:var(--green-light,#F0FDF4);display:flex;align-items:center;justify-content:center;margin:0 auto 8px"><i data-lucide="users" style="color:var(--green)"></i></div><span style="font-size:.75rem;color:var(--muted)">Collaboration</span></div>
-                    </div>
-                    <button class="btn btn-primary" onclick="openActivityModal()"><i data-lucide="plus"></i> Ajouter ma première activité</button>
+                    <button class="btn btn-primary" onclick="openAddActivityPage()"><i data-lucide="plus"></i> Ajouter ma première activité</button>
                 </div>
             </div>`;
-        lucide.createIcons(); return;
+        lucide.createIcons();
+        return;
     }
 
     if (filtered.length === 0) {
         container.innerHTML = `
             <div class="card"><div class="empty-state">
-                <i data-lucide="filter" class="empty-icon" style="width:3rem;height:3rem"></i>
+                <i data-lucide="filter" style="width:3rem;height:3rem;color:var(--border)"></i>
                 <h3>Aucune activité trouvée</h3>
                 <p>Aucune activité ne correspond au filtre sélectionné.</p>
-                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('typeFilter').value='all';filterActivities()">Afficher tout</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('typeFilter').value='all';filterActivities()">Afficher tout</button>
             </div></div>`;
-        lucide.createIcons(); return;
+        lucide.createIcons();
+        return;
     }
 
-    // Grouper par année
-    const grouped = {};
-    filtered.forEach(a => {
-        const year = new Date(a.date_start || a.created_at).getFullYear();
-        if (!grouped[year]) grouped[year] = [];
-        grouped[year].push(a);
-    });
-
     let html = '';
-    Object.keys(grouped).sort((a,b) => b - a).forEach(year => {
-        html += `<div style="margin-bottom:32px">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-                <h3 style="font-weight:700;font-size:1rem;color:var(--ink)">${year}</h3>
-                <span style="font-size:.75rem;color:var(--muted);background:var(--cream);padding:2px 10px;border-radius:10px">${grouped[year].length} activité(s)</span>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:12px">
-                ${grouped[year].map(a => renderActivityCard(a)).join('')}
-            </div>
-        </div>`;
+    filtered.forEach(a => {
+        const tc = getActivityTypeConfig(a.activity_type);
+        html += `
+            <div class="card" style="margin-bottom:12px">
+                <div style="display:flex;gap:16px;align-items:flex-start">
+                    <div class="activity-icon" style="background:${tc.bg}">
+                        <i data-lucide="${tc.icon}" style="color:${tc.color}"></i>
+                    </div>
+                    <div style="flex:1;min-width:0">
+                        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                            <div>
+                                <h4 class="activity-title">${escapeHtml(a.title)}</h4>
+                                <div class="activity-meta">
+                                    <span class="activity-type-badge" style="background:${tc.bg};color:${tc.color}">${tc.label}</span>
+                                    ${a.organization ? `<span style="font-size:.8125rem;color:var(--text-muted);display:flex;align-items:center;gap:4px"><i data-lucide="building-2" style="width:.8rem;height:.8rem"></i> ${escapeHtml(a.organization)}</span>` : ''}
+                                    ${a.date_start ? `<span style="font-size:.8125rem;color:var(--text-muted);display:flex;align-items:center;gap:4px"><i data-lucide="calendar" style="width:.8rem;height:.8rem"></i> ${formatDateRange(a.date_start, a.date_end)}</span>` : ''}
+                                    ${a.is_verified ? `<span style="font-size:.6875rem;font-weight:600;padding:2px 8px;border-radius:100px;background:var(--primary-dim);color:var(--primary);display:flex;align-items:center;gap:4px"><i data-lucide="check-circle" style="width:.7rem;height:.7rem"></i> Vérifié</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="action-group">
+                                <button class="btn-icon" onclick="openEditActivityPage('${a.id}')" title="Modifier"><i data-lucide="pencil"></i></button>
+                                <button class="btn-icon danger" onclick="deleteActivity('${a.id}')" title="Supprimer"><i data-lucide="trash-2"></i></button>
+                            </div>
+                        </div>
+                        ${a.description ? `<p class="activity-description">${escapeHtml(a.description)}</p>` : ''}
+                        ${a.document_url ? `<a href="${escapeHtml(a.document_url)}" target="_blank" class="activity-doc-link"><i data-lucide="file-text" style="width:1rem;height:1rem"></i> Voir le document <i data-lucide="external-link" style="width:.75rem;height:.75rem"></i></a>` : ''}
+                    </div>
+                </div>
+            </div>`;
     });
 
     container.innerHTML = html;
     lucide.createIcons();
 }
 
-function renderActivityCard(a) {
-    const tc = getActivityTypeConfig(a.activity_type);
-    return `
-        <div class="card" style="margin-bottom:0">
-            <div style="display:flex;gap:16px;align-items:flex-start">
-                <div style="width:48px;height:48px;border-radius:var(--radius);background:${tc.bg};display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                    <i data-lucide="${tc.icon}" style="width:1.3rem;height:1.3rem;color:${tc.color}"></i>
-                </div>
-                <div style="flex:1;min-width:0">
-                    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
-                        <div>
-                            <h4 style="font-weight:700;font-size:.95rem;color:var(--ink);margin-bottom:2px">${escapeHtml(a.title)}</h4>
-                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                                <span style="font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:6px;background:${tc.bg};color:${tc.color}">${tc.label}</span>
-                                ${a.organization ? `<span style="font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:4px"><i data-lucide="building-2" style="width:.8rem;height:.8rem"></i> ${escapeHtml(a.organization)}</span>` : ''}
-                                ${a.date_start ? `<span style="font-size:.78rem;color:var(--muted);display:flex;align-items:center;gap:4px"><i data-lucide="calendar" style="width:.8rem;height:.8rem"></i> ${formatDateRange(a.date_start, a.date_end)}</span>` : ''}
-                                ${a.is_verified ? `<span style="font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--green-light,#F0FDF4);color:var(--green);display:flex;align-items:center;gap:4px"><i data-lucide="check-circle" style="width:.7rem;height:.7rem"></i> Vérifié</span>` : ''}
-                            </div>
-                        </div>
-                        <div class="action-group">
-                            <button class="btn-icon" onclick="openActivityModal('${a.id}')" title="Modifier"><i data-lucide="pencil" style="width:.9rem;height:.9rem"></i></button>
-                            <button class="btn-icon danger" onclick="deleteActivity('${a.id}')" title="Supprimer"><i data-lucide="trash-2" style="width:.9rem;height:.9rem"></i></button>
-                        </div>
-                    </div>
-                    ${a.description ? `<p style="font-size:.82rem;color:var(--muted);line-height:1.6;margin-top:10px">${escapeHtml(a.description)}</p>` : ''}
-                    ${a.document_url ? `<a href="${escapeHtml(a.document_url)}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:.78rem;color:var(--blue,#3B82F6);font-weight:500;text-decoration:none"><i data-lucide="file-text" style="width:.9rem;height:.9rem"></i> Voir le document <i data-lucide="external-link" style="width:.7rem;height:.7rem"></i></a>` : ''}
-                </div>
-            </div>
-        </div>`;
-}
-
-// ─── I. MODAL CRUD — CRÉER / MODIFIER ────────────────────────
-async function openActivityModal(id = null) {
-    const isEdit = !!id;
-    let activity = {
-        title: '', activity_type: 'certification', description: '',
-        organization: '', date_start: '', date_end: '', document_url: ''
-    };
-
-    if (isEdit) {
-        const found = activities.find(a => a.id === id);
-        if (found) activity = { ...activity, ...found };
-    }
-
+// ═══ ADD ACTIVITY PAGE ═══
+function openAddActivityPage() {
     const activityTypes = [
-        { value:'certification', label:'Certification', icon:'certificate' },
-        { value:'training',      label:'Formation',     icon:'graduation-cap' },
-        { value:'event',         label:'Événement',     icon:'calendar-check' },
-        { value:'collaboration', label:'Collaboration', icon:'users' },
-        { value:'award',         label:'Récompense',    icon:'trophy' },
-        { value:'other',         label:'Autre',         icon:'star' }
+        { value:'certification', label:'Certification', icon:'certificate', desc:'Diplômes, certifications professionnelles' },
+        { value:'training', label:'Formation', icon:'graduation-cap', desc:'Ateliers, séminaires, cours suivis' },
+        { value:'event', label:'Événement', icon:'calendar-check', desc:'Conférences, salons, meetups' },
+        { value:'collaboration', label:'Collaboration', icon:'users', desc:'Partenariats, projets collaboratifs' },
+        { value:'award', label:'Récompense', icon:'trophy', desc:'Prix, distinctions, reconnaissances' },
+        { value:'other', label:'Autre', icon:'star', desc:'Toute autre réalisation' }
     ];
 
     const html = `
-        <div class="modal-header">
-            <h3 class="modal-title">
-                <i data-lucide="${isEdit ? 'pencil' : 'plus'}" style="width:1.2rem;height:1.2rem"></i>
-                ${isEdit ? "Modifier l'activité" : 'Nouvelle activité'}
-            </h3>
-            <button class="modal-close" onclick="closeModal()"><i data-lucide="x"></i></button>
-        </div>
-        <form id="activityForm">
-            <input type="hidden" name="id" value="${id || ''}">
+        <div class="modal-overlay">
+            <div class="modal-content" style="max-width:640px">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <i data-lucide="plus-circle" style="width:1.4rem;height:1.4rem"></i>
+                        Nouvelle activité
+                    </h3>
+                    <button class="modal-close" onclick="showExitModal()">
+                        <i data-lucide="x" style="width:1.25rem;height:1.25rem"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="activityForm">
+                        <div class="form-group">
+                            <label><i data-lucide="type" style="width:1rem;height:1rem;display:inline;vertical-align:middle;margin-right:4px"></i> Type d'activité *</label>
+                            <div class="type-selector" id="typeSelector">
+                                ${activityTypes.map((t, i) => `
+                                    <label class="type-option ${i === 0 ? 'selected' : ''}" onclick="selectType(this)">
+                                        <input type="radio" name="activity_type" value="${t.value}" ${i === 0 ? 'checked' : ''}>
+                                        <span class="type-icon"><i data-lucide="${t.icon}"></i></span>
+                                        <span class="type-label">${t.label}</span>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>
 
-            <div class="form-group">
-                <label>Titre de l'activité *</label>
-                <input type="text" name="title" value="${escapeHtml(activity.title)}" placeholder="Ex: Certification en plomberie professionnelle" required>
-            </div>
+                        <div class="form-group">
+                            <label><i data-lucide="file-text" style="width:1rem;height:1rem;display:inline;vertical-align:middle;margin-right:4px"></i> Titre de l'activité *</label>
+                            <input type="text" name="title" placeholder="Ex: Certification en plomberie professionnelle" required>
+                        </div>
 
-            <div class="form-group">
-                <label>Type d'activité *</label>
-                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px" id="typeSelector">
-                    ${activityTypes.map(t => `
-                        <label style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;border:1.5px solid ${activity.activity_type === t.value ? 'var(--gold)' : 'var(--rule)'};border-radius:var(--radius);cursor:pointer;transition:all .2s;background:${activity.activity_type === t.value ? 'var(--gold-dim)' : 'var(--white)'}">
-                            <input type="radio" name="activity_type" value="${t.value}" ${activity.activity_type === t.value ? 'checked' : ''} style="display:none">
-                            <i data-lucide="${t.icon}" style="width:1.2rem;height:1.2rem;color:${activity.activity_type === t.value ? 'var(--gold)' : 'var(--muted)'}"></i>
-                            <span style="font-size:.7rem;font-weight:600;color:${activity.activity_type === t.value ? 'var(--ink)' : 'var(--muted)'}">${t.label}</span>
-                        </label>
-                    `).join('')}
+                        <div class="form-group">
+                            <label><i data-lucide="building-2" style="width:1rem;height:1rem;display:inline;vertical-align:middle;margin-right:4px"></i> Organisation / Institution</label>
+                            <input type="text" name="organization" placeholder="Ex: Centre de Formation Professionnelle de Yaoundé">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label><i data-lucide="calendar" style="width:1rem;height:1rem;display:inline;vertical-align:middle;margin-right:4px"></i> Date de début</label>
+                                <input type="date" name="date_start">
+                            </div>
+                            <div class="form-group">
+                                <label><i data-lucide="calendar-check" style="width:1rem;height:1rem;display:inline;vertical-align:middle;margin-right:4px"></i> Date de fin <span style="font-weight:400;color:var(--text-muted);font-size:.75rem">(optionnel)</span></label>
+                                <input type="date" name="date_end">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i data-lucide="align-left" style="width:1rem;height:1rem;display:inline;vertical-align:middle;margin-right:4px"></i> Description</label>
+                            <textarea name="description" rows="4" placeholder="Décrivez cette activité, ce que vous avez appris ou accompli..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i data-lucide="link" style="width:1rem;height:1rem;display:inline;vertical-align:middle;margin-right:4px"></i> Lien du document / certificat <span style="font-weight:400;color:var(--text-muted);font-size:.75rem">(optionnel)</span></label>
+                            <input type="url" name="document_url" placeholder="https://...">
+                        </div>
+
+                        <div style="background:var(--blue-light);border-radius:var(--radius-md);padding:16px;margin-bottom:20px;display:flex;align-items:flex-start;gap:10px">
+                            <i data-lucide="info" style="width:1.25rem;height:1.25rem;color:var(--blue);flex-shrink:0;margin-top:1px"></i>
+                            <div>
+                                <p style="font-size:.8125rem;color:var(--blue);font-weight:600;margin-bottom:2px">💡 Conseil</p>
+                                <p style="font-size:.75rem;color:var(--text-muted);line-height:1.5">Les prestataires qui documentent leurs certifications reçoivent <strong>3x plus de demandes</strong> de clients.</p>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="showExitModal()">
+                                <i data-lucide="x"></i> Annuler
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i data-lucide="plus-circle"></i> Ajouter l'activité
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
+        </div>`;
 
-            <div class="form-group">
-                <label>Organisation / Institution</label>
-                <input type="text" name="organization" value="${escapeHtml(activity.organization || '')}" placeholder="Ex: Centre de Formation Professionnelle de Yaoundé">
-            </div>
+    openModalHtml(html);
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Date de début</label>
-                    <input type="date" name="date_start" value="${activity.date_start || ''}">
-                </div>
-                <div class="form-group">
-                    <label>Date de fin <span style="font-weight:400;color:var(--muted)">(optionnel)</span></label>
-                    <input type="date" name="date_end" value="${activity.date_end || ''}">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Description</label>
-                <textarea name="description" rows="4" placeholder="Décrivez cette activité, ce que vous avez appris ou accompli...">${escapeHtml(activity.description || '')}</textarea>
-            </div>
-
-            <div class="form-group">
-                <label>Lien du document / certificat <span style="font-weight:400;color:var(--muted)">(optionnel)</span></label>
-                <input type="url" name="document_url" value="${escapeHtml(activity.document_url || '')}" placeholder="https://...">
-                <span style="font-size:.7rem;color:var(--muted);margin-top:4px;display:block">Ajoutez un lien vers votre certificat ou document justificatif</span>
-            </div>
-
-            <div style="background:var(--blue-light,#EFF6FF);border-radius:var(--radius);padding:14px 16px;margin-bottom:20px;display:flex;align-items:flex-start;gap:10px">
-                <i data-lucide="info" style="width:1.1rem;height:1.1rem;color:var(--blue,#3B82F6);flex-shrink:0;margin-top:1px"></i>
-                <div>
-                    <div style="font-weight:600;font-size:.8rem;color:var(--blue,#3B82F6);margin-bottom:2px">Pourquoi ajouter vos activités ?</div>
-                    <p style="font-size:.75rem;color:var(--muted);line-height:1.5">Les prestataires qui documentent leurs certifications et formations reçoivent <strong>3x plus de demandes</strong> de clients.</p>
-                </div>
-            </div>
-
-            <div class="form-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
-                <button type="submit" class="btn btn-primary">
-                    <i data-lucide="save"></i> ${isEdit ? 'Enregistrer' : "Ajouter l'activité"}
-                </button>
-            </div>
-        </form>`;
-
-    openModal(html);
-
-    // Type selector UX
-    document.querySelectorAll('#typeSelector label').forEach(label => {
-        label.addEventListener('click', function() {
-            this.querySelector('input').checked = true;
-            document.querySelectorAll('#typeSelector label').forEach(l => {
-                l.style.borderColor = 'var(--rule)'; l.style.background = 'var(--white)';
-                l.querySelector('i').style.color = 'var(--muted)';
-                l.querySelector('span').style.color = 'var(--muted)';
-            });
-            this.style.borderColor = 'var(--gold)'; this.style.background = 'var(--gold-dim)';
-            this.querySelector('i').style.color = 'var(--gold)';
-            this.querySelector('span').style.color = 'var(--ink)';
-        });
-    });
-
-    // ── SUBMIT : INSERT ou UPDATE dans provider_activities ────
     document.getElementById('activityForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-        const fd   = new FormData(this);
+        const fd = new FormData(this);
         const data = Object.fromEntries(fd.entries());
-
-        // Nettoyage pour correspondre au schéma provider_activities
-        data.title        = data.title.trim();
-        data.description  = data.description.trim() || null;
+        
+        data.title = data.title.trim();
+        data.description = data.description.trim() || null;
         data.organization = data.organization.trim() || null;
-        data.date_start   = data.date_start || null;
-        data.date_end     = data.date_end   || null;
+        data.date_start = data.date_start || null;
+        data.date_end = data.date_end || null;
         data.document_url = data.document_url.trim() || null;
-
-        delete data.id;
+        data.user_id = currentUser.id;
 
         try {
-            if (isEdit) {
-                const { error } = await sb.from('provider_activities').update(data).eq('id', id);
-                if (error) throw error;
-                showToast('Activité mise à jour avec succès', 'success');
-            } else {
-                data.user_id = currentUser.id;
-                const { error } = await sb.from('provider_activities').insert([data]);
-                if (error) throw error;
-                showToast('Activité ajoutée avec succès', 'success');
-            }
+            const { error } = await sb.from('provider_activities').insert([data]);
+            if (error) throw error;
             closeModal();
+            showToast('Activité ajoutée avec succès !', 'success');
             activities = await getActivities();
             updateStats();
             renderActivities();
         } catch (err) {
-            console.error('Erreur provider_activities :', err);
-            if (err.code === '23503') {
-                showToast("Erreur de profil utilisateur. Complétez votre inscription d'abord.", 'error');
-            } else if (err.code === '23514') {
-                showToast('Type d\'activité invalide. Choisissez parmi les options proposées.', 'error');
-            } else {
-                showToast('Erreur : ' + (err.message || 'Réessayez.'), 'error');
-            }
+            showToast('Erreur : ' + (err.message || 'Réessayez.'), 'error');
         }
     });
 }
 
-// ─── J. SUPPRIMER ────────────────────────────────────────────
+// ═══ EDIT ACTIVITY PAGE ═══
+async function openEditActivityPage(id) {
+    const activity = activities.find(a => a.id === id);
+    if (!activity) return;
+
+    const activityTypes = [
+        { value:'certification', label:'Certification', icon:'certificate' },
+        { value:'training', label:'Formation', icon:'graduation-cap' },
+        { value:'event', label:'Événement', icon:'calendar-check' },
+        { value:'collaboration', label:'Collaboration', icon:'users' },
+        { value:'award', label:'Récompense', icon:'trophy' },
+        { value:'other', label:'Autre', icon:'star' }
+    ];
+
+    const html = `
+        <div class="modal-overlay">
+            <div class="modal-content" style="max-width:640px">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <i data-lucide="pencil" style="width:1.4rem;height:1.4rem"></i>
+                        Modifier l'activité
+                    </h3>
+                    <button class="modal-close" onclick="closeModal()">
+                        <i data-lucide="x" style="width:1.25rem;height:1.25rem"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="editActivityForm">
+                        <input type="hidden" name="id" value="${id}">
+
+                        <div class="form-group">
+                            <label>Type d'activité *</label>
+                            <div class="type-selector" id="editTypeSelector">
+                                ${activityTypes.map(t => `
+                                    <label class="type-option ${activity.activity_type === t.value ? 'selected' : ''}" onclick="selectType(this)">
+                                        <input type="radio" name="activity_type" value="${t.value}" ${activity.activity_type === t.value ? 'checked' : ''}>
+                                        <span class="type-icon"><i data-lucide="${t.icon}"></i></span>
+                                        <span class="type-label">${t.label}</span>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Titre de l'activité *</label>
+                            <input type="text" name="title" value="${escapeHtml(activity.title)}" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Organisation / Institution</label>
+                            <input type="text" name="organization" value="${escapeHtml(activity.organization || '')}">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Date de début</label>
+                                <input type="date" name="date_start" value="${activity.date_start || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Date de fin</label>
+                                <input type="date" name="date_end" value="${activity.date_end || ''}">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea name="description" rows="4">${escapeHtml(activity.description || '')}</textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Lien du document</label>
+                            <input type="url" name="document_url" value="${escapeHtml(activity.document_url || '')}">
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i data-lucide="save"></i> Enregistrer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>`;
+
+    openModalHtml(html);
+
+    document.getElementById('editActivityForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const fd = new FormData(this);
+        const data = Object.fromEntries(fd.entries());
+        const editId = data.id;
+        delete data.id;
+
+        data.title = data.title.trim();
+        data.description = data.description.trim() || null;
+        data.organization = data.organization.trim() || null;
+        data.date_start = data.date_start || null;
+        data.date_end = data.date_end || null;
+        data.document_url = data.document_url.trim() || null;
+
+        try {
+            const { error } = await sb.from('provider_activities').update(data).eq('id', editId);
+            if (error) throw error;
+            closeModal();
+            showToast('Activité mise à jour !', 'success');
+            activities = await getActivities();
+            updateStats();
+            renderActivities();
+        } catch (err) {
+            showToast('Erreur : ' + (err.message || 'Réessayez.'), 'error');
+        }
+    });
+}
+
+// ═══ EXIT MODAL ═══
+function showExitModal() {
+    const exitHtml = `
+        <div class="exit-modal-overlay" id="exitModalOverlay">
+            <div class="exit-modal">
+                <div class="exit-modal-icon">
+                    <i data-lucide="save"></i>
+                </div>
+                <h3>Quitter sans enregistrer ?</h3>
+                <p>Vous avez des modifications non enregistrées. Que souhaitez-vous faire ?</p>
+                <div class="exit-modal-actions">
+                    <button class="btn btn-primary" id="saveDraftBtn" style="width:100%">
+                        <i data-lucide="save"></i> Enregistrer le brouillon
+                    </button>
+                    <button class="btn btn-secondary" id="discardBtn" style="width:100%">
+                        <i data-lucide="trash-2"></i> Quitter sans enregistrer
+                    </button>
+                    <button class="btn btn-secondary" id="continueBtn" style="width:100%;background:var(--surface)">
+                        <i data-lucide="arrow-left"></i> Continuer à remplir
+                    </button>
+                </div>
+            </div>
+        </div>`;
+
+    document.body.insertAdjacentHTML('beforeend', exitHtml);
+    lucide.createIcons();
+
+    document.getElementById('saveDraftBtn').addEventListener('click', function() {
+        document.getElementById('exitModalOverlay').remove();
+        document.getElementById('activityForm')?.dispatchEvent(new Event('submit'));
+    });
+
+    document.getElementById('discardBtn').addEventListener('click', function() {
+        document.getElementById('exitModalOverlay').remove();
+        closeModal();
+    });
+
+    document.getElementById('continueBtn').addEventListener('click', function() {
+        document.getElementById('exitModalOverlay').remove();
+    });
+
+    document.getElementById('exitModalOverlay').addEventListener('click', function(e) {
+        if (e.target === this) this.remove();
+    });
+}
+
+// ═══ TYPE SELECTOR ═══
+function selectType(label) {
+    const parent = label.parentElement;
+    parent.querySelectorAll('.type-option').forEach(l => l.classList.remove('selected'));
+    label.classList.add('selected');
+    label.querySelector('input').checked = true;
+}
+
+// ═══ DELETE ═══
 async function deleteActivity(id) {
     const a = activities.find(x => x.id === id);
     if (!a) return;
-    const ok = await confirmAction(`Supprimer définitivement l'activité "${a.title}" ? Cette action est irréversible.`);
-    if (!ok) return;
-    try {
-        const { error } = await sb.from('provider_activities').delete().eq('id', id);
-        if (error) throw error;
-        activities = await getActivities();
-        updateStats();
-        renderActivities();
-        showToast('Activité supprimée', 'info');
-    } catch (err) {
-        showToast('Erreur : ' + err.message, 'error');
-    }
+    
+    const confirmHtml = `
+        <div class="modal-overlay" id="confirmOverlay">
+            <div class="modal-content" style="max-width:440px">
+                <div class="modal-header">
+                    <h3 class="modal-title"><i data-lucide="alert-triangle" style="color:var(--error)"></i> Confirmation</h3>
+                    <button class="modal-close" onclick="document.getElementById('confirmOverlay').remove()"><i data-lucide="x"></i></button>
+                </div>
+                <div class="modal-body">
+                    <p style="color:var(--text-secondary);margin-bottom:24px">Supprimer définitivement l'activité "<strong>${escapeHtml(a.title)}</strong>" ? Cette action est irréversible.</p>
+                    <div class="form-actions">
+                        <button class="btn btn-secondary" onclick="document.getElementById('confirmOverlay').remove()">Annuler</button>
+                        <button class="btn btn-primary" style="background:var(--error)" id="confirmDeleteBtn">
+                            <i data-lucide="trash-2"></i> Supprimer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
+    document.body.insertAdjacentHTML('beforeend', confirmHtml);
+    lucide.createIcons();
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
+        document.getElementById('confirmOverlay').remove();
+        try {
+            const { error } = await sb.from('provider_activities').delete().eq('id', id);
+            if (error) throw error;
+            activities = await getActivities();
+            updateStats();
+            renderActivities();
+            showToast('Activité supprimée', 'info');
+        } catch (err) {
+            showToast('Erreur : ' + err.message, 'error');
+        }
+    });
 }
 
-// ─── K. DÉMARRAGE ────────────────────────────────────────────
+// ═══ MODAL HELPERS ═══
+function openModalHtml(html) {
+    const c = document.getElementById('modalContainer');
+    c.innerHTML = html;
+    c.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    lucide.createIcons();
+}
+
+function closeModal() {
+    const c = document.getElementById('modalContainer');
+    c.innerHTML = '';
+    c.style.display = 'none';
+    document.body.style.overflow = '';
+    document.getElementById('exitModalOverlay')?.remove();
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        if (document.getElementById('exitModalOverlay')) {
+            document.getElementById('exitModalOverlay').remove();
+        } else {
+            closeModal();
+        }
+    }
+});
+
+// ═══ INIT ═══
 async function loadActivities() {
     await initDashboard();
-    setActiveNav('activities');
     activities = await getActivities();
     updateStats();
     renderActivities();
