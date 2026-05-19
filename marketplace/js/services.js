@@ -226,7 +226,7 @@ function showToast(msg, type) {
 
 // ═══════════════ PANIER ═══════════════
 function updateNavCartCount() {
-    var cart = JSON.parse(localStorage.getItem('camservices_cart') || '[]');
+    var cart = JSON.parse(localStorage.getItem('warap_cart') || '[]');
     var el = document.getElementById('cartCountNav');
     if (el) { 
         el.textContent = cart.length; 

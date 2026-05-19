@@ -43,14 +43,14 @@ async function addToCartWithAuth(serviceData) {
         return false;
     }
 
-    var cart = JSON.parse(localStorage.getItem('camservices_cart') || '[]');
+    var cart = JSON.parse(localStorage.getItem('warap_cart') || '[]');
     var exists = false;
     for (var i = 0; i < cart.length; i++) {
         if (cart[i].serviceId === serviceData.serviceId) { exists = true; break; }
     }
     if (!exists) {
         cart.push(serviceData);
-        localStorage.setItem('camservices_cart', JSON.stringify(cart));
+        localStorage.setItem('warap_cart', JSON.stringify(cart));
     }
     return true;
 }

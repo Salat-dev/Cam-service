@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Détail du service — CamServices</title>
+    <title>Détail du service — warap</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -188,7 +188,244 @@
             min-width: 18px;
             text-align: center;
         }
-        
+        /* ═══ RESPONSIVE - PETITS ÉCRANS ═══ */
+@media (max-width: 480px) {
+    .navbar {
+        padding: 0 12px;
+        height: 60px;
+    }
+    
+    .nav-logo img {
+        height: 24px;
+    }
+    
+    .breadcrumb-bar {
+        padding: 16px 12px 0;
+    }
+    
+    .breadcrumb {
+        font-size: 0.75rem;
+        gap: 4px;
+    }
+    
+    .service-hero {
+        padding: 20px 12px 16px;
+        gap: 16px;
+    }
+    
+    .service-hero-image {
+        aspect-ratio: 16/9;
+        border-radius: var(--radius-lg);
+    }
+    
+    .service-title {
+        font-size: 1.5rem;
+    }
+    
+    .service-price {
+        font-size: 1.25rem;
+    }
+    
+    .detail-layout {
+        padding: 16px 12px 40px;
+        gap: 16px;
+    }
+    
+    .card {
+        padding: 16px;
+        border-radius: var(--radius-md);
+    }
+    
+    .card-title {
+        font-size: 0.9375rem;
+        margin-bottom: 14px;
+    }
+    
+    .description-text {
+        font-size: 0.875rem;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 16px;
+        padding-top: 16px;
+    }
+    
+    .info-item-label {
+        font-size: 0.625rem;
+    }
+    
+    .info-item-value {
+        font-size: 0.8125rem;
+    }
+    
+    .provider-profile {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 12px;
+    }
+    
+    .provider-avatar {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .provider-name {
+        font-size: 1rem;
+        justify-content: center;
+    }
+    
+    .provider-location {
+        justify-content: center;
+    }
+    
+    .provider-meta {
+        justify-content: center;
+        gap: 10px;
+        font-size: 0.75rem;
+    }
+    
+    .expertise-tags {
+        justify-content: center;
+    }
+    
+    .expertise-tag {
+        font-size: 0.6875rem;
+        padding: 4px 10px;
+    }
+    
+    .stats-mini {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin-top: 16px;
+        padding-top: 16px;
+    }
+    
+    .stat-mini {
+        padding: 12px 6px;
+    }
+    
+    .stat-mini-value {
+        font-size: 1rem;
+    }
+    
+    .stat-mini-label {
+        font-size: 0.625rem;
+    }
+    
+    .schedule-days {
+        gap: 6px;
+    }
+    
+    .schedule-day {
+        font-size: 0.75rem;
+        padding: 6px 12px;
+    }
+    
+    .schedule-hours {
+        font-size: 0.8125rem;
+        padding: 10px 12px;
+        gap: 6px;
+    }
+    
+    .pricing-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 14px;
+    }
+    
+    .pricing-item-price {
+        align-self: flex-end;
+    }
+    
+    .portfolio-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+    
+    .activity-item {
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px;
+    }
+    
+    .activity-meta {
+        gap: 6px;
+    }
+    
+    .sidebar-card {
+        padding: 20px;
+    }
+    
+    .action-price {
+        font-size: 1.5rem;
+        margin-bottom: 14px;
+    }
+    
+    .btn {
+        padding: 10px 16px;
+        font-size: 0.8125rem;
+    }
+    
+    .online-popup {
+        left: 12px;
+        right: 12px;
+        bottom: 16px;
+        max-width: none;
+        width: auto;
+    }
+}
+
+/* ═══ RESPONSIVE - TRÈS PETITS ÉCRANS (≤360px) ═══ */
+@media (max-width: 360px) {
+    .service-title {
+        font-size: 1.3rem;
+    }
+    
+    .service-price {
+        font-size: 1.1rem;
+    }
+    
+    .price-type {
+        font-size: 0.75rem;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .stats-mini {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+    
+    .portfolio-grid {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+    
+    .card {
+        padding: 14px;
+    }
+    
+    .btn {
+        padding: 8px 14px;
+        font-size: 0.75rem;
+    }
+    
+    .btn i {
+        width: 1rem;
+        height: 1rem;
+    }
+    
+    .action-price {
+        font-size: 1.25rem;
+    }
+}
         .btn-nav {
             background: var(--primary);
             color: #FFFFFF !important;
@@ -1187,7 +1424,8 @@
 <nav class="navbar">
     <div class="navbar-inner">
         <a href="landing.html" class="nav-logo">
-            <img src="../asset/logo.svg" alt="CamServices" style="height: 82px;">
+            <img src="../asset/logo.svg" alt="warap" style="height: 42px;">
+
         </a>
         <button class="menu-toggle" id="menuToggle" onclick="toggleMenu()">
             <span></span><span></span><span></span>

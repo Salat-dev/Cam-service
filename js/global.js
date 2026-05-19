@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════
-// GLOBAL.JS — CamServices
+// GLOBAL.JS — warap
 // Utilitaires globaux pour toutes les pages
 // ═══════════════════════════════════════════
 
@@ -10,8 +10,8 @@
     const CONFIG = {
         supabaseUrl: 'https://cwubxwbzzuigctvgdygv.supabase.co',
         supabaseAnon: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dWJ4d2J6enVpZ2N0dmdkeWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzI2MTgsImV4cCI6MjA5MzgwODYxOH0.0mwBNo_S5yItQQjq2at9GNRN74ooZRBJIbZGDH9L2uk',
-        cartKey: 'camservices_cart',
-        userKey: 'camservices_user',
+        cartKey: 'warap_cart',
+        userKey: 'warap_user',
         emailKey: 'rememberedEmail'
     };
 

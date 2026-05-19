@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mes Services — CamServices Dashboard</title>
+    <title>Mes Services — warap Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="../css/global.css">
@@ -147,8 +147,7 @@
 
 <aside class="sidebar" id="sidebar">
     <a href="index.html" class="sidebar-logo">
-        <img src="../asset/logo.svg" alt="CamServices" style="height: 82px;">
-    </a>
+                <img src="../asset/logo.svg" alt="warap" style="height: 42px;">    </a>
     <div class="sidebar-user">
         <div class="sidebar-avatar" id="sidebarAvatar"></div>
         <div class="sidebar-user-info">
@@ -258,7 +257,8 @@ async function getMyServices(){
 function renderServices(){
     const c=document.getElementById('servicesTable');
     if(!services.length){
-        c.innerHTML=`<div class="empty-state"><div class="empty-icon"><i data-lucide="package" style="width:3rem;height:3rem"></i></div><h3>Aucun service créé</h3><p>Créez votre premier service pour commencer à recevoir des commandes.</p><button class="btn btn-primary" onclick="openServiceModal()"><i data-lucide="plus"></i> Créer un service</button></div>`;
+        c.innerHTML=`<div class="empty-state"><div class="empty-icon"><i data-lucide="package" style="width:3rem;height:3rem"></i></div><h3>Aucun service créé</h3><p>Créez votre premier service pour commencer à recevoir des commandes.</p>
+        <a href="service-registration.html" class="btn btn-primary"><i data-lucide="plus"></i> Créer un service</a></div>`;
         lucide.createIcons(); return;
     }
     const icons={'Plomberie':'wrench','Électricité':'zap','Ménage':'home','Photographie':'camera','Développement web':'monitor','Cours particuliers':'book-open','Transport':'car','Design':'palette','Beauté':'sparkles','Bâtiment':'hard-hat'};
@@ -271,7 +271,7 @@ function renderServices(){
         <td><span class="status-badge ${s.is_active?'status-active':'status-inactive'}">${s.is_active?'Actif':'Inactif'}</span></td>
         <td>${formatDate(s.created_at)}</td>
         <td><div style="display:flex;gap:4px">
-            <button class="btn-icon" onclick="openServiceModal('${s.id}')" title="Modifier"><i data-lucide="pencil" style="width:.875rem;height:.875rem"></i></button>
+            <a href="service-registration.html?id=${s.id}" class="btn-icon" title="Modifier"><i data-lucide="pencil" style="width:.875rem;height:.875rem"></i></a>
             <button class="btn-icon warning" onclick="toggleStatus('${s.id}')" title="${s.is_active?'Désactiver':'Activer'}"><i data-lucide="${s.is_active?'eye-off':'eye'}" style="width:.875rem;height:.875rem"></i></button>
             <button class="btn-icon danger" onclick="deleteService('${s.id}')" title="Supprimer"><i data-lucide="trash-2" style="width:.875rem;height:.875rem"></i></button>
         </div></td>

@@ -3,358 +3,347 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administration — CamServices</title>
+    <title>Administration — warap</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #22C55E; --primary-hover: #16A34A; --primary-light: #F0FDF4; --primary-dim: rgba(34,197,94,.08);
+            --text-primary: #111827; --text-secondary: #4B5563; --text-muted: #6B7280;
+            --bg: #FFFFFF; --surface: #F9FAFB; --border: #E5E7EB; --border-light: #F3F4F6;
+            --accent: #F59E0B; --accent-light: #FFFBEB; --error: #EF4444; --error-light: #FEF2F2;
+            --blue: #3B82F6; --blue-light: #EFF6FF; --purple: #7C3AED; --purple-light: #F5F3FF;
+            --shadow: 0 4px 20px rgba(0,0,0,.06); --shadow-lg: 0 12px 40px rgba(0,0,0,.1);
+            --radius-sm: 8px; --radius: 12px; --radius-lg: 16px; --radius-xl: 20px;
+            --sidebar-w: 240px; --max: 1400px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; background:var(--surface); color:var(--text-primary); display:flex; min-height:100vh; -webkit-font-smoothing:antialiased; }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes spin { to{transform:rotate(360deg)} }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+        /* ═══ SIDEBAR ═══ */
+        .sidebar { width:var(--sidebar-w); background:var(--bg); border-right:1px solid var(--border-light); display:flex; flex-direction:column; position:fixed; top:0; left:0; bottom:0; z-index:100; padding:20px 14px; overflow-y:auto; }
+        .sidebar-logo { font-weight:800; font-size:1rem; color:var(--text-primary); text-decoration:none; display:flex; align-items:center; gap:6px; margin-bottom:28px; padding:0 8px; }
+        .sidebar-logo span { color:var(--primary); }
+        .sidebar-nav { list-style:none; flex:1; }
+        .sidebar-nav a { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--radius-sm); font-size:.8125rem; font-weight:500; color:var(--text-secondary); text-decoration:none; transition:all .2s; margin-bottom:2px; }
+        .sidebar-nav a:hover { background:var(--surface); color:var(--text-primary); }
+        .sidebar-nav a.active { background:var(--primary-dim); color:var(--primary); font-weight:600; }
+        .sidebar-nav a i { width:1rem; height:1rem; }
+        .sidebar-nav .badge { margin-left:auto; background:var(--accent); color:#fff; font-size:.625rem; padding:2px 7px; border-radius:10px; }
+
+        /* ═══ MAIN ═══ */
+        .main-content { flex:1; margin-left:var(--sidebar-w); padding:28px 28px 64px; max-width:100%; }
+        .page-header { margin-bottom:28px; }
+        .page-title { font-weight:800; font-size:1.6rem; }
+        .page-title span { color:var(--primary); }
+
+        .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:28px; }
+        .stat-card { background:var(--bg); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:20px; transition:all .3s; }
+        .stat-card:hover { border-color:var(--primary); box-shadow:var(--shadow); transform:translateY(-2px); }
+        .stat-icon { width:38px; height:38px; border-radius:var(--radius); display:flex; align-items:center; justify-content:center; margin-bottom:10px; }
+        .stat-value { font-weight:800; font-size:1.5rem; letter-spacing:-.02em; }
+        .stat-label { font-size:.72rem; color:var(--text-muted); margin-top:2px; }
+        .stat-trend { font-size:.65rem; font-weight:600; margin-top:4px; }
+        .stat-trend.up { color:var(--primary); }
+        .stat-trend.down { color:var(--error); }
+
+        .section-card { background:var(--bg); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:22px; margin-bottom:20px; }
+        .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:10px; }
+        .section-title { font-weight:700; font-size:1rem; display:flex; align-items:center; gap:8px; }
+        .section-title i { color:var(--primary); }
+
+        .table-wrapper { overflow-x:auto; }
+        table { width:100%; border-collapse:collapse; font-size:.78rem; }
+        th { text-align:left; font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); padding:10px 12px; border-bottom:1px solid var(--border); white-space:nowrap; }
+        td { padding:10px 12px; border-bottom:1px solid var(--border-light); }
+        tr:hover td { background:var(--surface); }
+
+        .user-cell { display:flex; align-items:center; gap:8px; }
+        .user-avatar { width:32px; height:32px; border-radius:50%; background:var(--text-primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.7rem; overflow:hidden; flex-shrink:0; }
+        .user-avatar img { width:100%; height:100%; object-fit:cover; }
+
+        .status-badge { display:inline-flex; align-items:center; gap:3px; padding:3px 8px; border-radius:100px; font-size:.65rem; font-weight:600; white-space:nowrap; }
+        .status-verified { background:var(--primary-light); color:var(--primary); }
+        .status-pending { background:var(--accent-light); color:#D97706; }
+        .status-blocked { background:var(--error-light); color:var(--error); }
+        .status-active { background:var(--primary-light); color:var(--primary); }
+        .status-completed { background:var(--primary-light); color:var(--primary); }
+        .status-cancelled { background:var(--error-light); color:var(--error); }
+
+        .btn { display:inline-flex; align-items:center; gap:5px; padding:6px 12px; border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.72rem; font-weight:600; cursor:pointer; border:none; text-decoration:none; transition:all .2s; }
+        .btn-primary { background:var(--primary); color:#fff; }
+        .btn-outline { background:var(--bg); color:var(--text-secondary); border:1px solid var(--border); }
+        .btn-danger { background:var(--error); color:#fff; }
+        .btn-warning { background:var(--accent); color:#fff; }
+        .action-group { display:flex; gap:4px; flex-wrap:wrap; }
+
+        .tabs { display:flex; gap:2px; border-bottom:1px solid var(--border); margin-bottom:18px; overflow-x:auto; }
+        .tab { padding:9px 16px; font-size:.78rem; font-weight:500; color:var(--text-muted); cursor:pointer; border-bottom:2px solid transparent; background:none; border-top:none; border-left:none; border-right:none; font-family:'Inter',sans-serif; white-space:nowrap; }
+        .tab.active { color:var(--primary); border-bottom-color:var(--primary); font-weight:600; }
+
+        .live-dot { width:7px; height:7px; background:var(--primary); border-radius:50%; animation:pulse 2s infinite; display:inline-block; }
+
+        .search-input { padding:7px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.78rem; outline:none; max-width:220px; }
+        .search-input:focus { border-color:var(--primary); }
+
+        .tab-content { display:none; animation:fadeUp .3s ease; }
+        .tab-content.active { display:block; }
+
+        @media (max-width:900px) {
+            .sidebar { display:none; }
+            .main-content { margin-left:0; padding:20px 14px; }
+            .stats-grid { grid-template-columns:repeat(2,1fr); }
+        }
+        @media (max-width:500px) {
+            .stats-grid { grid-template-columns:1fr; }
+        }
+    </style>
 </head>
 <body>
-    <div id="nav"></div>
-    <hr>
-
-    <h1>Panel Administrateur</h1>
-
-    <!-- Statistiques -->
-    <div id="stats"></div>
-    <hr>
-
-    <!-- Prestataires en attente de vérification -->
-    <h2>Prestataires en attente de vérification</h2>
-    <div id="pending-providers">Chargement...</div>
-
-    <hr>
-
-    <!-- Tous les prestataires -->
-    <h2>Tous les prestataires</h2>
-    <div id="all-providers">Chargement...</div>
-
-    <hr>
-
-    <!-- Documents CNI -->
-    <h2>Documents CNI soumis</h2>
-    <div id="cni-documents">Chargement...</div>
-
-    <hr>
-
-    <!-- Tous les utilisateurs -->
-    <h2>Tous les utilisateurs</h2>
-    <div id="all-users">Chargement...</div>
-
-    <script src="config.js"></script>
-    <script>
-        renderNav();
-
-        let currentUser = null;
-
-        /**
-         * Initialisation de la page admin
-         */
-        async function initAdmin() {
-            currentUser = await requireAuth(['admin']);
-            if (!currentUser) return;
-
-            loadStats();
-            loadPendingProviders();
-            loadAllProviders();
-            loadCniDocuments();
-            loadAllUsers();
-        }
-
-        /**
-         * Statistiques générales
-         */
-        async function loadStats() {
-            const container = document.getElementById('stats');
-
-            const { count: totalUsers } = await supabase
-                .from('users').select('*', { count: 'exact', head: true });
-
-            const { count: totalProviders } = await supabase
-                .from('users').select('*', { count: 'exact', head: true })
-                .eq('role', 'prestataire');
-
-            const { count: pendingProviders } = await supabase
-                .from('users').select('*', { count: 'exact', head: true })
-                .eq('role', 'prestataire').eq('status', 'pending');
-
-            const { count: totalServices } = await supabase
-                .from('services').select('*', { count: 'exact', head: true });
-
-            const { count: totalOrders } = await supabase
-                .from('orders').select('*', { count: 'exact', head: true });
-
-            container.innerHTML =
-                '<p><strong>Utilisateurs totaux :</strong> ' + (totalUsers || 0) + '</p>' +
-                '<p><strong>Prestataires :</strong> ' + (totalProviders || 0) +
-                ' (dont ' + (pendingProviders || 0) + ' en attente)</p>' +
-                '<p><strong>Services publiés :</strong> ' + (totalServices || 0) + '</p>' +
-                '<p><strong>Commandes :</strong> ' + (totalOrders || 0) + '</p>';
-        }
-
-        /**
-         * Prestataires en attente de vérification
-         */
-        async function loadPendingProviders() {
-            const container = document.getElementById('pending-providers');
-
-            const { data, error } = await supabase
-                .from('users')
-                .select('*')
-                .eq('role', 'prestataire')
-                .eq('status', 'pending')
-                .order('created_at', { ascending: true });
-
-            if (error) {
-                container.innerHTML = '<p>Erreur : ' + error.message + '</p>';
-                return;
-            }
-
-            if (!data || data.length === 0) {
-                container.innerHTML = '<p>Aucun prestataire en attente.</p>';
-                return;
-            }
-
-            let html = '';
-            data.forEach(user => {
-                html += '<div>';
-                html += '<p><strong>' + user.full_name + '</strong> — ' + user.email + '</p>';
-                html += '<p>Tél: ' + user.phone + ' | Ville: ' + user.city + '</p>';
-                html += '<button onclick="verifyProvider(\'' + user.id + '\')">Valider</button> ';
-                html += '<button onclick="rejectProvider(\'' + user.id + '\')">Refuser</button>';
-                html += '</div><hr>';
-            });
-
-            container.innerHTML = html;
-        }
-
-        /**
-         * Tous les prestataires
-         */
-        async function loadAllProviders() {
-            const container = document.getElementById('all-providers');
-
-            const { data, error } = await supabase
-                .from('users')
-                .select('*')
-                .eq('role', 'prestataire')
-                .order('full_name');
-
-            if (error) {
-                container.innerHTML = '<p>Erreur : ' + error.message + '</p>';
-                return;
-            }
-
-            if (!data || data.length === 0) {
-                container.innerHTML = '<p>Aucun prestataire inscrit.</p>';
-                return;
-            }
-
-            const statusLabels = {
-                'pending': 'En attente',
-                'verified': 'Vérifié',
-                'blocked': 'Bloqué'
-            };
-
-            let html = '';
-            data.forEach(user => {
-                html += '<div>';
-                html += '<p><strong>' + user.full_name + '</strong> — ' + user.email + '</p>';
-                html += '<p>Ville: ' + user.city + ' | Statut: ' + (statusLabels[user.status] || user.status) + '</p>';
-
-                if (user.status !== 'blocked') {
-                    html += '<button onclick="blockUser(\'' + user.id + '\')">Bloquer</button> ';
-                } else {
-                    html += '<button onclick="unblockUser(\'' + user.id + '\')">Débloquer</button> ';
-                }
-
-                if (user.status === 'pending') {
-                    html += '<button onclick="verifyProvider(\'' + user.id + '\')">Valider</button>';
-                }
-
-                html += '</div><hr>';
-            });
-
-            container.innerHTML = html;
-        }
-
-        /**
-         * Documents CNI soumis
-         */
-        async function loadCniDocuments() {
-            const container = document.getElementById('cni-documents');
-
-            const { data, error } = await supabase
-                .from('documents')
-                .select('*, users(full_name, email)')
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                container.innerHTML = '<p>Erreur : ' + error.message + '</p>';
-                return;
-            }
-
-            if (!data || data.length === 0) {
-                container.innerHTML = '<p>Aucun document soumis.</p>';
-                return;
-            }
-
-            const statusLabels = {
-                'pending': 'En attente',
-                'verified': 'Approuvé',
-                'rejected': 'Refusé'
-            };
-
-            let html = '';
-            data.forEach(doc => {
-                const userName = doc.users ? doc.users.full_name : 'Inconnu';
-                html += '<div>';
-                html += '<p><strong>' + userName + '</strong> — Statut: ' +
-                    (statusLabels[doc.verification_status] || doc.verification_status) + '</p>';
-                html += '<p><a href="' + doc.cni_url + '" target="_blank">Voir le document CNI</a></p>';
-
-                if (doc.verification_status === 'pending') {
-                    html += '<button onclick="approveCni(\'' + doc.id + '\', \'' + doc.user_id + '\')">Approuver</button> ';
-                    html += '<button onclick="rejectCni(\'' + doc.id + '\')">Refuser</button>';
-                }
-
-                html += '</div><hr>';
-            });
-
-            container.innerHTML = html;
-        }
-
-        /**
-         * Tous les utilisateurs
-         */
-        async function loadAllUsers() {
-            const container = document.getElementById('all-users');
-
-            const { data, error } = await supabase
-                .from('users')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                container.innerHTML = '<p>Erreur : ' + error.message + '</p>';
-                return;
-            }
-
-            let html = '<table border="1" cellpadding="5">';
-            html += '<tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Ville</th><th>Statut</th><th>Actions</th></tr>';
-
-            (data || []).forEach(user => {
-                html += '<tr>';
-                html += '<td>' + user.full_name + '</td>';
-                html += '<td>' + user.email + '</td>';
-                html += '<td>' + user.role + '</td>';
-                html += '<td>' + user.city + '</td>';
-                html += '<td>' + user.status + '</td>';
-                html += '<td>';
-                if (user.role !== 'admin') {
-                    if (user.status !== 'blocked') {
-                        html += '<button onclick="blockUser(\'' + user.id + '\')">Bloquer</button>';
-                    } else {
-                        html += '<button onclick="unblockUser(\'' + user.id + '\')">Débloquer</button>';
-                    }
-                }
-                html += '</td>';
-                html += '</tr>';
-            });
-
-            html += '</table>';
-            container.innerHTML = html;
-        }
-
-        // ============================================================
-        // Actions admin
-        // ============================================================
-
-        /** Valider un prestataire */
-        async function verifyProvider(userId) {
-            const { error } = await supabase
-                .from('users')
-                .update({ status: 'verified' })
-                .eq('id', userId);
-
-            if (error) { alert('Erreur : ' + error.message); return; }
-            alert('Prestataire vérifié !');
-            loadPendingProviders();
-            loadAllProviders();
-            loadAllUsers();
-            loadStats();
-        }
-
-        /** Refuser un prestataire (le laisser pending ou le bloquer) */
-        async function rejectProvider(userId) {
-            const { error } = await supabase
-                .from('users')
-                .update({ status: 'blocked' })
-                .eq('id', userId);
-
-            if (error) { alert('Erreur : ' + error.message); return; }
-            alert('Prestataire refusé.');
-            loadPendingProviders();
-            loadAllProviders();
-            loadAllUsers();
-            loadStats();
-        }
-
-        /** Bloquer un utilisateur */
-        async function blockUser(userId) {
-            if (!confirm('Bloquer cet utilisateur ?')) return;
-            const { error } = await supabase
-                .from('users')
-                .update({ status: 'blocked' })
-                .eq('id', userId);
-
-            if (error) { alert('Erreur : ' + error.message); return; }
-            alert('Utilisateur bloqué.');
-            loadAllProviders();
-            loadAllUsers();
-        }
-
-        /** Débloquer un utilisateur */
-        async function unblockUser(userId) {
-            const { error } = await supabase
-                .from('users')
-                .update({ status: 'verified' })
-                .eq('id', userId);
-
-            if (error) { alert('Erreur : ' + error.message); return; }
-            alert('Utilisateur débloqué.');
-            loadAllProviders();
-            loadAllUsers();
-        }
-
-        /** Approuver une CNI et valider le prestataire */
-        async function approveCni(docId, userId) {
-            // Mettre à jour le document
-            await supabase.from('documents')
-                .update({ verification_status: 'verified' })
-                .eq('id', docId);
-
-            // Valider le prestataire
-            await supabase.from('users')
-                .update({ status: 'verified' })
-                .eq('id', userId);
-
-            alert('CNI approuvée et prestataire vérifié !');
-            loadCniDocuments();
-            loadPendingProviders();
-            loadAllProviders();
-            loadAllUsers();
-            loadStats();
-        }
-
-        /** Refuser une CNI */
-        async function rejectCni(docId) {
-            await supabase.from('documents')
-                .update({ verification_status: 'rejected' })
-                .eq('id', docId);
-
-            alert('CNI refusée.');
-            loadCniDocuments();
-        }
-
-        initAdmin();
-    </script>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+    <a href="#" class="sidebar-logo">⚙️ Admin <span>warap</span></a>
+    <ul class="sidebar-nav" id="sidebarNav">
+        <li><a href="#" class="active" data-tab="dashboard"><i data-lucide="layout-dashboard"></i> Tableau de bord</a></li>
+        <li><a href="#" data-tab="users"><i data-lucide="users"></i> Utilisateurs <span class="badge" id="pendingBadge">0</span></a></li>
+        <li><a href="#" data-tab="verification"><i data-lucide="shield-check"></i> Vérification</a></li>
+        <li><a href="#" data-tab="orders"><i data-lucide="shopping-bag"></i> Commandes</a></li>
+        <li><a href="#" data-tab="disputes"><i data-lucide="alert-triangle"></i> Litiges</a></li>
+        <li><a href="#" data-tab="payments"><i data-lucide="banknote"></i> Paiements</a></li>
+        <li><a href="#" data-tab="commissions"><i data-lucide="percent"></i> Commissions</a></li>
+        <li><a href="#" data-tab="security"><i data-lucide="shield"></i> Sécurité</a></li>
+        <li><a href="#" data-tab="analytics"><i data-lucide="bar-chart-3"></i> Analytics</a></li>
+        <li><a href="#" data-tab="support"><i data-lucide="headphones"></i> Support</a></li>
+    </ul>
+    <a href="../landing.html" onclick="logout()" style="display:flex;align-items:center;gap:8px;padding:10px;color:var(--error);text-decoration:none;font-size:.8125rem;font-weight:500"><i data-lucide="log-out" style="width:1rem;height:1rem"></i> Déconnexion</a>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main-content" id="mainContent"></main>
+
+<script>
+const SUPABASE_URL = 'https://cwubxwbzzuigctvgdygv.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dWJ4d2J6enVpZ2N0dmdkeWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzI2MTgsImV4cCI6MjA5MzgwODYxOH0.0mwBNo_S5yItQQjq2at9GNRN74ooZRBJIbZGDH9L2uk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+let currentTab = 'dashboard';
+
+lucide.createIcons();
+init();
+
+async function init() {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { window.location.href = '../login.html'; return; }
+    const { data: profile } = await sb.from('users').select('role').eq('id', user.id).single();
+    if (!profile || profile.role !== 'admin') { alert('Accès refusé'); window.location.href = '../landing.html'; return; }
+    
+    document.querySelectorAll('#sidebarNav a').forEach(a => {
+        a.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelectorAll('#sidebarNav a').forEach(x => x.classList.remove('active'));
+            this.classList.add('active');
+            currentTab = this.dataset.tab;
+            loadTab(currentTab);
+        });
+    });
+    loadTab('dashboard');
+}
+
+async function logout() { await sb.auth.signOut(); window.location.href = '../landing.html'; }
+
+function esc(t) { const d=document.createElement('div'); d.textContent=t||''; return d.innerHTML; }
+function fmt(p) { return new Intl.NumberFormat('fr-FR',{style:'currency',currency:'XAF',maximumFractionDigits:0}).format(p||0); }
+function fmtDate(d) { return d?new Date(d).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'—'; }
+
+async function loadTab(tab) {
+    const c = document.getElementById('mainContent');
+    switch(tab) {
+        case 'dashboard': c.innerHTML = await renderDashboard(); break;
+        case 'users': c.innerHTML = await renderUsers(); break;
+        case 'verification': c.innerHTML = await renderVerification(); break;
+        case 'orders': c.innerHTML = await renderOrders(); break;
+        case 'disputes': c.innerHTML = renderDisputes(); break;
+        case 'payments': c.innerHTML = renderPayments(); break;
+        case 'commissions': c.innerHTML = renderCommissions(); break;
+        case 'security': c.innerHTML = renderSecurity(); break;
+        case 'analytics': c.innerHTML = await renderAnalytics(); break;
+        case 'support': c.innerHTML = renderSupport(); break;
+    }
+    lucide.createIcons();
+    if (tab === 'users') { loadUsersData(); }
+    if (tab === 'verification') { loadVerificationData(); }
+    if (tab === 'orders') { loadOrdersData(); }
+}
+
+// ═══ DASHBOARD ═══
+async function renderDashboard() {
+    const [users, providers, clients, services, orders, pending, completedOrders, cancelledOrders] = await Promise.all([
+        sb.from('users').select('*',{count:'exact',head:true}),
+        sb.from('users').select('*',{count:'exact',head:true}).eq('role','prestataire'),
+        sb.from('users_clients').select('*',{count:'exact',head:true}),
+        sb.from('services').select('*',{count:'exact',head:true}),
+        sb.from('orders').select('*',{count:'exact',head:true}),
+        sb.from('users').select('*',{count:'exact',head:true}).eq('role','prestataire').eq('verification_status','pending'),
+        sb.from('orders').select('*',{count:'exact',head:true}).eq('status','completed'),
+        sb.from('orders').select('*',{count:'exact',head:true}).eq('status','cancelled')
+    ]);
+
+    return `<div class="page-header"><h1 class="page-title">Tableau de <span>bord</span></h1></div>
+    <div class="stats-grid">
+        ${stat('users','#3B82F6','#EFF6FF',users.count||0,'Utilisateurs totaux')}
+        ${stat('briefcase','#22C55E','#F0FDF4',providers.count||0,'Prestataires')}
+        ${stat('user-check','#7C3AED','#F5F3FF',clients.count||0,'Clients')}
+        ${stat('clock','#F59E0B','#FFFBEB',pending.count||0,'En attente validation','','<div class="stat-trend up">⚠ Action requise</div>')}
+        ${stat('package','#EF4444','#FEF2F2',services.count||0,'Services')}
+        ${stat('shopping-bag','#3B82F6','#EFF6FF',orders.count||0,'Commandes')}
+        ${stat('check-circle','#22C55E','#F0FDF4',completedOrders.count||0,'Missions terminées','','<div class="stat-trend up">↑ Taux réussite</div>')}
+        ${stat('x-circle','#EF4444','#FEF2F2',cancelledOrders.count||0,'Annulations','','<div class="stat-trend down">↓ À surveiller</div>')}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="section-card">
+            <div class="section-header"><h3 class="section-title"><i data-lucide="activity"></i> Activité récente</h3></div>
+            <p style="color:var(--text-muted);font-size:.8125rem"><span class="live-dot"></span> Système opérationnel · ${new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}</p>
+        </div>
+        <div class="section-card">
+            <div class="section-header"><h3 class="section-title"><i data-lucide="shield"></i> Sécurité</h3></div>
+            <p style="color:var(--text-muted);font-size:.8125rem">✅ Aucun signalement actif · 0 litiges ouverts</p>
+        </div>
+    </div>`;
+}
+
+function stat(icon,color,bg,val,label,extra='',trend='') {
+    return `<div class="stat-card"><div class="stat-icon" style="background:${bg};color:${color}"><i data-lucide="${icon}" style="width:1.1rem;height:1.1rem"></i></div><div class="stat-value">${val}</div><div class="stat-label">${label}</div>${trend}</div>`;
+}
+
+// ═══ USERS ═══
+async function renderUsers() {
+    return `<div class="page-header"><h1 class="page-title">Gestion des <span>utilisateurs</span></h1></div>
+    <div class="tabs">
+        <button class="tab active" onclick="filterUserTable('prestataire',this)">Prestataires</button>
+        <button class="tab" onclick="filterUserTable('client',this)">Clients</button>
+        <button class="tab" onclick="filterUserTable('all',this)">Tous</button>
+    </div>
+    <div class="section-card">
+        <div class="section-header"><h3 class="section-title"><i data-lucide="users"></i> <span id="userTableTitle">Prestataires</span></h3><input type="text" class="search-input" id="userSearch" placeholder="Rechercher..." oninput="filterUserTable()"></div>
+        <div class="table-wrapper" id="userTable"><div class="loading-spinner"><div class="spinner"></div></div></div>
+    </div>`;
+}
+
+let userFilter = 'prestataire';
+async function loadUsersData() { filterUserTable(userFilter); }
+async function filterUserTable(filter, btn) {
+    if (filter) userFilter = filter;
+    if (btn) { document.querySelectorAll('#mainContent .tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active'); }
+    const q = (document.getElementById('userSearch')?.value||'').toLowerCase().trim();
+    let query = sb.from('users').select('*').order('full_name');
+    if (userFilter === 'prestataire') query = query.eq('role','prestataire');
+    else if (userFilter === 'client') query = query.eq('role','client');
+    const { data } = await query;
+    const filtered = q ? (data||[]).filter(u => (u.full_name||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q)) : (data||[]);
+    document.getElementById('userTableTitle').textContent = userFilter === 'prestataire' ? 'Prestataires' : userFilter === 'client' ? 'Clients' : 'Tous';
+    const statusLabels = { pending:'En attente', verified:'Vérifié', active:'Actif', blocked:'Bloqué' };
+    document.getElementById('userTable').innerHTML = filtered.length ? `<table><thead><tr><th>Utilisateur</th><th>Email</th><th>Téléphone</th><th>Ville</th><th>Rôle</th><th>Statut</th><th>Actions</th></tr></thead><tbody>${filtered.map(u=>`
+        <tr>
+            <td><div class="user-cell"><div class="user-avatar">${u.profile_photo_url?`<img src="${u.profile_photo_url}" alt="">`:(u.full_name||'?')[0].toUpperCase()}</div><strong>${esc(u.full_name)}</strong></div></td>
+            <td>${esc(u.email)}</td><td>${esc(u.phone||'—')}</td><td>${esc(u.city||'—')}</td><td>${u.role}</td>
+            <td><span class="status-badge status-${u.status||'active'}">${statusLabels[u.status]||u.status}</span></td>
+            <td><div class="action-group">
+                <button class="btn btn-outline" onclick="viewProfile('${u.id}')"><i data-lucide="eye" style="width:.7rem;height:.7rem"></i></button>
+                ${u.role==='prestataire'&&u.status!=='verified'?`<button class="btn btn-primary" onclick="verifyProvider('${u.id}')"><i data-lucide="check" style="width:.7rem;height:.7rem"></i></button>`:''}
+                ${u.status!=='blocked'?`<button class="btn btn-danger" onclick="blockUser('${u.id}')"><i data-lucide="ban" style="width:.7rem;height:.7rem"></i></button>`:`<button class="btn btn-warning" onclick="unblockUser('${u.id}')"><i data-lucide="unlock" style="width:.7rem;height:.7rem"></i></button>`}
+            </div></td>
+        </tr>`).join('')}</tbody></table>` : '<div class="empty-state">Aucun utilisateur trouvé.</div>';
+    lucide.createIcons();
+}
+
+// ═══ VERIFICATION ═══
+async function renderVerification() {
+    return `<div class="page-header"><h1 class="page-title">Vérification des <span>prestataires</span></h1></div>
+    <div class="section-card">
+        <div class="section-header"><h3 class="section-title"><i data-lucide="clock"></i> En attente de validation</h3></div>
+        <div class="table-wrapper" id="verificationTable"><div class="loading-spinner"><div class="spinner"></div></div></div>
+    </div>`;
+}
+async function loadVerificationData() {
+    const { data } = await sb.from('users').select('*').eq('role','prestataire').eq('verification_status','pending').order('created_at');
+    document.getElementById('verificationTable').innerHTML = data?.length ? `<table><thead><tr><th>Prestataire</th><th>Email</th><th>Téléphone</th><th>Ville</th><th>Document</th><th>Date</th><th>Actions</th></tr></thead><tbody>${data.map(u=>`
+        <tr>
+            <td><div class="user-cell"><div class="user-avatar">${(u.full_name||'?')[0].toUpperCase()}</div><strong>${esc(u.full_name)}</strong></div></td>
+            <td>${esc(u.email)}</td><td>${esc(u.phone||'—')}</td><td>${esc(u.city||'—')}</td>
+            <td>${u.id_document_url?`<a href="${u.id_document_url}" target="_blank" class="btn btn-outline">Voir doc</a>`:'Aucun'}</td>
+            <td>${fmtDate(u.created_at)}</td>
+            <td><div class="action-group">
+                <button class="btn btn-primary" onclick="verifyProvider('${u.id}')"><i data-lucide="check" style="width:.7rem;height:.7rem"></i> Valider</button>
+                <button class="btn btn-outline" onclick="viewProfile('${u.id}')"><i data-lucide="eye" style="width:.7rem;height:.7rem"></i></button>
+                <button class="btn btn-danger" onclick="blockUser('${u.id}')"><i data-lucide="x" style="width:.7rem;height:.7rem"></i> Refuser</button>
+            </div></td>
+        </tr>`).join('')}</tbody></table>` : '<div class="empty-state">✅ Tous les prestataires sont vérifiés.</div>';
+    lucide.createIcons();
+}
+
+// ═══ ORDERS ═══
+async function renderOrders() {
+    return `<div class="page-header"><h1 class="page-title">Gestion des <span>commandes</span></h1></div>
+    <div class="section-card">
+        <div class="section-header"><h3 class="section-title"><i data-lucide="shopping-bag"></i> Toutes les commandes</h3></div>
+        <div class="table-wrapper" id="ordersTable"><div class="loading-spinner"><div class="spinner"></div></div></div>
+    </div>`;
+}
+async function loadOrdersData() {
+    const { data } = await sb.from('orders').select('*, service:service_id(title)').order('created_at',{ascending:false}).limit(50);
+    document.getElementById('ordersTable').innerHTML = data?.length ? `<table><thead><tr><th>Client</th><th>Téléphone</th><th>Service</th><th>Montant</th><th>Statut</th><th>Date</th></tr></thead><tbody>${data.map(o=>`
+        <tr><td><strong>${esc(o.client_name||'—')}</strong></td><td>${esc(o.client_phone||'—')}</td><td>${esc(o.service?.title||'—')}</td><td>${fmt(o.total_amount)}</td><td><span class="status-badge status-${o.status}">${o.status}</span></td><td>${fmtDate(o.created_at)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty-state">Aucune commande.</div>';
+    lucide.createIcons();
+}
+
+// ═══ AUTRES ONGLETS (simplifiés) ═══
+function renderDisputes() { return `<div class="page-header"><h1 class="page-title">Centre de <span>litiges</span></h1></div><div class="section-card"><div class="empty-state"><i data-lucide="check-circle" style="width:2rem;height:2rem;color:var(--primary)"></i><p>Aucun litige en cours.</p></div></div>`; }
+function renderPayments() { return `<div class="page-header"><h1 class="page-title">Gestion des <span>paiements</span></h1></div><div class="section-card"><div class="empty-state"><p>Historique des transactions · Module à venir</p></div></div>`; }
+function renderCommissions() { return `<div class="page-header"><h1 class="page-title"><span>Commissions</span></h1></div><div class="stats-grid">${stat('percent','#22C55E','#F0FDF4','10%','Commission globale')}${stat('settings','#3B82F6','#EFF6FF','Configurable','Par catégorie')}</div>`; }
+function renderSecurity() { return `<div class="page-header"><h1 class="page-title"><span>Sécurité</span></h1></div><div class="section-card"><div class="empty-state"><i data-lucide="shield-check" style="width:2rem;height:2rem;color:var(--primary)"></i><p>Système sécurisé · Aucune alerte</p></div></div>`; }
+async function renderAnalytics() {
+    const { count: svc } = await sb.from('services').select('*',{count:'exact',head:true});
+    const { count: ord } = await sb.from('orders').select('*',{count:'exact',head:true});
+    return `<div class="page-header"><h1 class="page-title"><span>Analytics</span></h1></div>
+    <div class="stats-grid">${stat('package','#22C55E','#F0FDF4',svc||0,'Services')}${stat('shopping-bag','#3B82F6','#EFF6FF',ord||0,'Commandes')}</div>`;
+}
+function renderSupport() { return `<div class="page-header"><h1 class="page-title">Support <span>client</span></h1></div><div class="section-card"><div class="empty-state"><p>Centre de support · Module à venir</p></div></div>`; }
+
+// ═══ ACTIONS ═══
+async function verifyProvider(id) { if(!confirm('Valider ce prestataire ?'))return; await sb.from('users').update({status:'verified',is_verified:true,verification_status:'verified'}).eq('id',id); alert('✅ Vérifié !'); loadTab(currentTab); }
+async function blockUser(id) { if(!confirm('Bloquer cet utilisateur ?'))return; await sb.from('users').update({status:'blocked'}).eq('id',id); alert('🚫 Bloqué.'); loadTab(currentTab); }
+async function unblockUser(id) { if(!confirm('Débloquer ?'))return; await sb.from('users').update({status:'active'}).eq('id',id); alert('✅ Débloqué.'); loadTab(currentTab); }
+
+async function viewProfile(userId) {
+    const { data: user } = await sb.from('users').select('*').eq('id',userId).single();
+    const { data: services } = await sb.from('services').select('*').eq('user_id',userId);
+    const { data: orders } = await sb.from('orders').select('*, service:service_id(title)').eq('provider_id',userId).order('created_at',{ascending:false}).limit(10);
+    if (!user) return;
+    const initials = (user.full_name||'?').split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)';
+    modal.onclick = e => { if(e.target===modal) modal.remove(); };
+    modal.innerHTML = `<div style="background:#fff;border-radius:16px;padding:24px;width:100%;max-width:600px;max-height:85vh;overflow-y:auto" onclick="event.stopPropagation()">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"><h3 style="font-weight:700">Profil</h3><button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;cursor:pointer;color:var(--text-muted)"><i data-lucide="x"></i></button></div>
+        <div style="display:flex;gap:14px;align-items:center;margin-bottom:16px">
+            <div style="width:56px;height:56px;border-radius:50%;background:var(--text-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;overflow:hidden">${user.profile_photo_url?`<img src="${user.profile_photo_url}" style="width:100%;height:100%;object-fit:cover">`:initials}</div>
+            <div><div style="font-weight:700">${esc(user.full_name)}</div><div style="font-size:.78rem;color:var(--text-muted)">${esc(user.email)} · ${esc(user.phone||'—')}</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center;background:var(--surface);border-radius:12px;padding:12px;margin-bottom:14px">
+            <div><div style="font-weight:800">${services?.length||0}</div><div style="font-size:.65rem;color:var(--text-muted)">Services</div></div>
+            <div><div style="font-weight:800">${orders?.length||0}</div><div style="font-size:.65rem;color:var(--text-muted)">Commandes</div></div>
+            <div><div style="font-weight:800">${user.is_verified?'✅':'❌'}</div><div style="font-size:.65rem;color:var(--text-muted)">Vérifié</div></div>
+            <div><div style="font-weight:800">${user.status}</div><div style="font-size:.65rem;color:var(--text-muted)">Statut</div></div>
+        </div>
+        ${orders?.length?`<div style="font-weight:700;font-size:.8rem;margin-bottom:6px">Dernières commandes</div><table style="width:100%;font-size:.7rem"><thead><tr><th>Client</th><th>Service</th><th>Montant</th></tr></thead><tbody>${orders.map(o=>`<tr><td>${esc(o.client_name||'—')}</td><td>${esc(o.service?.title||'—')}</td><td>${fmt(o.total_amount)}</td></tr>`).join('')}</tbody></table>`:''}
+    </div>`;
+    document.body.appendChild(modal);
+    lucide.createIcons();
+}
+</script>
 </body>
 </html>

@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CamServices — Trouvez le prestataire idéal au Cameroun</title>
+    <title>warap — Trouvez le prestataire idéal au Cameroun</title>
     <meta name="description" content="La première marketplace de services professionnels au Cameroun. Prestataires vérifiés, paiement sécurisé, intervention rapide.">
     <meta name="theme-color" content="#22C55E">
     <link rel="icon" type="image/x-icon" href="icons/favicon.ico">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <link rel="manifest" href="manifest.json">
-    <meta property="og:title" content="CamServices — Trouvez le prestataire idéal">
+    <meta property="og:title" content="warap — Trouvez le prestataire idéal">
     <meta property="og:description" content="Des professionnels vérifiés près de chez vous pour tous vos besoins.">
     <meta property="og:image" content="icons/logo-512.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -1374,7 +1374,7 @@
 <nav class="navbar" id="navbar">
     <div class="navbar-inner">
         <a href="landing.html" class="nav-logo">
-            <img src="../asset/logo.svg" alt="CamServices" style="height: 82px;">
+            <img src="../asset/logo.svg" alt="warap" style="height: 42px;">
         </a>
         <button class="menu-toggle" id="menuToggle" onclick="toggleMenu()">
             <span></span><span></span><span></span>
@@ -1497,7 +1497,7 @@
     <div class="section-inner">
         <div class="section-head reveal">
             <div class="section-tag">
-                <i data-lucide="award" style="width:0.875rem;height:0.875rem"></i> Pourquoi CamServices
+                <i data-lucide="award" style="width:0.875rem;height:0.875rem"></i> Pourquoi warap
             </div>
             <h2 class="section-title">La confiance au cœur de <span class="accent">l'expérience</span></h2>
         </div>
@@ -1532,14 +1532,14 @@
     <div class="section-inner">
         <div class="about-grid">
             <div class="about-img-wrap reveal">
-                <img src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=600&h=500&fit=crop" alt="Équipe CamServices" loading="lazy" onerror="this.style.display='none'">
+                <img src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=600&h=500&fit=crop" alt="Équipe warap" loading="lazy" onerror="this.style.display='none'">
             </div>
             <div class="about-content reveal">
                 <div class="section-tag">
                     <i data-lucide="info" style="width:0.875rem;height:0.875rem"></i> À propos
                 </div>
                 <h2>La marketplace qui connecte talents et <span class="accent">besoins</span></h2>
-                <p><strong>CamServices</strong> est la première plateforme camerounaise qui met en relation des prestataires qualifiés avec des clients exigeants.</p>
+                <p><strong>warap</strong> est la première plateforme camerounaise qui met en relation des prestataires qualifiés avec des clients exigeants.</p>
                 <p>Notre mission est de simplifier l'accès aux services de qualité tout en offrant aux professionnels une vitrine digitale performante.</p>
                 <div class="about-values">
                     <div class="about-val"><i data-lucide="check-circle"></i> Transparence totale sur les prix</div>
@@ -1642,7 +1642,7 @@
 <section class="section cta-section">
     <div class="cta-inner reveal">
         <h2>Prêt à trouver votre <span class="accent">prestataire</span> ?</h2>
-        <p>Rejoignez des milliers d'utilisateurs qui font confiance à CamServices pour leurs besoins quotidiens.</p>
+        <p>Rejoignez des milliers d'utilisateurs qui font confiance à warap pour leurs besoins quotidiens.</p>
         <div class="cta-btns">
             <a href="services.html" class="btn btn-primary btn-lg">
                 <i data-lucide="search"></i> Explorer les services
@@ -1659,7 +1659,8 @@
     <div class="footer-inner">
         <div class="footer-brand">
             <a href="landing.html" class="nav-logo">
-                <img src="../asset/logo.svg" alt="CamServices" style="height: 82px;">
+                <img src="../asset/logo.svg" alt="warap" style="height: 32px;">
+
             </a>
             <p>La première marketplace de services professionnels au Cameroun. Trouvez les meilleurs prestataires près de chez vous.</p>
         </div>
@@ -1685,7 +1686,7 @@
         </div>
     </div>
     <div class="footer-bottom">
-        <p>© 2026 CamServices — Tous droits réservés</p>
+        <p>© 2026 warap — Tous droits réservés</p>
     </div>
 </footer>
 
@@ -1702,8 +1703,8 @@ var categoryIcons = {
 
 var testimonials = [
     {name:'Jean-Marie K.',role:'Client à Douala',text:'Service impeccable ! J\'ai trouvé un plombier en moins de 2h. Très professionnel et tarif transparent.',stars:5,img:''},
-    {name:'Aïcha N.',role:'Cliente à Yaoundé',text:'CamServices m\'a permis de trouver une femme de ménage de confiance. Je recommande vivement !',stars:5,img:''},
-    {name:'Patrick D.',role:'Prestataire',text:'Grâce à CamServices, j\'ai doublé ma clientèle en 3 mois. La plateforme est vraiment bien pensée.',stars:4,img:''}
+    {name:'Aïcha N.',role:'Cliente à Yaoundé',text:'warap m\'a permis de trouver une femme de ménage de confiance. Je recommande vivement !',stars:5,img:''},
+    {name:'Patrick D.',role:'Prestataire',text:'Grâce à warap, j\'ai doublé ma clientèle en 3 mois. La plateforme est vraiment bien pensée.',stars:4,img:''}
 ];
 
 var SUPABASE_URL = 'https://cwubxwbzzuigctvgdygv.supabase.co';
@@ -1808,7 +1809,7 @@ function renderFeaturedServices(services) {
     grid.innerHTML = services.map(function(s, i) {
         var p = s.provider || {};
         var initials = (p.full_name || '?').split(' ').map(function(n){return n[0];}).join('').substring(0,2).toUpperCase();
-        return '<a href="service-detail.html?id=' + s.id + '" class="feat-card reveal" style="transition-delay:' + (i * 0.07) + 's"><div class="feat-img">' + (s.image_url ? '<img src="' + escapeHtml(s.image_url) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' : '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:var(--primary-dim)"><i data-lucide="' + (categoryIcons[s.category] || 'briefcase') + '" style="width:48px;height:48px;color:var(--primary)"></i></div>') + '<span class="fi-price">' + formatPrice(s.price) + '</span></div><div class="feat-body"><div class="feat-title">' + escapeHtml(s.title) + '</div><div class="feat-desc">' + escapeHtml(s.description || 'Service professionnel disponible sur CamServices.') + '</div></div><div class="feat-foot"><div class="feat-provider"><div class="feat-avatar">' + (p.profile_photo_url ? '<img src="' + p.profile_photo_url + '">' : initials) + '</div><div><div class="feat-pname">' + escapeHtml(p.full_name || 'Prestataire') + '</div><div class="feat-ploc">' + escapeHtml(p.city || '') + '</div></div></div>' + (p.is_verified ? '<span class="verified-sm"><i data-lucide="shield-check"></i> Vérifié</span>' : '') + '</div></a>';
+        return '<a href="service-detail.html?id=' + s.id + '" class="feat-card reveal" style="transition-delay:' + (i * 0.07) + 's"><div class="feat-img">' + (s.image_url ? '<img src="' + escapeHtml(s.image_url) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' : '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:var(--primary-dim)"><i data-lucide="' + (categoryIcons[s.category] || 'briefcase') + '" style="width:48px;height:48px;color:var(--primary)"></i></div>') + '<span class="fi-price">' + formatPrice(s.price) + '</span></div><div class="feat-body"><div class="feat-title">' + escapeHtml(s.title) + '</div><div class="feat-desc">' + escapeHtml(s.description || 'Service professionnel disponible sur warap.') + '</div></div><div class="feat-foot"><div class="feat-provider"><div class="feat-avatar">' + (p.profile_photo_url ? '<img src="' + p.profile_photo_url + '">' : initials) + '</div><div><div class="feat-pname">' + escapeHtml(p.full_name || 'Prestataire') + '</div><div class="feat-ploc">' + escapeHtml(p.city || '') + '</div></div></div>' + (p.is_verified ? '<span class="verified-sm"><i data-lucide="shield-check"></i> Vérifié</span>' : '') + '</div></a>';
     }).join('');
     lucide.createIcons();
     grid.querySelectorAll('.reveal').forEach(function(el) { revealObserver.observe(el); });

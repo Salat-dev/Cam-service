@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon Panier — CamServices</title>
+    <title>Mon Panier — warap</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -401,7 +401,8 @@
 <nav class="navbar">
     <div class="navbar-inner">
         <a href="landing.html" class="nav-logo">
-            <img src="../asset/logo.svg" alt="CamServices" style="height: 82px;">
+            <img src="../asset/logo.svg" alt="warap" style="height: 42px;">
+
         </a>
         <button class="menu-toggle" id="menuToggle" onclick="toggleMenu()">
             <span></span><span></span><span></span>
@@ -455,11 +456,11 @@
     }
 
     function getCart() {
-        try { return JSON.parse(localStorage.getItem('camservices_cart') || '[]'); }
+        try { return JSON.parse(localStorage.getItem('warap_cart') || '[]'); }
         catch(e) { return []; }
     }
-    function saveCart(cart) { localStorage.setItem('camservices_cart', JSON.stringify(cart)); }
-    function clearCart() { localStorage.removeItem('camservices_cart'); }
+    function saveCart(cart) { localStorage.setItem('warap_cart', JSON.stringify(cart)); }
+    function clearCart() { localStorage.removeItem('warap_cart'); }
 
     function updateCartCount() {
         var el = document.getElementById('cartCount');
@@ -477,16 +478,20 @@
         return _isUserLoggedIn;
     }
 
-    async function requireAuth(actionLabel) {
-        var { data } = await sb.auth.getSession();
-        if (data.session) { _isUserLoggedIn = true; return true; }
-        _isUserLoggedIn = false;
-        showAuthRequired(actionLabel);
-        return false;
-    }
+    // ═══ AUTH ═══
+async function requireAuth(actionLabel) {
+    var { data } = await sb.auth.getSession();
+    if (data.session) { _isUserLoggedIn = true; return true; }
+    _isUserLoggedIn = false;
+    
+    // ✅ Rediriger vers la page de connexion au lieu d'ouvrir un modal
+    localStorage.setItem('warap_redirect_url', window.location.href);
+    window.location.href = 'required-login.html';
+    return false;
+}
 
     function showAuthRequired(actionLabel) {
-        localStorage.setItem('camservices_redirect_url', window.location.href);
+        localStorage.setItem('warap_redirect_url', window.location.href);
 
         var msg = actionLabel
             ? 'Vous devez vous connecter pour ' + actionLabel + '.'

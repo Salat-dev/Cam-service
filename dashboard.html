@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Prestataire — warap</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #22C55E; --primary-hover: #16A34A; --primary-light: #F0FDF4; --primary-dim: rgba(34,197,94,.08);
+            --text-primary: #111827; --text-secondary: #4B5563; --text-muted: #6B7280;
+            --bg: #FFFFFF; --surface: #F9FAFB; --border: #E5E7EB; --border-light: #F3F4F6;
+            --accent: #F59E0B; --accent-light: #FFFBEB; --error: #EF4444; --error-light: #FEF2F2;
+            --blue: #3B82F6; --blue-light: #EFF6FF; --purple: #7C3AED;
+            --shadow: 0 4px 20px rgba(0,0,0,.06); --shadow-lg: 0 12px 40px rgba(0,0,0,.1);
+            --radius-sm: 8px; --radius: 12px; --radius-lg: 16px; --radius-xl: 20px;
+            --sidebar-w: 240px; --max: 1400px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; background:var(--surface); color:var(--text-primary); display:flex; min-height:100vh; -webkit-font-smoothing:antialiased; }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes spin { to{transform:rotate(360deg)} }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+        @keyframes slideIn { from{opacity:0;transform:translateX(100%)} to{opacity:1;transform:translateX(0)} }
+
+        /* ═══ SIDEBAR ═══ */
+        .sidebar { width:var(--sidebar-w); background:var(--bg); border-right:1px solid var(--border-light); display:flex; flex-direction:column; position:fixed; top:0; left:0; bottom:0; z-index:100; padding:20px 14px; overflow-y:auto; }
+        .sidebar-logo { font-weight:800; font-size:1rem; text-decoration:none; display:flex; align-items:center; gap:6px; margin-bottom:24px; padding:0 8px; color:var(--text-primary); }
+        .sidebar-logo span { color:var(--primary); }
+        .sidebar-user { display:flex; align-items:center; gap:10px; padding:10px; background:var(--surface); border-radius:var(--radius); margin-bottom:20px; }
+        .sidebar-avatar { width:38px; height:38px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.75rem; overflow:hidden; flex-shrink:0; }
+        .sidebar-avatar img { width:100%; height:100%; object-fit:cover; }
+        .sidebar-user-name { font-weight:600; font-size:.8125rem; }
+        .sidebar-user-role { font-size:.6875rem; color:var(--text-muted); }
+        .sidebar-nav { list-style:none; flex:1; }
+        .sidebar-nav a { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--radius-sm); font-size:.8125rem; font-weight:500; color:var(--text-secondary); text-decoration:none; transition:all .2s; margin-bottom:2px; }
+        .sidebar-nav a:hover { background:var(--surface); color:var(--text-primary); }
+        .sidebar-nav a.active { background:var(--primary-dim); color:var(--primary); font-weight:600; }
+        .sidebar-nav a i { width:1rem; height:1rem; }
+        .sidebar-nav .badge { margin-left:auto; background:var(--accent); color:#fff; font-size:.625rem; padding:2px 7px; border-radius:10px; }
+
+        /* ═══ MAIN ═══ */
+        .main-content { flex:1; margin-left:var(--sidebar-w); padding:24px 24px 64px; max-width:100%; }
+        .page-header { margin-bottom:24px; }
+        .page-title { font-weight:800; font-size:1.5rem; }
+        .page-title span { color:var(--primary); }
+        .page-subtitle { font-size:.8125rem; color:var(--text-muted); margin-top:2px; }
+
+        .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-bottom:24px; }
+        .stat-card { background:var(--bg); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:18px; transition:all .3s; }
+        .stat-card:hover { border-color:var(--primary); box-shadow:var(--shadow); transform:translateY(-2px); }
+        .stat-icon { width:36px; height:36px; border-radius:var(--radius); display:flex; align-items:center; justify-content:center; margin-bottom:8px; }
+        .stat-value { font-weight:800; font-size:1.4rem; letter-spacing:-.02em; }
+        .stat-label { font-size:.7rem; color:var(--text-muted); }
+
+        .section-card { background:var(--bg); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:20px; margin-bottom:20px; }
+        .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:10px; }
+        .section-title { font-weight:700; font-size:.95rem; display:flex; align-items:center; gap:8px; }
+        .section-title i { color:var(--primary); }
+
+        .table-wrapper { overflow-x:auto; }
+        table { width:100%; border-collapse:collapse; font-size:.75rem; }
+        th { text-align:left; font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); padding:8px 10px; border-bottom:1px solid var(--border); white-space:nowrap; }
+        td { padding:8px 10px; border-bottom:1px solid var(--border-light); }
+        tr:hover td { background:var(--surface); }
+
+        .status-badge { display:inline-flex; align-items:center; gap:3px; padding:3px 8px; border-radius:100px; font-size:.65rem; font-weight:600; }
+        .status-pending { background:var(--accent-light); color:#D97706; }
+        .status-confirmed { background:var(--blue-light); color:var(--blue); }
+        .status-completed { background:var(--primary-light); color:var(--primary); }
+        .status-cancelled { background:var(--error-light); color:var(--error); }
+
+        .btn { display:inline-flex; align-items:center; gap:5px; padding:7px 14px; border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.75rem; font-weight:600; cursor:pointer; border:none; text-decoration:none; transition:all .2s; }
+        .btn-primary { background:var(--primary); color:#fff; }
+        .btn-primary:hover { background:var(--primary-hover); }
+        .btn-outline { background:var(--bg); color:var(--text-secondary); border:1px solid var(--border); }
+        .btn-outline:hover { border-color:var(--primary); color:var(--primary); }
+        .btn-accent { background:var(--accent); color:#fff; }
+        .btn-sm { padding:5px 10px; font-size:.68rem; }
+        .action-group { display:flex; gap:4px; flex-wrap:wrap; }
+
+        .quick-actions { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+        .quick-action { display:flex; align-items:center; gap:6px; padding:10px 16px; background:var(--bg); border:1px solid var(--border-light); border-radius:var(--radius); font-size:.78rem; font-weight:500; cursor:pointer; transition:all .2s; text-decoration:none; color:var(--text-primary); }
+        .quick-action:hover { border-color:var(--primary); background:var(--primary-dim); }
+
+        .alert-card { background:var(--blue-light); border:1px solid rgba(59,130,246,.2); border-radius:var(--radius); padding:14px 16px; margin-bottom:12px; display:flex; align-items:flex-start; gap:10px; font-size:.8125rem; }
+        .alert-card i { color:var(--blue); flex-shrink:0; margin-top:1px; }
+        .alert-card.warning { background:var(--accent-light); border-color:rgba(245,158,11,.2); }
+        .alert-card.warning i { color:var(--accent); }
+        .alert-card.success { background:var(--primary-light); border-color:rgba(34,197,94,.2); }
+        .alert-card.success i { color:var(--primary); }
+
+        .toggle-switch { position:relative; width:44px; height:24px; background:var(--border); border-radius:12px; cursor:pointer; transition:background .3s; }
+        .toggle-switch.active { background:var(--primary); }
+        .toggle-switch::after { content:''; position:absolute; top:2px; left:2px; width:20px; height:20px; background:#fff; border-radius:50%; transition:transform .3s; }
+        .toggle-switch.active::after { transform:translateX(20px); }
+
+        .progress-bar { height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+        .progress-fill { height:100%; background:var(--primary); border-radius:3px; transition:width .5s; }
+
+        .profile-strength { background:var(--bg); border:1px solid var(--border-light); border-radius:var(--radius); padding:14px; margin-bottom:16px; }
+        .profile-strength .progress-fill { background:var(--accent); }
+
+        @media (max-width:900px) {
+            .sidebar { display:none; }
+            .main-content { margin-left:0; padding:16px 12px; }
+            .stats-grid { grid-template-columns:repeat(2,1fr); }
+        }
+        @media (max-width:500px) {
+            .stats-grid { grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+    <a href="#" class="sidebar-logo">⚡ <span>warap</span></a>
+    <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sidebarAvatar">--</div>
+        <div>
+            <div class="sidebar-user-name" id="sidebarName">Chargement...</div>
+            <div class="sidebar-user-role">Prestataire</div>
+        </div>
+    </div>
+    <ul class="sidebar-nav" id="sidebarNav">
+        <li><a href="#" class="active" data-tab="overview"><i data-lucide="layout-dashboard"></i> Vue d'ensemble</a></li>
+        <li><a href="#" data-tab="requests"><i data-lucide="inbox"></i> Demandes <span class="badge" id="requestBadge">0</span></a></li>
+        <li><a href="#" data-tab="availability"><i data-lucide="clock"></i> Disponibilité</a></li>
+        <li><a href="#" data-tab="earnings"><i data-lucide="banknote"></i> Revenus</a></li>
+        <li><a href="#" data-tab="profile"><i data-lucide="user-circle"></i> Profil pro</a></li>
+        <li><a href="#" data-tab="reputation"><i data-lucide="star"></i> Réputation</a></li>
+        <li><a href="#" data-tab="chat"><i data-lucide="message-circle"></i> Messages <span class="badge" id="msgBadge">0</span></a></li>
+    </ul>
+    <a href="./login copy.html" onclick="logout()" style="display:flex;align-items:center;gap:8px;padding:10px;color:var(--error);text-decoration:none;font-size:.8125rem"><i data-lucide="log-out" style="width:1rem;height:1rem"></i> Déconnexion</a>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main-content" id="mainContent"></main>
+
+<script>
+const SUPABASE_URL = 'https://cwubxwbzzuigctvgdygv.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dWJ4d2J6enVpZ2N0dmdkeWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzI2MTgsImV4cCI6MjA5MzgwODYxOH0.0mwBNo_S5yItQQjq2at9GNRN74ooZRBJIbZGDH9L2uk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+let currentUser = null, currentTab = 'overview';
+
+lucide.createIcons();
+init();
+
+async function init() {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { window.location.href = '../login.html'; return; }
+    const { data: profile } = await sb.from('users').select('*').eq('id', user.id).single();
+    if (!profile || profile.role !== 'prestataire') { window.location.href = '../landing.html'; return; }
+    currentUser = profile;
+    updateSidebar();
+    document.querySelectorAll('#sidebarNav a').forEach(a => a.addEventListener('click', function(e) {
+        e.preventDefault(); document.querySelectorAll('#sidebarNav a').forEach(x=>x.classList.remove('active')); this.classList.add('active');
+        currentTab = this.dataset.tab; loadTab(currentTab);
+    }));
+    loadTab('overview');
+}
+
+function updateSidebar() {
+    document.getElementById('sidebarName').textContent = currentUser.full_name || 'Prestataire';
+    const av = document.getElementById('sidebarAvatar');
+    if (currentUser.profile_photo_url) av.innerHTML = `<img src="${currentUser.profile_photo_url}" alt="">`;
+    else av.textContent = (currentUser.full_name||'?').split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+}
+
+async function logout() { await sb.auth.signOut(); window.location.href = '../landing.html'; }
+function esc(t) { const d=document.createElement('div'); d.textContent=t||''; return d.innerHTML; }
+function fmt(p) { return new Intl.NumberFormat('fr-FR',{style:'currency',currency:'XAF',maximumFractionDigits:0}).format(p||0); }
+function fmtDate(d) { return d?new Date(d).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}):'—'; }
+
+async function loadTab(tab) {
+    const c = document.getElementById('mainContent');
+    switch(tab) {
+        case 'overview': c.innerHTML = await renderOverview(); await loadOverviewData(); break;
+        case 'requests': c.innerHTML = renderRequests(); await loadRequestsData(); break;
+        case 'availability': c.innerHTML = renderAvailability(); break;
+        case 'earnings': c.innerHTML = await renderEarnings(); break;
+        case 'profile': c.innerHTML = renderProfile(); break;
+        case 'reputation': c.innerHTML = await renderReputation(); break;
+        case 'chat': c.innerHTML = renderChat(); break;
+    }
+    lucide.createIcons();
+}
+
+// ═══ OVERVIEW ═══
+async function renderOverview() {
+    return `<div class="page-header"><h1 class="page-title">Bonjour <span>${esc(currentUser.full_name?.split(' ')[0]||'')}</span></h1><p class="page-subtitle">${new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}</p></div>
+    <div class="quick-actions">
+        <a href="#" class="quick-action" onclick="loadTab('requests');return false"><i data-lucide="inbox"></i> Demandes</a>
+        <a href="#" class="quick-action" onclick="loadTab('availability');return false"><i data-lucide="toggle-right"></i> Disponibilité</a>
+        <a href="#" class="quick-action" onclick="loadTab('earnings');return false"><i data-lucide="banknote"></i> Revenus</a>
+        <a href="#" class="quick-action" onclick="loadTab('profile');return false"><i data-lucide="user-circle"></i> Profil</a>
+    </div>
+    <div id="alertsContainer"></div>
+    <div class="stats-grid" id="overviewStats"></div>
+    <div class="section-card"><div class="section-header"><h3 class="section-title"><i data-lucide="calendar"></i> Commandes récentes</h3></div><div class="table-wrapper" id="recentOrders"></div></div>`;
+}
+async function loadOverviewData() {
+    const now = new Date(), today = new Date(now.getFullYear(),now.getMonth(),now.getDate()).toISOString();
+    const [pending, confirmed, completed, todayOrders, allOrders, stats] = await Promise.all([
+        sb.from('orders').select('*',{count:'exact',head:true}).eq('provider_id',currentUser.id).eq('status','pending'),
+        sb.from('orders').select('*',{count:'exact',head:true}).eq('provider_id',currentUser.id).eq('status','confirmed'),
+        sb.from('orders').select('*',{count:'exact',head:true}).eq('provider_id',currentUser.id).eq('status','completed'),
+        sb.from('orders').select('*').eq('provider_id',currentUser.id).gte('created_at',today),
+        sb.from('orders').select('*, service:service_id(title)').eq('provider_id',currentUser.id).order('created_at',{ascending:false}).limit(5),
+        sb.from('provider_stats').select('*').eq('provider_id',currentUser.id).maybeSingle()
+    ]);
+    document.getElementById('requestBadge').textContent = pending.count || 0;
+    const st = stats.data || {};
+    const totalRevenue = allOrders.data?.filter(o=>o.status==='completed').reduce((s,o)=>s+(o.total_amount||0),0)||0;
+    document.getElementById('overviewStats').innerHTML = [
+        {icon:'inbox',color:'#F59E0B',bg:'#FFFBEB',val:pending.count||0,label:'Nouvelles demandes'},
+        {icon:'check-circle',color:'#3B82F6',bg:'#EFF6FF',val:confirmed.count||0,label:'En cours'},
+        {icon:'flag',color:'#22C55E',bg:'#F0FDF4',val:completed.count||0,label:'Terminées'},
+        {icon:'banknote',color:'#7C3AED',bg:'#F5F3FF',val:fmt(totalRevenue),label:'Revenus'},
+        {icon:'star',color:'#F59E0B',bg:'#FFFBEB',val:st.average_rating?st.average_rating.toFixed(1):'—',label:'Note'},
+        {icon:'trending-up',color:'#22C55E',bg:'#F0FDF4',val:st.response_rate?Math.round(st.response_rate)+'%':'—',label:'Taux réponse'}
+    ].map(s=>`<div class="stat-card"><div class="stat-icon" style="background:${s.bg};color:${s.color}"><i data-lucide="${s.icon}" style="width:1rem;height:1rem"></i></div><div class="stat-value">${s.val}</div><div class="stat-label">${s.label}</div></div>`).join('');
+    document.getElementById('recentOrders').innerHTML = allOrders.data?.length ? `<table><thead><tr><th>Client</th><th>Service</th><th>Montant</th><th>Statut</th><th>Date</th></tr></thead><tbody>${allOrders.data.map(o=>`<tr><td><strong>${esc(o.client_name||'—')}</strong></td><td>${esc(o.service?.title||'—')}</td><td>${fmt(o.total_amount)}</td><td><span class="status-badge status-${o.status}">${o.status}</span></td><td>${fmtDate(o.created_at)}</td></tr>`).join('')}</tbody></table>` : '<p style="color:var(--text-muted);font-size:.8125rem">Aucune commande</p>';
+    // Alertes
+    const alerts = [];
+    if ((pending.count||0) > 0) alerts.push({icon:'inbox',text:`${pending.count} nouvelle(s) demande(s) en attente`,type:'warning'});
+    const profileComplete = currentUser.bio && currentUser.profile_photo_url && (currentUser.domain_expertise||[]).length > 0 ? 100 : currentUser.bio ? 70 : currentUser.profile_photo_url ? 50 : 30;
+    if (profileComplete < 80) alerts.push({icon:'user-circle',text:`Profil complété à ${profileComplete}% — Complétez-le pour plus de visibilité`,type:'info'});
+    document.getElementById('alertsContainer').innerHTML = alerts.map(a=>`<div class="alert-card ${a.type==='warning'?'warning':a.type==='success'?'success':''}"><i data-lucide="${a.icon}" style="width:1.1rem;height:1.1rem"></i><span>${a.text}</span></div>`).join('');
+    lucide.createIcons();
+}
+
+// ═══ REQUESTS ═══
+function renderRequests() { return `<div class="page-header"><h1 class="page-title">Demandes <span>clients</span></h1></div><div class="section-card"><div class="table-wrapper" id="requestsTable"><div class="loading-spinner"><div class="spinner"></div></div></div></div>`; }
+async function loadRequestsData() {
+    const { data } = await sb.from('orders').select('*, service:service_id(title)').eq('provider_id',currentUser.id).order('created_at',{ascending:false});
+    document.getElementById('requestsTable').innerHTML = data?.length ? `<table><thead><tr><th>Client</th><th>Téléphone</th><th>Service</th><th>Montant</th><th>Adresse</th><th>Statut</th><th>Actions</th></tr></thead><tbody>${data.map(o=>`<tr>
+        <td><strong>${esc(o.client_name||'—')}</strong></td><td>${esc(o.client_phone||'—')}</td><td>${esc(o.service?.title||'—')}</td><td>${fmt(o.total_amount)}</td><td>${esc(o.client_address||'—')}</td>
+        <td><span class="status-badge status-${o.status}">${o.status}</span></td>
+        <td><div class="action-group">
+            ${o.status==='pending'?`<button class="btn btn-primary btn-sm" onclick="updateOrderStatus('${o.id}','confirmed')"><i data-lucide="check" style="width:.7rem;height:.7rem"></i> Accepter</button><button class="btn btn-outline btn-sm" onclick="updateOrderStatus('${o.id}','cancelled')"><i data-lucide="x" style="width:.7rem;height:.7rem"></i></button>`:''}
+            ${o.status==='confirmed'?`<button class="btn btn-accent btn-sm" onclick="updateOrderStatus('${o.id}','completed')"><i data-lucide="flag" style="width:.7rem;height:.7rem"></i> Terminer</button>`:''}
+            ${o.client_phone?`<a href="https://wa.me/${o.client_phone.replace(/[^0-9]/g,'')}" target="_blank" class="btn btn-outline btn-sm"><i data-lucide="message-circle" style="width:.7rem;height:.7rem"></i></a>`:''}
+        </div></td></tr>`).join('')}</tbody></table>` : '<p style="color:var(--text-muted)">Aucune demande</p>';
+    lucide.createIcons();
+}
+async function updateOrderStatus(id, status) {
+    await sb.from('orders').update({status}).eq('id',id);
+    loadRequestsData(); loadOverviewData();
+}
+
+// ═══ AVAILABILITY ═══
+function renderAvailability() {
+    const isAvailable = currentUser.status === 'active';
+    return `<div class="page-header"><h1 class="page-title">Disponibilité</h1></div>
+    <div class="section-card">
+        <div class="section-header"><h3 class="section-title"><i data-lucide="toggle-right"></i> Statut</h3></div>
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+            <div class="toggle-switch ${isAvailable?'active':''}" id="availabilityToggle" onclick="toggleAvailability()"></div>
+            <span style="font-weight:600;font-size:.875rem">${isAvailable?'Disponible maintenant':'Indisponible'}</span>
+        </div>
+        <div style="background:var(--surface);border-radius:var(--radius);padding:14px;font-size:.8125rem;color:var(--text-secondary)">
+            <p><i data-lucide="map-pin" style="width:.875rem;height:.875rem;vertical-align:middle;margin-right:4px;color:var(--primary)"></i> Zone : ${esc(currentUser.city||'Non définie')} · ${esc(currentUser.neighborhood||'')}</p>
+            <p style="margin-top:6px"><i data-lucide="clock" style="width:.875rem;height:.875rem;vertical-align:middle;margin-right:4px;color:var(--primary)"></i> Horaires configurables dans vos services</p>
+        </div>
+    </div>`;
+}
+async function toggleAvailability() {
+    const newStatus = currentUser.status === 'active' ? 'inactive' : 'active';
+    await sb.from('users').update({ status: newStatus }).eq('id', currentUser.id);
+    currentUser.status = newStatus;
+    const tgl = document.getElementById('availabilityToggle');
+    tgl.classList.toggle('active');
+    tgl.nextElementSibling.textContent = newStatus === 'active' ? 'Disponible maintenant' : 'Indisponible';
+}
+
+// ═══ EARNINGS ═══
+async function renderEarnings() {
+    const { data: orders } = await sb.from('orders').select('*').eq('provider_id',currentUser.id).eq('status','completed');
+    const total = (orders||[]).reduce((s,o)=>s+(o.total_amount||0),0);
+    return `<div class="page-header"><h1 class="page-title">Mes <span>revenus</span></h1></div>
+    <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon" style="background:#F0FDF4;color:#22C55E"><i data-lucide="banknote" style="width:1rem;height:1rem"></i></div><div class="stat-value">${fmt(total)}</div><div class="stat-label">Revenus totaux</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#EFF6FF;color:#3B82F6"><i data-lucide="shopping-bag" style="width:1rem;height:1rem"></i></div><div class="stat-value">${orders?.length||0}</div><div class="stat-label">Missions terminées</div></div>
+    </div>
+    <div class="section-card"><div class="section-header"><h3 class="section-title"><i data-lucide="smartphone"></i> Retrait Mobile Money</h3></div><p style="font-size:.8125rem;color:var(--text-muted)">MTN MoMo · Orange Money — Module à venir</p></div>`;
+}
+
+// ═══ PROFILE ═══
+function renderProfile() {
+    const p = currentUser;
+    const strength = (p.bio?30:0)+(p.profile_photo_url?30:0)+((p.domain_expertise||[]).length>0?20:0)+(p.education?20:0);
+    return `<div class="page-header"><h1 class="page-title">Profil <span>pro</span></h1></div>
+    <div class="profile-strength"><div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:.75rem"><span>Complétion du profil</span><span style="font-weight:600">${strength}%</span></div><div class="progress-bar"><div class="progress-fill" style="width:${strength}%"></div></div></div>
+    <div class="section-card">
+        <div class="section-header"><h3 class="section-title"><i data-lucide="user"></i> Infos</h3></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:.8125rem">
+            <div><strong>Nom :</strong> ${esc(p.full_name)}</div><div><strong>Téléphone :</strong> ${esc(p.phone||'—')}</div>
+            <div><strong>Ville :</strong> ${esc(p.city||'—')}</div><div><strong>Quartier :</strong> ${esc(p.neighborhood||'—')}</div>
+            <div><strong>Expérience :</strong> ${esc(p.education||'—')}</div><div><strong>Statut :</strong> ${p.status}</div>
+        </div>
+    </div>`;
+}
+
+// ═══ REPUTATION ═══
+async function renderReputation() {
+    const { data: stats } = await sb.from('provider_stats').select('*').eq('provider_id',currentUser.id).maybeSingle();
+    const st = stats || {};
+    const isVerified = currentUser.is_verified;
+    return `<div class="page-header"><h1 class="page-title">Réputation</h1></div>
+    <div class="stats-grid">
+        <div class="stat-card"><div class="stat-value">${st.average_rating?st.average_rating.toFixed(1):'—'}</div><div class="stat-label">Note moyenne</div></div>
+        <div class="stat-card"><div class="stat-value">${st.total_reviews||0}</div><div class="stat-label">Avis reçus</div></div>
+        <div class="stat-card"><div class="stat-value">${st.completed_orders||0}</div><div class="stat-label">Missions</div></div>
+        <div class="stat-card"><div class="stat-value">${isVerified?'✅':'❌'}</div><div class="stat-label">Vérifié</div></div>
+    </div>
+    <div class="section-card"><div class="section-header"><h3 class="section-title"><i data-lucide="shield-check"></i> Badge vérifié</h3></div><p style="font-size:.8125rem;color:var(--text-muted)">${isVerified?'✅ Votre profil est vérifié.':'⚠️ Faites vérifier votre profil pour plus de confiance.'}</p></div>`;
+}
+
+// ═══ CHAT ═══
+function renderChat() {
+    return `<div class="page-header"><h1 class="page-title">Messages</h1></div>
+    <div class="section-card"><div class="empty-state"><i data-lucide="message-circle" style="width:2rem;height:2rem;color:var(--primary)"></i><p>Chat intégré — Module à venir</p></div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">
+        <span class="btn btn-outline btn-sm">“Je suis en route”</span>
+        <span class="btn btn-outline btn-sm">“Pouvez-vous envoyer une photo ?”</span>
+        <span class="btn btn-outline btn-sm">“J'arrive dans 20 minutes”</span>
+    </div></div>`;
+}
+</script>
+</body>
+</html>

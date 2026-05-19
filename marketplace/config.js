@@ -1,6 +1,6 @@
 /**
  * ═══════════════════════════════════════════════════════════════
- *  CamServices — config.js
+ *  warap — config.js
  *  Initialisation du client Supabase partagé par toutes les pages
  *
  *  ⚠️  Ce fichier DOIT être chargé après le SDK Supabase :
@@ -30,7 +30,7 @@ window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
   },
   global: {
     headers: {
-      'X-Client-Info': 'camservices-web/1.0',
+      'X-Client-Info': 'warap-web/1.0',
     },
   },
 });
