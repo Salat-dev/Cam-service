@@ -35,7 +35,7 @@ async function requireAuth(actionLabel) {
     _isUserLoggedIn = false;
     
     // ✅ Rediriger vers la page de connexion au lieu d'ouvrir un modal
-    localStorage.setItem('warap_redirect_url', window.location.href);
+    localStorage.setItem('travailici_redirect_url', window.location.href);
     window.location.href = 'required-login.html';
     return false;
 }
@@ -44,7 +44,7 @@ function showAuthModal(actionLabel) {
     var existing = document.getElementById('authModalOverlay');
     if (existing) existing.remove();
 
-    localStorage.setItem('warap_redirect_url', window.location.href);
+    localStorage.setItem('travailici_redirect_url', window.location.href);
 
     var overlay = document.createElement('div');
     overlay.id = 'authModalOverlay';
@@ -141,7 +141,7 @@ function renderServiceDetail() {
     var p = _currentProvider;
 
     var phone = (p.phone || '').replace(/\s+/g, '').replace('+', '');
-    var whatsappUrl = 'https://wa.me/' + phone + '?text=' + encodeURIComponent('Bonjour, je suis intéressé par votre service "' + s.title + '" sur warap.');
+    var whatsappUrl = 'https://wa.me/' + phone + '?text=' + encodeURIComponent('Bonjour, je suis intéressé par votre service "' + s.title + '" sur travailici.');
     var initials = (p.full_name || '?').split(' ').map(function(n) { return n[0]; }).join('').substring(0, 2).toUpperCase();
 
     var html = '';
@@ -406,7 +406,7 @@ async function handleAddToCart() {
     var isAuth = await requireAuth('ajouter ce service à votre panier');
     if (!isAuth) return;
 
-    var cart = JSON.parse(localStorage.getItem('warap_cart') || '[]');
+    var cart = JSON.parse(localStorage.getItem('travailici_cart') || '[]');
     for (var i = 0; i < cart.length; i++) {
         if (cart[i].serviceId === _currentService.id) {
             showToast('Ce service est déjà dans votre panier.', 'info');
@@ -422,13 +422,13 @@ async function handleAddToCart() {
         providerId: _currentProvider.id,
         addedAt: new Date().toISOString()
     });
-    localStorage.setItem('warap_cart', JSON.stringify(cart));
+    localStorage.setItem('travailici_cart', JSON.stringify(cart));
     updateNavCartCount();
     showToast('Service ajouté au panier !', 'success');
 }
 
 function updateNavCartCount() {
-    var cart = JSON.parse(localStorage.getItem('warap_cart') || '[]');
+    var cart = JSON.parse(localStorage.getItem('travailici_cart') || '[]');
     var el = document.getElementById('cartCountNav');
     if (el) { el.textContent = cart.length; el.style.display = cart.length > 0 ? 'inline' : 'none'; }
 }

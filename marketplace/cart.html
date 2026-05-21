@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon Panier — warap</title>
+    <title>Mon Panier — travailici</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -401,7 +401,7 @@
 <nav class="navbar">
     <div class="navbar-inner">
         <a href="landing.html" class="nav-logo">
-            <img src="../asset/logo.svg" alt="warap" style="height: 40px;">
+            <img src="../asset/logo.svg" alt="travailici" style="height:60px;">
 
         </a>
         <button class="menu-toggle" id="menuToggle" onclick="toggleMenu()">
@@ -456,11 +456,11 @@
     }
 
     function getCart() {
-        try { return JSON.parse(localStorage.getItem('warap_cart') || '[]'); }
+        try { return JSON.parse(localStorage.getItem('travailici_cart') || '[]'); }
         catch(e) { return []; }
     }
-    function saveCart(cart) { localStorage.setItem('warap_cart', JSON.stringify(cart)); }
-    function clearCart() { localStorage.removeItem('warap_cart'); }
+    function saveCart(cart) { localStorage.setItem('travailici_cart', JSON.stringify(cart)); }
+    function clearCart() { localStorage.removeItem('travailici_cart'); }
 
     function updateCartCount() {
         var el = document.getElementById('cartCount');
@@ -485,13 +485,13 @@ async function requireAuth(actionLabel) {
     _isUserLoggedIn = false;
     
     // ✅ Rediriger vers la page de connexion au lieu d'ouvrir un modal
-    localStorage.setItem('warap_redirect_url', window.location.href);
+    localStorage.setItem('travailici_redirect_url', window.location.href);
     window.location.href = 'required-login.html';
     return false;
 }
 
     function showAuthRequired(actionLabel) {
-        localStorage.setItem('warap_redirect_url', window.location.href);
+        localStorage.setItem('travailici_redirect_url', window.location.href);
 
         var msg = actionLabel
             ? 'Vous devez vous connecter pour ' + actionLabel + '.'

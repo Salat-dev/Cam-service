@@ -1,5 +1,5 @@
 -- ============================================================
--- warap — Script SQL pour Supabase
+-- travailici — Script SQL pour Supabase
 -- ============================================================
 -- Exécutez ce script dans l'éditeur SQL de votre dashboard Supabase
 -- (Dashboard > SQL Editor > New Query)

@@ -1,4 +1,4 @@
-# 🇨🇲 warap — Marketplace de Services au Cameroun
+# 🇨🇲 travailici — Marketplace de Services au Cameroun
 
 <div align="center">
 
@@ -8,7 +8,7 @@ Plomberie • Électricité • Design • Photographie • Beauté • Bâtimen
 
 ---
 
-[🌐 Démo Live](https://warap.vercel.app) · [📋 Documentation](#installation) · [🐛 Signaler un bug](https://github.com/votre-repo/issues)
+[🌐 Démo Live](https://travailici.vercel.app) · [📋 Documentation](#installation) · [🐛 Signaler un bug](https://github.com/votre-repo/issues)
 
 </div>
 
@@ -62,7 +62,7 @@ Plomberie • Électricité • Design • Photographie • Beauté • Bâtimen
 ## 🏗️ Architecture du Projet
 
 ```
-warap/
+travailici/
 │
 ├── index.html                  # Point d'entrée → redirige vers landing
 ├── landing.html                # Page d'accueil dynamique (stats, catégories, services populaires)
@@ -155,8 +155,8 @@ users (1) ──→ (N) profile_views
 ### 1. Cloner le projet
 
 ```bash
-git clone https://github.com/votre-repo/warap.git
-cd warap
+git clone https://github.com/votre-repo/travailici.git
+cd travailici
 ```
 
 ### 2. Configurer Supabase

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Mon Profil — warap Dashboard</title>
+    <title>Mon Profil — travailici Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -109,7 +109,64 @@
         .modal-close:hover { background:var(--surface); color:var(--text-primary); }
         .modal-body { padding:24px 28px 28px; }
         .form-actions { display:flex; gap:12px; justify-content:flex-end; padding-top:8px; }
-
+ .documents-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .document-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            transition: all 0.2s;
+        }
+        .document-item:hover {
+            border-color: var(--primary);
+            background: #FFFFFF;
+        }
+        .document-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .document-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .document-name {
+            font-weight: 600;
+            font-size: 0.8125rem;
+            color: var(--text-primary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .document-meta {
+            font-size: 0.6875rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+        .document-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px;
+            border-radius: 100px;
+            font-size: 0.6875rem;
+            font-weight: 600;
+        }
+        .doc-status-pending { background: #FFF7ED; color: #F59E0B; }
+        .doc-status-approved { background: var(--primary-light); color: var(--primary); }
+        .doc-status-rejected { background: var(--error-light); color: var(--error); }
         /* ═══════════════════════════════════════════
            BOTTOM NAVBAR MOBILE
            ═══════════════════════════════════════════ */
@@ -192,7 +249,7 @@
 <!-- ═══ SIDEBAR (Desktop) ═══ -->
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
-                <img src="../asset/logo.svg" alt="warap" style="height: 42px;">    </div>
+                <img src="../asset/logo.svg" alt="travailici" style="height: 42px;">    </div>
     <div class="sidebar-user">
         <div class="sidebar-avatar" id="sidebarAvatar"></div>
         <div class="sidebar-user-info">
@@ -350,32 +407,199 @@
 </style>
 
 <script>
+// ═══════════════════════════════════════════════════════════════
+// MON PROFIL - JavaScript Complet
+// Table: verification_documents | Buckets: profile-photos, verification-documents
+// ═══════════════════════════════════════════════════════════════
+
+// ─── A. SUPABASE ─────────────────────────────────────────────
 const SUPABASE_URL = 'https://cwubxwbzzuigctvgdygv.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dWJ4d2J6enVpZ2N0dmdkeWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzI2MTgsImV4cCI6MjA5MzgwODYxOH0.0mwBNo_S5yItQQjq2at9GNRN74ooZRBJIbZGDH9L2uk';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-let currentUser = null, profileData = {}, skills = [], newPhotoFile = null;
+// ─── B. VARIABLES GLOBALES ───────────────────────────────────
+let currentUser = null;
+let profileData = {};
+let skills = [];
+let newPhotoFile = null;
+let verificationDocuments = [];
 
-// ═══ BOTTOM NAV ═══
-function setActiveBottomNav(navId) { document.querySelectorAll('.bottom-nav-link').forEach(l=>l.classList.remove('active')); const link=document.querySelector(`[data-nav-id="${navId}"]`); if(link) link.classList.add('active'); }
-function syncBadges() { const svc=document.getElementById('serviceBadge'),ord=document.getElementById('orderBadge'),bSvc=document.getElementById('bottom-serviceBadge'),bOrd=document.getElementById('bottom-orderBadge'); if(svc&&bSvc){bSvc.textContent=svc.textContent;bSvc.style.display=parseInt(svc.textContent)>0?'inline':'none';} if(ord&&bOrd){bOrd.textContent=ord.textContent;bOrd.style.display=parseInt(ord.textContent)>0?'inline':'none';} }
-let moreMenuOpen=false;
-document.addEventListener('DOMContentLoaded',()=>{ const trigger=document.getElementById('moreMenuTrigger'); if(trigger) trigger.addEventListener('click',function(e){e.preventDefault(); moreMenuOpen?(closeMoreMenu()):openMoreMenu(); }); });
-function openMoreMenu(){ closeMoreMenu(); const menu=document.createElement('div'); menu.className='more-menu-dropdown'; menu.id='moreMenuDropdown'; menu.innerHTML=[{href:'../dashboard/portfolio.html',icon:'image',label:'Portfolio'},{href:'../dashboard/activities.html',icon:'award',label:'Activités'},{href:'../dashboard/profile.html',icon:'user-circle',label:'Profil'},{href:'../dashboard/analytics.html',icon:'bar-chart-3',label:'Statistiques'}].map(i=>`<a href="${i.href}"><i data-lucide="${i.icon}"></i> ${i.label}</a>`).join(''); document.body.appendChild(menu); lucide.createIcons(); moreMenuOpen=true; setTimeout(()=>document.addEventListener('click',closeMoreMenuOnClickOutside),0); }
-function closeMoreMenu(){ const m=document.getElementById('moreMenuDropdown'); if(m) m.remove(); moreMenuOpen=false; document.removeEventListener('click',closeMoreMenuOnClickOutside); }
-function closeMoreMenuOnClickOutside(e){ const m=document.getElementById('moreMenuDropdown'),t=document.getElementById('moreMenuTrigger'); if(m&&!m.contains(e.target)&&e.target!==t) closeMoreMenu(); }
-function detectCurrentPage(){ const path=window.location.pathname,map={index:'nav-overview',services:'nav-services',orders:'nav-orders',pricing:'nav-pricing',portfolio:'nav-more',activities:'nav-more',profile:'nav-more',analytics:'nav-more'}; for(const[k,id] of Object.entries(map)){ if(path.includes(k)){ setActiveBottomNav(id); return; } } setActiveBottomNav('nav-overview'); }
+// ─── C. CONSTANTES ────────────────────────────────────────────
+const ALLOWED_FILE_TYPES = [
+    'image/jpeg', 'image/png', 'image/webp',
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/msword'
+];
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 Mo
+const MAX_PHOTO_SIZE = 5 * 1024 * 1024; // 5 Mo
+
+const DOCUMENT_TYPES = [
+    { value: 'cni', label: 'CNI / Carte d\'identité', icon: 'id-card', description: 'Pièce d\'identité nationale en cours de validité' },
+    { value: 'passport', label: 'Passeport', icon: 'book-open', description: 'Passeport en cours de validité' },
+    { value: 'permit', label: 'Permis de conduire', icon: 'car', description: 'Permis de conduire valide' },
+    { value: 'cv', label: 'CV / Curriculum Vitae', icon: 'file-text', description: 'Votre CV professionnel à jour' },
+    { value: 'diploma', label: 'Diplôme / Certificat', icon: 'graduation-cap', description: 'Diplômes, certifications ou attestations' },
+    { value: 'location_plan', label: 'Plan de localisation', icon: 'map-pin', description: 'Plan d\'accès à votre activité ou commerce' },
+    { value: 'other', label: 'Autre document', icon: 'file', description: 'Tout autre document justificatif' }
+];
+
+const DOCUMENT_TYPE_ICONS = {
+    'cni': 'id-card', 'passport': 'book-open', 'permit': 'car',
+    'cv': 'file-text', 'diploma': 'graduation-cap', 'location_plan': 'map-pin', 'other': 'file'
+};
+
+const DOCUMENT_TYPE_COLORS = {
+    'cni': { bg: '#EFF6FF', color: '#3B82F6' },
+    'passport': { bg: '#F5F3FF', color: '#7C3AED' },
+    'permit': { bg: '#FFF7ED', color: '#F59E0B' },
+    'cv': { bg: '#F0FDF4', color: '#22C55E' },
+    'diploma': { bg: '#FEF2F2', color: '#EF4444' },
+    'location_plan': { bg: '#FFFBEB', color: '#D97706' },
+    'other': { bg: '#F9FAFB', color: '#6B7280' }
+};
+
+const DOCUMENT_STATUS_LABELS = {
+    'pending': 'En attente',
+    'approved': 'Approuvé',
+    'rejected': 'Rejeté'
+};
+
+const DOCUMENT_STATUS_CLASSES = {
+    'pending': 'doc-status-pending',
+    'approved': 'doc-status-approved',
+    'rejected': 'doc-status-rejected'
+};
+
+const CITIES = [
+    'Yaoundé', 'Douala', 'Bafoussam', 'Bamenda', 'Maroua', 'Garoua',
+    'Ngaoundéré', 'Kribi', 'Limbe', 'Buea', 'Ebolowa', 'Bertoua'
+];
+
+const EMPLOYMENT_STATUSES = [
+    { value: 'employed', label: 'Employé(e)' },
+    { value: 'self_employed', label: 'Travailleur indépendant' },
+    { value: 'unemployed', label: 'Sans emploi' },
+    { value: 'student', label: 'Étudiant(e)' }
+];
+
+// ─── D. BOTTOM NAVBAR ────────────────────────────────────────
+function setActiveBottomNav(navId) {
+    document.querySelectorAll('.bottom-nav-link').forEach(l => l.classList.remove('active'));
+    const link = document.querySelector(`[data-nav-id="${navId}"]`);
+    if (link) link.classList.add('active');
+}
+
+function syncBadges() {
+    const svc = document.getElementById('serviceBadge');
+    const ord = document.getElementById('orderBadge');
+    const bSvc = document.getElementById('bottom-serviceBadge');
+    const bOrd = document.getElementById('bottom-orderBadge');
+    
+    if (svc && bSvc) {
+        bSvc.textContent = svc.textContent;
+        bSvc.style.display = parseInt(svc.textContent) > 0 ? 'inline' : 'none';
+    }
+    if (ord && bOrd) {
+        bOrd.textContent = ord.textContent;
+        bOrd.style.display = parseInt(ord.textContent) > 0 ? 'inline' : 'none';
+    }
+}
+
+let moreMenuOpen = false;
+document.addEventListener('DOMContentLoaded', () => {
+    const trigger = document.getElementById('moreMenuTrigger');
+    if (trigger) {
+        trigger.addEventListener('click', function(e) {
+            e.preventDefault();
+            moreMenuOpen ? closeMoreMenu() : openMoreMenu();
+        });
+    }
+    
+    // Skills input
+    const skillsInput = document.getElementById('skillsInput');
+    if (skillsInput) {
+        skillsInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const v = this.value.trim();
+                if (v && !skills.includes(v)) {
+                    skills.push(v);
+                    renderSkills();
+                }
+                this.value = '';
+            }
+        });
+    }
+});
+
+function openMoreMenu() {
+    closeMoreMenu();
+    const menu = document.createElement('div');
+    menu.className = 'more-menu-dropdown';
+    menu.id = 'moreMenuDropdown';
+    menu.innerHTML = [
+        { href: '../dashboard/portfolio.html', icon: 'image', label: 'Portfolio' },
+        { href: '../dashboard/activities.html', icon: 'award', label: 'Activités' },
+        { href: '../dashboard/profile.html', icon: 'user-circle', label: 'Profil' },
+        { href: '../dashboard/analytics.html', icon: 'bar-chart-3', label: 'Statistiques' }
+    ].map(i => `<a href="${i.href}"><i data-lucide="${i.icon}"></i> ${i.label}</a>`).join('');
+    document.body.appendChild(menu);
+    lucide.createIcons();
+    moreMenuOpen = true;
+    setTimeout(() => document.addEventListener('click', closeMoreMenuOnClickOutside), 0);
+}
+
+function closeMoreMenu() {
+    const m = document.getElementById('moreMenuDropdown');
+    if (m) m.remove();
+    moreMenuOpen = false;
+    document.removeEventListener('click', closeMoreMenuOnClickOutside);
+}
+
+function closeMoreMenuOnClickOutside(e) {
+    const m = document.getElementById('moreMenuDropdown');
+    const t = document.getElementById('moreMenuTrigger');
+    if (m && !m.contains(e.target) && e.target !== t) closeMoreMenu();
+}
+
+function detectCurrentPage() {
+    const path = window.location.pathname;
+    const map = {
+        'index': 'nav-overview', 'services': 'nav-services', 'orders': 'nav-orders',
+        'pricing': 'nav-pricing', 'portfolio': 'nav-more', 'activities': 'nav-more',
+        'profile': 'nav-more', 'analytics': 'nav-more'
+    };
+    for (const [key, id] of Object.entries(map)) {
+        if (path.includes(key)) { setActiveBottomNav(id); return; }
+    }
+    setActiveBottomNav('nav-overview');
+}
 detectCurrentPage();
 
-// ═══ INIT ═══
+// ─── E. INITIALISATION ───────────────────────────────────────
 async function initDashboard() {
     const { data: { user: authUser } } = await sb.auth.getUser();
     if (!authUser) { window.location.href = '../login.html'; return; }
+
     const { data: profile } = await sb.from('users').select('*').eq('id', authUser.id).maybeSingle();
-    currentUser = profile || { id: authUser.id, email: authUser.email, full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0], role: 'prestataire', is_verified: false };
+
+    currentUser = profile || {
+        id: authUser.id,
+        email: authUser.email,
+        full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0],
+        role: 'prestataire',
+        is_verified: false,
+        profile_photo_url: null
+    };
+
     updateSidebarUI();
-    const { count: svcCount } = await sb.from('services').select('id', { count:'exact', head:true }).eq('user_id', currentUser.id);
-    const { count: ordCount } = await sb.from('orders').select('id', { count:'exact', head:true }).eq('provider_id', currentUser.id).in('status', ['pending','confirmed','in_progress']);
+    await loadVerificationDocuments();
+
+    const { count: svcCount } = await sb.from('services').select('id', { count: 'exact', head: true }).eq('user_id', currentUser.id);
+    const { count: ordCount } = await sb.from('orders').select('id', { count: 'exact', head: true }).eq('provider_id', currentUser.id).in('status', ['pending', 'confirmed', 'in_progress']);
+    
     document.getElementById('serviceBadge').textContent = svcCount || 0;
     document.getElementById('orderBadge').textContent = ordCount || 0;
     syncBadges();
@@ -384,24 +608,89 @@ async function initDashboard() {
 function updateSidebarUI() {
     document.getElementById('sidebarName').textContent = currentUser.full_name || currentUser.email;
     document.getElementById('verifyBadge').style.display = currentUser.is_verified ? 'inline-flex' : 'none';
+    
     const avatar = document.getElementById('sidebarAvatar');
-    if (currentUser.profile_photo_url) { avatar.style.backgroundImage = `url(${currentUser.profile_photo_url})`; avatar.style.backgroundSize = 'cover'; avatar.textContent = ''; }
-    else { avatar.textContent = (currentUser.full_name || 'U').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+    if (currentUser.profile_photo_url) {
+        avatar.style.backgroundImage = `url(${currentUser.profile_photo_url})`;
+        avatar.style.backgroundSize = 'cover';
+        avatar.textContent = '';
+    } else {
+        avatar.style.backgroundImage = '';
+        avatar.textContent = (currentUser.full_name || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    }
 }
 
-async function logout() { await sb.auth.signOut(); window.location.href = '../landing.html'; }
-
-function esc(t) { const d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
-function showToast(msg, type='info') {
-    let w = document.getElementById('_tw'); if(!w){ w=document.createElement('div'); w.id='_tw'; w.style.cssText='position:fixed;top:24px;right:24px;z-index:10000;display:flex;flex-direction:column;gap:10px;pointer-events:none;'; document.body.appendChild(w); }
-    const colors={success:'#22C55E',error:'#EF4444',info:'#F59E0B'}, icons={success:'check-circle',error:'alert-circle',info:'info'};
-    const t=document.createElement('div'); t.style.cssText=`display:flex;align-items:center;gap:10px;padding:14px 20px;background:#fff;border:1px solid #E5E7EB;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.1);font-size:.875rem;color:#111827;pointer-events:auto;min-width:280px;animation:slideInRight .3s ease;border-left:4px solid ${colors[type]};`;
-    t.innerHTML=`<i data-lucide="${icons[type]}" style="width:1.125rem;height:1.125rem;color:${colors[type]};flex-shrink:0"></i><span style="flex:1">${msg}</span><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:#6B7280;padding:0"><i data-lucide="x" style="width:.9rem;height:.9rem"></i></button>`;
-    w.appendChild(t); lucide.createIcons(); setTimeout(()=>{t.style.transition='all .3s';t.style.opacity='0';t.style.transform='translateX(20px)';setTimeout(()=>t.remove(),300);},4000);
+async function logout() {
+    await sb.auth.signOut();
+    window.location.href = '../landing.html';
 }
 
-// ═══ PROFILE ═══
-async function loadProfile() { await initDashboard(); const { data } = await sb.from('users').select('*').eq('id', currentUser.id).single(); if (data) { profileData = data; currentUser = data; } populateForm(); updateSidebarUI(); updatePhotoPreview(); updateVerificationSection(); renderSkills(); lucide.createIcons(); }
+// ─── F. UTILITAIRES ──────────────────────────────────────────
+function esc(t) {
+    if (!t) return '';
+    const d = document.createElement('div');
+    d.textContent = t;
+    return d.innerHTML;
+}
+
+function formatFileSize(bytes) {
+    if (!bytes) return '0 o';
+    if (bytes < 1024) return bytes + ' o';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' Ko';
+    return (bytes / 1048576).toFixed(1) + ' Mo';
+}
+
+function getFileIcon(mimeType) {
+    if (mimeType?.startsWith('image/')) return 'image';
+    if (mimeType === 'application/pdf') return 'file-text';
+    if (mimeType?.includes('word') || mimeType?.includes('document')) return 'file-text';
+    return 'file';
+}
+
+function showToast(message, type = 'info') {
+    let w = document.getElementById('_tw');
+    if (!w) {
+        w = document.createElement('div');
+        w.id = '_tw';
+        w.style.cssText = 'position:fixed;top:24px;right:24px;z-index:10000;display:flex;flex-direction:column;gap:10px;pointer-events:none;';
+        document.body.appendChild(w);
+    }
+    
+    const colors = { success: '#22C55E', error: '#EF4444', info: '#F59E0B' };
+    const icons = { success: 'check-circle', error: 'alert-circle', info: 'info' };
+    
+    const t = document.createElement('div');
+    t.style.cssText = `display:flex;align-items:center;gap:10px;padding:14px 20px;background:#fff;border:1px solid #E5E7EB;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.1);font-size:.875rem;color:#111827;pointer-events:auto;min-width:280px;animation:slideInRight .3s ease;border-left:4px solid ${colors[type]};`;
+    t.innerHTML = `<i data-lucide="${icons[type]}" style="width:1.125rem;height:1.125rem;color:${colors[type]};flex-shrink:0"></i><span style="flex:1">${message}</span><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:#6B7280;padding:0"><i data-lucide="x" style="width:.9rem;height:.9rem"></i></button>`;
+    
+    w.appendChild(t);
+    lucide.createIcons();
+    
+    setTimeout(() => {
+        t.style.transition = 'all .3s';
+        t.style.opacity = '0';
+        t.style.transform = 'translateX(20px)';
+        setTimeout(() => t.remove(), 300);
+    }, 4000);
+}
+
+// ─── G. CHARGEMENT DU PROFIL ─────────────────────────────────
+async function loadProfile() {
+    await initDashboard();
+    
+    const { data } = await sb.from('users').select('*').eq('id', currentUser.id).single();
+    if (data) {
+        profileData = data;
+        currentUser = data;
+    }
+    
+    populateForm();
+    updateSidebarUI();
+    updatePhotoPreview();
+    updateVerificationSection();
+    renderSkills();
+    lucide.createIcons();
+}
 
 function populateForm() {
     document.getElementById('inputFullName').value = profileData.full_name || '';
@@ -414,64 +703,712 @@ function populateForm() {
     document.getElementById('inputEmploymentStatus').value = profileData.employment_status || '';
     document.getElementById('inputEducation').value = profileData.education || '';
     document.getElementById('inputSideActivities').value = profileData.side_activities || '';
-    if (profileData.domain_expertise && Array.isArray(profileData.domain_expertise)) skills = [...profileData.domain_expertise];
+    
+    if (profileData.domain_expertise && Array.isArray(profileData.domain_expertise)) {
+        skills = [...profileData.domain_expertise];
+    }
+    
     document.getElementById('displayName').textContent = profileData.full_name || '--';
     document.getElementById('displayUsername').textContent = '@' + (profileData.username || '--');
 }
 
+// ─── H. PHOTO DE PROFIL ──────────────────────────────────────
 function updatePhotoPreview() {
-    const container = document.getElementById('profilePhotoPreview'), initials = document.getElementById('photoInitials');
-    if (newPhotoFile) { const reader = new FileReader(); reader.onload = function(e) { container.style.backgroundImage = `url(${e.target.result})`; container.style.backgroundSize = 'cover'; container.style.backgroundPosition = 'center'; initials.style.display = 'none'; }; reader.readAsDataURL(newPhotoFile); }
-    else if (profileData.profile_photo_url) { container.style.backgroundImage = `url(${profileData.profile_photo_url})`; container.style.backgroundSize = 'cover'; container.style.backgroundPosition = 'center'; initials.style.display = 'none'; }
-    else { container.style.backgroundImage = ''; container.style.background = 'var(--text-primary)'; initials.style.display = 'block'; initials.textContent = (profileData.full_name || 'U').split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase(); }
+    const container = document.getElementById('profilePhotoPreview');
+    const initials = document.getElementById('photoInitials');
+    
+    if (newPhotoFile) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            container.style.backgroundImage = `url(${e.target.result})`;
+            container.style.backgroundSize = 'cover';
+            container.style.backgroundPosition = 'center';
+            container.style.background = '';
+            initials.style.display = 'none';
+        };
+        reader.readAsDataURL(newPhotoFile);
+    } else if (profileData.profile_photo_url) {
+        container.style.backgroundImage = `url(${profileData.profile_photo_url})`;
+        container.style.backgroundSize = 'cover';
+        container.style.backgroundPosition = 'center';
+        container.style.background = '';
+        initials.style.display = 'none';
+    } else {
+        container.style.backgroundImage = '';
+        container.style.background = 'var(--text-primary)';
+        initials.style.display = 'block';
+        initials.textContent = (profileData.full_name || 'U').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    }
 }
 
-function handlePhotoChange(event) { const file = event.target.files[0]; if (!file) return; if (file.size > 5*1024*1024) { showToast('Photo max 5 Mo', 'error'); return; } if (!['image/jpeg','image/png','image/webp'].includes(file.type)) { showToast('Format: JPG, PNG, WebP', 'error'); return; } newPhotoFile = file; updatePhotoPreview(); }
+function handlePhotoChange(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        showToast('Format non supporté. Utilisez JPG, PNG ou WebP.', 'error');
+        event.target.value = '';
+        return;
+    }
+    
+    if (file.size > MAX_PHOTO_SIZE) {
+        showToast('Photo trop volumineuse. Maximum 5 Mo.', 'error');
+        event.target.value = '';
+        return;
+    }
+    
+    newPhotoFile = file;
+    updatePhotoPreview();
+}
 
-function updateVerificationSection() {
-    const section = document.getElementById('verificationSection'), badge = document.getElementById('profileStatusBadge');
-    if (profileData.is_verified) { badge.innerHTML = '<span class="status-badge status-verified"><i data-lucide="shield-check" style="width:.8rem;height:.8rem"></i> Profil vérifié</span>'; section.innerHTML = '<div style="background:var(--primary-light);border-radius:var(--radius-sm);padding:16px;text-align:center"><i data-lucide="check-circle" style="width:2rem;height:2rem;color:var(--primary);margin-bottom:8px"></i><p style="font-weight:600;font-size:.875rem;color:var(--primary)">Profil vérifié</p><p style="font-size:.75rem;color:var(--text-muted);margin-top:4px">Votre pièce d\'identité a été validée.</p></div>'; }
-    else if (profileData.verification_status === 'pending') { badge.innerHTML = '<span class="status-badge status-pending"><i data-lucide="clock" style="width:.8rem;height:.8rem"></i> Vérification en cours</span>'; section.innerHTML = '<div style="background:#FFF7ED;border-radius:var(--radius-sm);padding:16px;text-align:center"><i data-lucide="clock" style="width:2rem;height:2rem;color:#F59E0B;margin-bottom:8px"></i><p style="font-weight:600;font-size:.875rem;color:#F59E0B">Vérification en cours</p><p style="font-size:.75rem;color:var(--text-muted);margin-top:4px">Délai moyen : 24-48h.</p></div>'; }
-    else { badge.innerHTML = '<span class="status-badge status-unverified"><i data-lucide="shield-off" style="width:.8rem;height:.8rem"></i> Non vérifié</span>'; section.innerHTML = '<button class="btn btn-primary btn-sm" onclick="openVerificationModal()" style="width:100%"><i data-lucide="shield-check"></i> Demander la vérification</button>'; }
+// ─── I. SKILLS / EXPERTISE ───────────────────────────────────
+function renderSkills() {
+    const container = document.getElementById('skillsTags');
+    container.innerHTML = skills.map((s, i) => `
+        <span class="skill-tag">
+            ${esc(s)}
+            <button onclick="removeSkill(${i})">
+                <i data-lucide="x" style="width:.7rem;height:.7rem"></i>
+            </button>
+        </span>
+    `).join('');
     lucide.createIcons();
 }
 
+function removeSkill(i) {
+    skills.splice(i, 1);
+    renderSkills();
+}
+
+// ─── J. DOCUMENTS DE VÉRIFICATION ────────────────────────────
+async function loadVerificationDocuments() {
+    if (!currentUser) return;
+    
+    const { data, error } = await sb
+        .from('verification_documents')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('submitted_at', { ascending: false });
+    
+    if (error) {
+        console.error('Erreur chargement documents:', error);
+        verificationDocuments = [];
+    } else {
+        verificationDocuments = data || [];
+    }
+}
+
+function updateVerificationSection() {
+    const section = document.getElementById('verificationSection');
+    const badge = document.getElementById('profileStatusBadge');
+    
+    const hasApprovedDocs = verificationDocuments.some(d => d.document_status === 'approved');
+    const hasPendingDocs = verificationDocuments.some(d => d.document_status === 'pending');
+    const hasRejectedDocs = verificationDocuments.some(d => d.document_status === 'rejected');
+    
+    let badgeHtml = '';
+    let sectionHtml = '';
+    
+    if (profileData.is_verified) {
+        badgeHtml = '<span class="status-badge status-verified"><i data-lucide="shield-check" style="width:.8rem;height:.8rem"></i> Profil vérifié</span>';
+        sectionHtml = `
+            <div style="background:var(--primary-light);border-radius:var(--radius-sm);padding:16px;text-align:center">
+                <i data-lucide="check-circle" style="width:2rem;height:2rem;color:var(--primary);margin-bottom:8px"></i>
+                <p style="font-weight:600;font-size:.875rem;color:var(--primary)">Profil vérifié</p>
+                <p style="font-size:.75rem;color:var(--text-muted);margin-top:4px">Vos documents ont été validés par notre équipe.</p>
+            </div>`;
+    } else if (hasPendingDocs) {
+        badgeHtml = '<span class="status-badge status-pending"><i data-lucide="clock" style="width:.8rem;height:.8rem"></i> Vérification en cours</span>';
+        sectionHtml = `
+            <div style="background:#FFF7ED;border-radius:var(--radius-sm);padding:16px;text-align:center">
+                <i data-lucide="clock" style="width:2rem;height:2rem;color:#F59E0B;margin-bottom:8px"></i>
+                <p style="font-weight:600;font-size:.875rem;color:#F59E0B">Vérification en cours</p>
+                <p style="font-size:.75rem;color:var(--text-muted);margin-top:4px">Délai moyen : 24-48h.</p>
+                <button class="btn btn-primary btn-sm" onclick="openVerificationModal()" style="margin-top:12px">
+                    <i data-lucide="plus"></i> Ajouter un document
+                </button>
+            </div>`;
+    } else if (hasApprovedDocs) {
+        badgeHtml = '<span class="status-badge status-pending"><i data-lucide="clock" style="width:.8rem;height:.8rem"></i> En attente de validation</span>';
+        sectionHtml = `
+            <div style="background:var(--blue-light);border-radius:var(--radius-sm);padding:16px;text-align:center">
+                <i data-lucide="info" style="width:2rem;height:2rem;color:var(--blue);margin-bottom:8px"></i>
+                <p style="font-weight:600;font-size:.875rem;color:var(--blue)">Documents en cours de validation</p>
+                <p style="font-size:.75rem;color:var(--text-muted);margin-top:4px">Votre profil sera vérifié après validation complète.</p>
+            </div>`;
+    } else if (hasRejectedDocs) {
+        badgeHtml = '<span class="status-badge status-unverified"><i data-lucide="alert-triangle" style="width:.8rem;height:.8rem"></i> Documents rejetés</span>';
+        sectionHtml = `
+            <div style="background:var(--error-light);border-radius:var(--radius-sm);padding:16px;text-align:center">
+                <i data-lucide="alert-triangle" style="width:2rem;height:2rem;color:var(--error);margin-bottom:8px"></i>
+                <p style="font-weight:600;font-size:.875rem;color:var(--error)">Certains documents ont été rejetés</p>
+                <p style="font-size:.75rem;color:var(--text-muted);margin-top:4px">Veuillez soumettre de nouveaux documents.</p>
+                <button class="btn btn-primary btn-sm" onclick="openVerificationModal()" style="margin-top:12px">
+                    <i data-lucide="refresh-cw"></i> Soumettre à nouveau
+                </button>
+            </div>`;
+    } else {
+        badgeHtml = '<span class="status-badge status-unverified"><i data-lucide="shield-off" style="width:.8rem;height:.8rem"></i> Non vérifié</span>';
+        sectionHtml = `
+            <button class="btn btn-primary btn-sm" onclick="openVerificationModal()" style="width:100%">
+                <i data-lucide="shield-check"></i> Demander la vérification
+            </button>
+            <p style="font-size:.6875rem;color:var(--text-muted);text-align:center;margin-top:8px">
+                CNI, CV, diplôme ou plan de localisation acceptés
+            </p>`;
+    }
+    
+    badge.innerHTML = badgeHtml;
+    
+    // Ajouter la liste des documents
+    if (verificationDocuments.length > 0) {
+        sectionHtml += renderDocumentsList();
+    }
+    
+    section.innerHTML = sectionHtml;
+    lucide.createIcons();
+}
+
+function renderDocumentsList() {
+    return `
+        <div style="margin-top:16px">
+            <h5 style="font-weight:700;font-size:.8125rem;margin-bottom:10px;color:var(--text-primary)">Documents soumis</h5>
+            <div class="documents-list">
+                ${verificationDocuments.map(doc => {
+                    const typeConfig = DOCUMENT_TYPE_COLORS[doc.document_type] || DOCUMENT_TYPE_COLORS['other'];
+                    const icon = DOCUMENT_TYPE_ICONS[doc.document_type] || 'file';
+                    const typeLabel = DOCUMENT_TYPES.find(t => t.value === doc.document_type)?.label || doc.document_type;
+                    const date = doc.submitted_at ? new Date(doc.submitted_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+                    const statusClass = DOCUMENT_STATUS_CLASSES[doc.document_status] || 'doc-status-pending';
+                    const statusLabel = DOCUMENT_STATUS_LABELS[doc.document_status] || doc.document_status;
+                    
+                    return `
+                        <div class="document-item">
+                            <div class="document-icon" style="background:${typeConfig.bg};color:${typeConfig.color}">
+                                <i data-lucide="${icon}" style="width:1.1rem;height:1.1rem"></i>
+                            </div>
+                            <div class="document-info">
+                                <div class="document-name">${esc(typeLabel)}</div>
+                                <div class="document-meta">Soumis le ${date}</div>
+                            </div>
+                            <span class="document-status ${statusClass}">
+                                ${doc.document_status === 'rejected' && doc.reviewer_notes ? 
+                                    `<span title="${esc(doc.reviewer_notes)}">${statusLabel}</span>` : 
+                                    statusLabel}
+                            </span>
+                            <a href="${doc.document_url}" target="_blank" rel="noopener" class="btn btn-outline" style="font-size:.625rem;padding:4px 10px">
+                                <i data-lucide="external-link" style="width:.7rem;height:.7rem"></i> Voir
+                            </a>
+                        </div>`;
+                }).join('')}
+            </div>
+        </div>`;
+}
+
+// ─── K. MODAL DE VÉRIFICATION ────────────────────────────────
 async function openVerificationModal() {
-    openModalHtml(`<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-header"><h3 class="modal-title"><i data-lucide="shield-check" style="color:var(--primary)"></i> Demande de vérification</h3><button class="modal-close" onclick="closeModal()"><i data-lucide="x"></i></button></div><div class="modal-body"><form id="verificationForm"><div style="background:var(--primary-dim);border-radius:var(--radius-sm);padding:16px;margin-bottom:20px;display:flex;align-items:flex-start;gap:10px"><i data-lucide="info" style="color:var(--primary);flex-shrink:0;margin-top:1px"></i><p style="font-size:.8125rem;color:var(--text-primary);line-height:1.5">Fournissez une pièce d'identité valide. Traitement sous 24-48h.</p></div><div class="form-group"><label>Type de document *</label><select name="id_document_type" required><option value="">Sélectionnez</option><option value="cni">CNI</option><option value="passport">Passeport</option><option value="permit">Permis</option><option value="other">Autre</option></select></div><div class="form-group"><label>Photo du document *</label><div style="border:2px dashed var(--border);border-radius:var(--radius-sm);padding:24px;text-align:center;cursor:pointer;position:relative;transition:all .2s" onmouseover="this.style.borderColor='var(--primary)';this.style.background='var(--primary-dim)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='transparent'"><i data-lucide="upload" style="width:2rem;height:2rem;color:var(--text-muted);margin-bottom:8px"></i><p style="font-size:.875rem;color:var(--text-secondary)">Cliquez pour téléverser</p><p style="font-size:.75rem;color:var(--text-muted)">JPG/PNG · Max 10 Mo</p><input type="file" name="id_document" accept="image/*" required style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="handleDocPreview(event)"></div><div id="docPreview" style="margin-top:8px;display:none"></div></div><div class="form-actions"><button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button><button type="submit" class="btn btn-primary"><i data-lucide="send"></i> Envoyer</button></div></form></div></div></div>`);
-    document.getElementById('verificationForm').addEventListener('submit', async function(e) { e.preventDefault(); const fd = new FormData(this), docFile = fd.get('id_document'); if (!docFile?.size) { showToast('Sélectionnez un document', 'error'); return; } try { const fileName = `verification/${currentUser.id}/${Date.now()}_${docFile.name}`; const { error: uploadError } = await sb.storage.from('id-documents').upload(fileName, docFile); if (uploadError) throw uploadError; const { data: { publicUrl } } = sb.storage.from('id-documents').getPublicUrl(fileName); await sb.from('users').update({ id_document_url: publicUrl, id_document_type: fd.get('id_document_type'), verification_status: 'pending' }).eq('id', currentUser.id); closeModal(); profileData.verification_status = 'pending'; profileData.id_document_url = publicUrl; updateVerificationSection(); showToast('Document envoyé !', 'success'); } catch(err) { showToast('Erreur: ' + err.message, 'error'); } });
+    const html = `
+        <div class="modal-overlay" id="verificationModalOverlay" onclick="if(event.target===this)closeVerificationModal()">
+            <div class="modal-content" onclick="event.stopPropagation()" style="max-width:600px">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <i data-lucide="shield-check" style="color:var(--primary)"></i> 
+                        Soumettre un document
+                    </h3>
+                    <button class="modal-close" onclick="closeVerificationModal()">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="verificationForm" enctype="multipart/form-data">
+                        <div style="background:var(--primary-dim);border-radius:var(--radius-sm);padding:16px;margin-bottom:24px;display:flex;align-items:flex-start;gap:12px">
+                            <i data-lucide="info" style="color:var(--primary);flex-shrink:0;margin-top:1px;width:1.25rem;height:1.25rem"></i>
+                            <div>
+                                <p style="font-size:.8125rem;color:var(--text-primary);line-height:1.5;margin-bottom:4px">
+                                    <strong>Documents acceptés :</strong> CNI, passeport, permis, CV, diplômes, plan de localisation.
+                                </p>
+                                <p style="font-size:.75rem;color:var(--text-muted)">
+                                    Formats : JPG, PNG, WebP, PDF, DOCX, DOC · Max 10 Mo par fichier
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Type de document <span style="color:var(--error)">*</span></label>
+                            <select name="document_type" id="docTypeSelect" required onchange="updateDocTypeHint()">
+                                <option value="">— Sélectionnez le type —</option>
+                                ${DOCUMENT_TYPES.map(t => `
+                                    <option value="${t.value}">${t.label}</option>
+                                `).join('')}
+                            </select>
+                            <span style="font-size:.6875rem;color:var(--text-muted);margin-top:4px;display:block" id="docTypeHint">
+                                Cliquez pour voir les instructions
+                            </span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Fichier <span style="color:var(--error)">*</span></label>
+                            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('docFileInput').click()">
+                                <i data-lucide="upload-cloud" style="width:2.5rem;height:2.5rem;color:var(--text-muted);margin-bottom:12px"></i>
+                                <p style="font-size:.9375rem;color:var(--text-secondary);font-weight:500">
+                                    Cliquez ou glissez-déposez votre fichier
+                                </p>
+                                <p style="font-size:.75rem;color:var(--text-muted);margin-top:4px" id="uploadHint">
+                                    JPG, PNG, WebP, PDF, DOCX, DOC · Max 10 Mo
+                                </p>
+                                <input type="file" 
+                                       id="docFileInput" 
+                                       name="document_file" 
+                                       accept=".jpg,.jpeg,.png,.webp,.pdf,.docx,.doc"
+                                       required 
+                                       style="display:none" 
+                                       onchange="handleDocumentFileChange(event)">
+                            </div>
+                            <div id="docFilePreview" style="margin-top:12px;display:none"></div>
+                        </div>
+                        
+                        <div style="background:var(--blue-light);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:8px;display:flex;align-items:flex-start;gap:8px">
+                            <i data-lucide="shield" style="color:var(--blue);flex-shrink:0;margin-top:1px;width:1rem;height:1rem"></i>
+                            <p style="font-size:.75rem;color:var(--blue);line-height:1.4">
+                                Vos documents sont stockés de manière sécurisée et ne sont accessibles qu'à notre équipe de vérification.
+                            </p>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="closeVerificationModal()">
+                                Annuler
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="submitDocBtn">
+                                <i data-lucide="send"></i> Envoyer le document
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>`;
+    
+    document.getElementById('modalContainer').innerHTML = html;
+    document.getElementById('modalContainer').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    lucide.createIcons();
+    
+    // Gestionnaire de soumission
+    document.getElementById('verificationForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        await submitVerificationDocument();
+    });
+    
+    // Drag & drop
+    setupDragAndDrop();
 }
 
-function handleDocPreview(event) { const file = event.target.files[0], preview = document.getElementById('docPreview'); if (file) { preview.style.display = 'flex'; preview.style.alignItems = 'center'; preview.style.gap = '10px'; preview.innerHTML = `<i data-lucide="check-circle" style="color:var(--primary)"></i><span style="font-size:.8125rem;font-weight:500;color:var(--primary)">${file.name}</span>`; lucide.createIcons(); } }
+function closeVerificationModal() {
+    document.getElementById('modalContainer').innerHTML = '';
+    document.getElementById('modalContainer').style.display = 'none';
+    document.body.style.overflow = '';
+}
 
-function renderSkills() { document.getElementById('skillsTags').innerHTML = skills.map((s,i) => `<span class="skill-tag">${esc(s)}<button onclick="removeSkill(${i})"><i data-lucide="x" style="width:.7rem;height:.7rem"></i></button></span>`).join(''); lucide.createIcons(); }
-function removeSkill(i) { skills.splice(i,1); renderSkills(); }
-document.addEventListener('DOMContentLoaded', () => { document.getElementById('skillsInput')?.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); const v = this.value.trim(); if (v && !skills.includes(v)) { skills.push(v); renderSkills(); } this.value = ''; } }); });
+function updateDocTypeHint() {
+    const select = document.getElementById('docTypeSelect');
+    const hint = document.getElementById('docTypeHint');
+    const selectedType = DOCUMENT_TYPES.find(t => t.value === select.value);
+    
+    if (selectedType) {
+        hint.textContent = '💡 ' + selectedType.description;
+    } else {
+        hint.textContent = 'Sélectionnez un type pour voir les instructions';
+    }
+}
 
-async function saveAllProfile() {
-    const full_name = document.getElementById('inputFullName').value.trim(), username = document.getElementById('inputUsername').value.trim(), phone = document.getElementById('inputPhone').value.trim(), city = document.getElementById('inputCity').value, neighborhood = document.getElementById('inputNeighborhood').value.trim();
-    if (!full_name || !username || !phone) { showToast('Champs obligatoires manquants', 'error'); return; }
-    if (!city || !neighborhood) { showToast('Adresse complète requise', 'error'); return; }
-    const pwd = document.getElementById('inputPassword').value;
-    if (pwd) { if (pwd !== document.getElementById('inputPasswordConfirm').value) { showToast('Mots de passe différents', 'error'); return; } if (pwd.length < 8) { showToast('Mot de passe: 8 caractères min', 'error'); return; } }
+function setupDragAndDrop() {
+    const zone = document.getElementById('uploadZone');
+    if (!zone) return;
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        zone.addEventListener(eventName, function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            zone.style.borderColor = 'var(--primary)';
+            zone.style.background = 'var(--primary-dim)';
+            zone.style.borderStyle = 'solid';
+        });
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        zone.addEventListener(eventName, function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            zone.style.borderColor = 'var(--border)';
+            zone.style.background = 'transparent';
+            zone.style.borderStyle = 'dashed';
+        });
+    });
+    
+    zone.addEventListener('drop', function(e) {
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            document.getElementById('docFileInput').files = files;
+            handleDocumentFileChange({ target: { files: files } });
+        }
+    });
+}
+
+function handleDocumentFileChange(event) {
+    const file = event.target.files[0];
+    const preview = document.getElementById('docFilePreview');
+    
+    if (!file) {
+        preview.style.display = 'none';
+        return;
+    }
+    
+    // Validation du type
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+        showToast('Format non supporté. Utilisez JPG, PNG, WebP, PDF, DOCX ou DOC.', 'error');
+        document.getElementById('docFileInput').value = '';
+        preview.style.display = 'none';
+        return;
+    }
+    
+    // Validation de la taille
+    if (file.size > MAX_FILE_SIZE) {
+        showToast('Fichier trop volumineux. Maximum 10 Mo.', 'error');
+        document.getElementById('docFileInput').value = '';
+        preview.style.display = 'none';
+        return;
+    }
+    
+    // Afficher l'aperçu
+    const icon = getFileIcon(file.type);
+    const sizeFormatted = formatFileSize(file.size);
+    
+    preview.style.display = 'flex';
+    preview.style.alignItems = 'center';
+    preview.style.gap = '12px';
+    preview.style.padding = '14px 16px';
+    preview.style.background = 'var(--primary-light)';
+    preview.style.border = '1px solid rgba(34,197,94,.2)';
+    preview.style.borderRadius = 'var(--radius-sm)';
+    preview.innerHTML = `
+        <i data-lucide="${icon}" style="color:var(--primary);width:1.5rem;height:1.5rem;flex-shrink:0"></i>
+        <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:.8125rem;color:var(--primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(file.name)}</div>
+            <div style="font-size:.6875rem;color:var(--text-muted);margin-top:2px">${sizeFormatted} · Prêt à être envoyé</div>
+        </div>
+        <button onclick="clearDocFile()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:6px;border-radius:6px;transition:all .2s" onmouseover="this.style.background='rgba(0,0,0,.05)'" onmouseout="this.style.background='none'">
+            <i data-lucide="x" style="width:1rem;height:1rem"></i>
+        </button>`;
+    
+    lucide.createIcons();
+}
+
+function clearDocFile() {
+    document.getElementById('docFileInput').value = '';
+    document.getElementById('docFilePreview').style.display = 'none';
+}
+
+// ─── L. SOUMETTRE UN DOCUMENT ────────────────────────────────
+async function submitVerificationDocument() {
+    const docType = document.getElementById('docTypeSelect').value;
+    const fileInput = document.getElementById('docFileInput');
+    const file = fileInput.files[0];
+    const submitBtn = document.getElementById('submitDocBtn');
+    
+    // Validation
+    if (!docType) {
+        showToast('Veuillez sélectionner le type de document.', 'error');
+        document.getElementById('docTypeSelect').focus();
+        return;
+    }
+    
+    if (!file) {
+        showToast('Veuillez sélectionner un fichier.', 'error');
+        return;
+    }
+    
+    // Vérifier si un document du même type est déjà en attente ou approuvé
+    const existingDoc = verificationDocuments.find(d => 
+        d.document_type === docType && 
+        ['pending', 'approved'].includes(d.document_status)
+    );
+    
+    if (existingDoc) {
+        const statusLabel = existingDoc.document_status === 'pending' ? 'en attente de validation' : 'déjà approuvé';
+        if (!confirm(`Vous avez déjà un document de type "${DOCUMENT_TYPES.find(t => t.value === docType)?.label}" ${statusLabel}. Voulez-vous le remplacer ?`)) {
+            return;
+        }
+    }
+    
+    // Désactiver le bouton pendant l'envoi
+    const originalHTML = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span style="width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;margin-right:4px"></span> Envoi en cours...';
+    
     try {
-        let photoUrl = profileData.profile_photo_url;
-        if (newPhotoFile) { const ext = newPhotoFile.name.split('.').pop(); const fileName = 'profile_' + currentUser.id.substring(0, 8) + '_' + Date.now() + '.' + ext; const { error: uploadError } = await sb.storage.from('profile-photos').upload(fileName, newPhotoFile, { cacheControl: '3600', upsert: true }); if (uploadError) throw uploadError; const { data: { publicUrl } } = sb.storage.from('profile-photos').getPublicUrl(fileName); photoUrl = publicUrl; }
-        const updateData = { full_name, username, phone, bio: document.getElementById('inputBio').value.trim(), city, neighborhood, employment_status: document.getElementById('inputEmploymentStatus').value, domain_expertise: skills, education: document.getElementById('inputEducation').value.trim(), side_activities: document.getElementById('inputSideActivities').value.trim(), profile_photo_url: photoUrl };
-        const { error } = await sb.from('users').update(updateData).eq('id', currentUser.id); if (error) throw error;
-        if (pwd) await sb.auth.updateUser({ password: pwd });
-        profileData = { ...profileData, ...updateData }; currentUser = { ...currentUser, ...updateData }; newPhotoFile = null;
-        updateSidebarUI(); updatePhotoPreview(); document.getElementById('profilePhotoInput').value = ''; showToast('Profil mis à jour !', 'success');
-    } catch(err) { showToast('Erreur: ' + err.message, 'error'); }
+        // Générer un nom de fichier unique
+        const fileExt = file.name.split('.').pop();
+        const timestamp = Date.now();
+        const safeFileName = `${currentUser.id}/${docType}_${timestamp}.${fileExt}`;
+        
+        console.log('📤 Upload du document:', {
+            type: docType,
+            fileName: safeFileName,
+            size: formatFileSize(file.size)
+        });
+        
+        // Upload vers le bucket Supabase
+        const { data: uploadData, error: uploadError } = await sb.storage
+            .from('verification-documents')
+            .upload(safeFileName, file, {
+                cacheControl: '3600',
+                upsert: true
+            });
+        
+        if (uploadError) {
+            console.error('❌ Erreur upload:', uploadError);
+            
+            if (uploadError.message?.includes('not found') || uploadError.message?.includes('bucket')) {
+                throw new Error('Le service de stockage n\'est pas configuré. Contactez l\'administrateur.');
+            }
+            if (uploadError.message?.includes('duplicate')) {
+                throw new Error('Un fichier avec le même nom existe déjà. Veuillez réessayer.');
+            }
+            throw uploadError;
+        }
+        
+        // Récupérer l'URL publique
+        const { data: { publicUrl } } = sb.storage
+            .from('verification-documents')
+            .getPublicUrl(safeFileName);
+        
+        console.log('✅ Document uploadé:', publicUrl);
+        
+        // Insérer dans la table verification_documents
+        const { data: insertData, error: insertError } = await sb
+            .from('verification_documents')
+            .insert([{
+                user_id: currentUser.id,
+                document_type: docType,
+                document_url: publicUrl,
+                document_status: 'pending',
+                submitted_at: new Date().toISOString()
+            }])
+            .select();
+        
+        if (insertError) {
+            console.error('❌ Erreur insertion:', insertError);
+            
+            if (insertError.code === '23503') {
+                throw new Error('Erreur de profil utilisateur. Complétez votre inscription d\'abord.');
+            }
+            if (insertError.code === '23514') {
+                throw new Error('Type de document invalide. Choisissez parmi les options proposées.');
+            }
+            throw insertError;
+        }
+        
+        console.log('✅ Document enregistré:', insertData);
+        
+        // Mettre à jour le statut de vérification de l'utilisateur
+        await sb.from('users').update({
+            verification_status: 'pending'
+        }).eq('id', currentUser.id);
+        
+        // Rafraîchir les données
+        await loadVerificationDocuments();
+        profileData.verification_status = 'pending';
+        
+        // Fermer le modal et mettre à jour l'affichage
+        closeVerificationModal();
+        updateVerificationSection();
+        
+        const docLabel = DOCUMENT_TYPES.find(t => t.value === docType)?.label || docType;
+        showToast(`Document "${docLabel}" envoyé avec succès ! En attente de validation.`, 'success');
+        
+    } catch (err) {
+        console.error('❌ Erreur complète:', err);
+        showToast('Erreur : ' + (err.message || 'Une erreur est survenue lors de l\'envoi.'), 'error');
+        
+        // Réactiver le bouton
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalHTML;
+        lucide.createIcons();
+    }
 }
 
-function resetForm() { populateForm(); renderSkills(); newPhotoFile = null; updatePhotoPreview(); showToast('Formulaire réinitialisé', 'info'); }
-function previewProfile() { window.open(`../profile.html?id=${currentUser.id}`, '_blank'); }
-function openModalHtml(html) { const c = document.getElementById('modalContainer'); c.innerHTML = html; c.style.display = 'block'; document.body.style.overflow = 'hidden'; lucide.createIcons(); }
-function closeModal() { const c = document.getElementById('modalContainer'); c.innerHTML = ''; c.style.display = 'none'; document.body.style.overflow = ''; }
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+// ─── M. SAUVEGARDE DU PROFIL ─────────────────────────────────
+async function saveAllProfile() {
+    const full_name = document.getElementById('inputFullName').value.trim();
+    const username = document.getElementById('inputUsername').value.trim();
+    const phone = document.getElementById('inputPhone').value.trim();
+    const city = document.getElementById('inputCity').value;
+    const neighborhood = document.getElementById('inputNeighborhood').value.trim();
+    
+    // Validation
+    if (!full_name) { showToast('Le nom complet est obligatoire.', 'error'); document.getElementById('inputFullName').focus(); return; }
+    if (!username) { showToast('Le nom d\'utilisateur est obligatoire.', 'error'); document.getElementById('inputUsername').focus(); return; }
+    if (username.length < 3) { showToast('Le nom d\'utilisateur doit contenir au moins 3 caractères.', 'error'); return; }
+    if (!phone) { showToast('Le téléphone est obligatoire.', 'error'); document.getElementById('inputPhone').focus(); return; }
+    if (!city) { showToast('La ville est obligatoire.', 'error'); document.getElementById('inputCity').focus(); return; }
+    if (!neighborhood) { showToast('Le quartier est obligatoire.', 'error'); document.getElementById('inputNeighborhood').focus(); return; }
+    
+    // Validation mot de passe
+    const pwd = document.getElementById('inputPassword').value;
+    if (pwd) {
+        if (pwd.length < 8) { showToast('Le mot de passe doit contenir au moins 8 caractères.', 'error'); return; }
+        if (pwd !== document.getElementById('inputPasswordConfirm').value) { showToast('Les mots de passe ne correspondent pas.', 'error'); return; }
+    }
+    
+    try {
+        // Upload de la photo de profil
+        let photoUrl = profileData.profile_photo_url;
+        
+        if (newPhotoFile) {
+            console.log('📤 Upload photo de profil...');
+            const ext = newPhotoFile.name.split('.').pop();
+            const fileName = `profile_${currentUser.id.substring(0, 8)}_${Date.now()}.${ext}`;
+            
+            const { error: uploadError } = await sb.storage
+                .from('profile-photos')
+                .upload(fileName, newPhotoFile, {
+                    cacheControl: '3600',
+                    upsert: true
+                });
+            
+            if (uploadError) {
+                console.error('❌ Erreur upload photo:', uploadError);
+                throw new Error('Erreur lors de l\'upload de la photo. Veuillez réessayer.');
+            }
+            
+            const { data: { publicUrl } } = sb.storage
+                .from('profile-photos')
+                .getPublicUrl(fileName);
+            
+            photoUrl = publicUrl;
+            console.log('✅ Photo uploadée:', photoUrl);
+        }
+        
+        // Préparer les données de mise à jour
+        const updateData = {
+            full_name,
+            username,
+            phone,
+            bio: document.getElementById('inputBio').value.trim() || null,
+            city,
+            neighborhood,
+            employment_status: document.getElementById('inputEmploymentStatus').value || null,
+            domain_expertise: skills,
+            education: document.getElementById('inputEducation').value.trim() || null,
+            side_activities: document.getElementById('inputSideActivities').value.trim() || null,
+            profile_photo_url: photoUrl
+        };
+        
+        console.log('💾 Sauvegarde du profil...');
+        
+        // Mettre à jour dans Supabase
+        const { error } = await sb.from('users').update(updateData).eq('id', currentUser.id);
+        if (error) {
+            console.error('❌ Erreur mise à jour:', error);
+            throw error;
+        }
+        
+        // Mettre à jour le mot de passe si fourni
+        if (pwd) {
+            const { error: pwdError } = await sb.auth.updateUser({ password: pwd });
+            if (pwdError) {
+                console.error('❌ Erreur mot de passe:', pwdError);
+                showToast('Profil mis à jour mais erreur lors du changement de mot de passe.', 'error');
+                return;
+            }
+        }
+        
+        // Mettre à jour les données locales
+        profileData = { ...profileData, ...updateData };
+        currentUser = { ...currentUser, ...updateData };
+        newPhotoFile = null;
+        
+        // Rafraîchir l'interface
+        updateSidebarUI();
+        updatePhotoPreview();
+        document.getElementById('profilePhotoInput').value = '';
+        document.getElementById('inputPassword').value = '';
+        document.getElementById('inputPasswordConfirm').value = '';
+        
+        console.log('✅ Profil sauvegardé avec succès');
+        showToast('Profil mis à jour avec succès !', 'success');
+        
+    } catch (err) {
+        console.error('❌ Erreur sauvegarde:', err);
+        showToast('Erreur : ' + (err.message || 'Une erreur est survenue.'), 'error');
+    }
+}
 
-loadProfile();
-setInterval(syncBadges, 3000);
+function resetForm() {
+    populateForm();
+    renderSkills();
+    newPhotoFile = null;
+    updatePhotoPreview();
+    document.getElementById('profilePhotoInput').value = '';
+    document.getElementById('inputPassword').value = '';
+    document.getElementById('inputPasswordConfirm').value = '';
+    showToast('Formulaire réinitialisé.', 'info');
+}
+
+function previewProfile() {
+    if (!currentUser?.id) {
+        showToast('Profil non disponible.', 'error');
+        return;
+    }
+    window.open(`../profile.html?id=${currentUser.id}`, '_blank');
+}
+
+// ─── N. MODAL UTILITIES ──────────────────────────────────────
+function openModalHtml(html) {
+    const c = document.getElementById('modalContainer');
+    c.innerHTML = html;
+    c.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    lucide.createIcons();
+}
+
+function closeModal() {
+    const c = document.getElementById('modalContainer');
+    c.innerHTML = '';
+    c.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        if (document.getElementById('verificationModalOverlay')) {
+            closeVerificationModal();
+        } else {
+            closeModal();
+        }
+    }
+});
+
+// ─── O. DÉMARRAGE ────────────────────────────────────────────
+async function startApp() {
+    console.log('🚀 Démarrage de la page Profil...');
+    await loadProfile();
+    console.log('✅ Page Profil chargée', {
+        user: currentUser?.full_name,
+        verified: currentUser?.is_verified,
+        documents: verificationDocuments.length,
+        skills: skills.length
+    });
+}
+
+// Lancer l'application
+startApp();
+
+// Synchroniser les badges toutes les 30 secondes
+setInterval(syncBadges, 30000);
+
+// ═══════════════════════════════════════════════════════════════
+// FIN DU SCRIPT
+// ═══════════════════════════════════════════════════════════════
 </script>
 </body>
 </html>

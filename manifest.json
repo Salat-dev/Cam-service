@@ -1,6 +1,6 @@
 {
-    "name": "Warap - Prestataires & Services",
-    "short_name": "Warap",
+    "name": "travailici - Prestataires & Services",
+    "short_name": "travailici",
     "description": "La marketplace qui connecte les talents camerounais aux opportunités. Trouvez des prestataires vérifiés près de chez vous.",
     "start_url": "/landing.html",
     "scope": "/",
@@ -76,7 +76,7 @@
             "sizes": "1080x1920",
             "type": "image/png",
             "form_factor": "narrow",
-            "label": "Page d'accueil Warap"
+            "label": "Page d'accueil travailici"
         },
         {
             "src": "assets/screenshots/services.png",

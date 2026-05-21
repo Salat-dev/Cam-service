@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trouver un Service — warap</title>
+    <title>Trouver un Service — travailici</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -855,7 +855,7 @@
 <nav class="navbar">
     <div class="navbar-inner">
         <a href="landing.html" class="nav-logo">
-            <img src="../asset/logo.svg" alt="warap" style="height: 32px;">
+            <img src="../asset/logo.svg" alt="travailici" style="height: 60px;">
 
         </a>
         <button class="menu-toggle" id="menuToggle" onclick="toggleMenu()">
@@ -933,10 +933,10 @@
     <div class="footer-inner">
         <div class="footer-logo">
             <a href="landing.html">
-                <img src="../asset/logo.svg" alt="warap" style="height: 48px;">
+                <img src="../asset/logo.svg" alt="travailici" style="height: 48px;">
             </a>
         </div>
-        <div class="footer-text">© 2026 warap — Tous droits réservés</div>
+        <div class="footer-text">© 2026 travailici — Tous droits réservés</div>
     </div>
 </footer>
 <!-- ═══ PWA ═══ -->
@@ -1210,7 +1210,7 @@ function showToast(msg, type) {
 
 // ═══════════════ PANIER ═══════════════
 function updateNavCartCount() {
-    var cart = JSON.parse(localStorage.getItem('warap_cart') || '[]');
+    var cart = JSON.parse(localStorage.getItem('travailici_cart') || '[]');
     var el = document.getElementById('cartCountNav');
     if (el) { 
         el.textContent = cart.length; 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connexion requise — warap</title>
+    <title>Connexion requise — travailici</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -99,7 +99,7 @@
     <div class="auth-card">
         <div class="auth-header">
             <a href="landing.html" class="auth-logo">
-            <img src="../asset/logo.svg" alt="warap" style="height: 40px;">
+            <img src="../asset/logo.svg" alt="travailici" style="height:60px;">
 
             </a>
             <div class="icon-circle"><i data-lucide="log-in" style="width:1.8rem;height:1.8rem"></i></div>
@@ -190,7 +190,7 @@
     lucide.createIcons();
 
     // Redirection après connexion
-    var redirectUrl = localStorage.getItem('warap_redirect_url') || 'services.html';
+    var redirectUrl = localStorage.getItem('travailici_redirect_url') || 'services.html';
 
     function showAlert(msg, type) {
         var a = document.getElementById('formAlert');
@@ -227,7 +227,7 @@
                 return;
             }
             if (data.user) {
-                localStorage.removeItem('warap_redirect_url');
+                localStorage.removeItem('travailici_redirect_url');
                 showAlert('✅ Connexion réussie ! Redirection...', 'success');
                 setTimeout(function() { window.location.href = redirectUrl; }, 1000);
             }
