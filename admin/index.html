@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Tableau de bord — Administration CamServices</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <!-- Sidebar Desktop -->
+    <aside class="sidebar" id="sidebar">
+        <a href="index.html" class="sidebar-logo">⚙️ Admin <span>CamServices</span></a>
+        <ul class="sidebar-nav">
+            <li><a href="index.html" class="active"><i data-lucide="layout-dashboard"></i> Tableau de bord</a></li>
+            <li><a href="users/index.html"><i data-lucide="users"></i> Utilisateurs <span class="badge" id="pendingBadge">0</span></a></li>
+            <li><a href="verification/index.html"><i data-lucide="shield-check"></i> Vérification</a></li>
+            <li><a href="orders/index.html"><i data-lucide="shopping-bag"></i> Commandes</a></li>
+            <li><a href="disputes/index.html"><i data-lucide="alert-triangle"></i> Litiges</a></li>
+            <li><a href="payments/index.html"><i data-lucide="banknote"></i> Paiements</a></li>
+            <li><a href="commissions/index.html"><i data-lucide="percent"></i> Commissions</a></li>
+            <li><a href="security/index.html"><i data-lucide="shield"></i> Sécurité</a></li>
+            <li><a href="analytics/index.html"><i data-lucide="bar-chart-3"></i> Analytics</a></li>
+            <li><a href="support/index.html"><i data-lucide="headphones"></i> Support</a></li>
+            <li><a href="settings/index.html"><i data-lucide="settings"></i> Paramètres</a></li>
+        </ul>
+        <a href="../landing.html" class="sidebar-logout"><i data-lucide="log-out"></i> Déconnexion</a>
+    </aside>
+
+    <!-- Menu mobile -->
+    <button class="menu-toggle" id="menuToggle"><i data-lucide="menu"></i> Menu</button>
+
+    <!-- Contenu principal -->
+    <main class="main-content" id="mainContent">
+        <!-- Chargé dynamiquement -->
+    </main>
+
+    <!-- Bottom navbar mobile -->
+    <nav class="bottom-navbar">
+        <div class="bottom-nav-list">
+            <a href="index.html" class="bottom-nav-link active"><i data-lucide="layout-dashboard"></i><span>Accueil</span></a>
+            <a href="users/index.html" class="bottom-nav-link"><i data-lucide="users"></i><span>Users</span></a>
+            <a href="orders/index.html" class="bottom-nav-link"><i data-lucide="shopping-bag"></i><span>Cmd</span></a>
+            <a href="verification/index.html" class="bottom-nav-link"><i data-lucide="shield-check"></i><span>Vérif</span></a>
+            <a href="#" class="bottom-nav-link" id="moreMenuTrigger"><i data-lucide="more-horizontal"></i><span>Plus</span></a>
+        </div>
+    </nav>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/admin-common.js"></script>
+    <script src="js/admin-dashboard.js"></script>
+</body>
+</html>

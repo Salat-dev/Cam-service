@@ -1,0 +1,1672 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Administration — CamServices</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+   <style>
+    :root {
+        --primary: #22C55E; --primary-hover: #16A34A; --primary-light: #F0FDF4; --primary-dim: rgba(34,197,94,.08);
+        --text-primary: #111827; --text-secondary: #4B5563; --text-muted: #6B7280;
+        --bg: #FFFFFF; --surface: #F9FAFB; --border: #E5E7EB; --border-light: #F3F4F6;
+        --accent: #F59E0B; --accent-light: #FFFBEB; --error: #EF4444; --error-light: #FEF2F2;
+        --blue: #3B82F6; --blue-light: #EFF6FF; --purple: #7C3AED; --purple-light: #F5F3FF;
+        --shadow: 0 4px 20px rgba(0,0,0,.06); --shadow-lg: 0 12px 40px rgba(0,0,0,.1);
+        --radius-sm: 8px; --radius: 12px; --radius-lg: 16px; --radius-xl: 20px;
+        --sidebar-w: 240px; --max: 1400px;
+        --bottom-nav-h: 72px;
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--surface);
+        color: var(--text-primary);
+        display: flex;
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    ::selection { background: var(--primary-dim); color: var(--text-primary); }
+
+    /* ═══ ANIMATIONS ═══ */
+    @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    @keyframes pulse { 0%,100%{ opacity:1; } 50%{ opacity:.5; } }
+    @keyframes slideUpBottom { from { transform:translateY(100%); } to { transform:translateY(0); } }
+    @keyframes slideUpModal { from { opacity:0; transform:translateY(30px) scale(.97); } to { opacity:1; transform:translateY(0) scale(1); } }
+    @keyframes slideUpMobile { from { opacity:0; transform:translateY(60px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes toastIn { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes toastOut { from { opacity:1; transform:translateX(0); } to { opacity:0; transform:translateX(40px); } }
+    @keyframes slideInLeft { from { transform:translateX(-100%); } to { transform:translateX(0); } }
+
+    /* ═══ SIDEBAR (Desktop) ═══ */
+    .sidebar {
+        width: var(--sidebar-w);
+        background: var(--bg);
+        border-right: 1px solid var(--border-light);
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        top: 0; left: 0; bottom: 0;
+        z-index: 100;
+        padding: 20px 14px;
+        overflow-y: auto;
+    }
+
+    .sidebar-logo {
+        font-weight: 800;
+        font-size: 1rem;
+        color: var(--text-primary);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 28px;
+        padding: 0 8px;
+    }
+
+    .sidebar-logo span { color: var(--primary); }
+
+    .sidebar-nav { list-style: none; flex: 1; }
+
+    .sidebar-nav a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: var(--radius-sm);
+        font-size: .8125rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: all .2s;
+        margin-bottom: 2px;
+    }
+
+    .sidebar-nav a:hover { background: var(--surface); color: var(--text-primary); }
+
+    .sidebar-nav a.active {
+        background: var(--primary-dim);
+        color: var(--primary);
+        font-weight: 600;
+    }
+
+    .sidebar-nav a i { width: 1rem; height: 1rem; }
+
+    .sidebar-nav .badge {
+        margin-left: auto;
+        background: var(--accent);
+        color: #fff;
+        font-size: .625rem;
+        padding: 2px 7px;
+        border-radius: 10px;
+    }
+
+    .sidebar-logout {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        color: var(--error);
+        text-decoration: none;
+        font-size: .8125rem;
+        font-weight: 500;
+        border-radius: var(--radius-sm);
+        transition: all .2s;
+    }
+
+    .sidebar-logout:hover { background: var(--error-light); }
+
+    /* ═══ MAIN CONTENT ═══ */
+    .main-content {
+        flex: 1;
+        margin-left: var(--sidebar-w);
+        padding: 28px 28px 64px;
+        max-width: 100%;
+    }
+
+    .page-header { margin-bottom: 28px; }
+
+    .page-title {
+        font-weight: 800;
+        font-size: 1.6rem;
+        letter-spacing: -.02em;
+    }
+
+    .page-title span { color: var(--primary); }
+
+    /* ═══ STATS GRID ═══ */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 14px;
+        margin-bottom: 28px;
+    }
+
+    .stat-card {
+        background: var(--bg);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        transition: all .3s;
+        box-shadow: var(--shadow);
+    }
+
+    .stat-card:hover {
+        border-color: var(--primary);
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+    }
+
+    .stat-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: var(--radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 10px;
+    }
+
+    .stat-value {
+        font-weight: 800;
+        font-size: 1.5rem;
+        letter-spacing: -.02em;
+    }
+
+    .stat-label {
+        font-size: .72rem;
+        color: var(--text-muted);
+        margin-top: 2px;
+    }
+
+    .stat-trend {
+        font-size: .65rem;
+        font-weight: 600;
+        margin-top: 4px;
+    }
+
+    .stat-trend.up { color: var(--primary); }
+    .stat-trend.down { color: var(--error); }
+
+    /* ═══ SECTION CARD ═══ */
+    .section-card {
+        background: var(--bg);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-lg);
+        padding: 22px;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow);
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .section-title {
+        font-weight: 700;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .section-title i { color: var(--primary); }
+
+    /* ═══ TABLE ═══ */
+    .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: .78rem;
+        min-width: 700px;
+    }
+
+    th {
+        text-align: left;
+        font-size: .65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: var(--text-muted);
+        padding: 10px 12px;
+        border-bottom: 2px solid var(--border-light);
+        white-space: nowrap;
+        background: var(--surface);
+    }
+
+    td {
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    tr:hover td { background: var(--surface); }
+
+    /* ═══ USER CELL ═══ */
+    .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--text-primary);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: .7rem;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .user-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* ═══ VERIFIED BADGE ═══ */
+    .verified-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        background: var(--primary);
+        border-radius: 50%;
+        margin-left: 4px;
+        flex-shrink: 0;
+    }
+
+    .verified-icon i {
+        width: 10px;
+        height: 10px;
+        color: #FFFFFF;
+        stroke-width: 4;
+    }
+
+    /* ═══ STATUS BADGES ═══ */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        padding: 3px 8px;
+        border-radius: 100px;
+        font-size: .65rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .status-verified { background: var(--primary-light); color: var(--primary); }
+    .status-pending { background: var(--accent-light); color: #D97706; }
+    .status-blocked { background: var(--error-light); color: var(--error); }
+    .status-active { background: var(--primary-light); color: var(--primary); }
+    .status-completed { background: var(--primary-light); color: var(--primary); }
+    .status-cancelled { background: var(--error-light); color: var(--error); }
+
+    /* ═══ BUTTONS ═══ */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 12px;
+        border-radius: var(--radius-sm);
+        font-family: 'Inter', sans-serif;
+        font-size: .72rem;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
+        transition: all .2s;
+        white-space: nowrap;
+    }
+
+    .btn i { width: .75rem; height: .75rem; }
+
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+
+    .btn-outline {
+        background: var(--bg);
+        color: var(--text-secondary);
+        border: 1px solid var(--border);
+    }
+    .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+
+    .btn-danger { background: var(--error); color: #fff; }
+    .btn-danger:hover { background: #DC2626; }
+
+    .btn-warning { background: var(--accent); color: #fff; }
+    .btn-warning:hover { background: #D97706; }
+
+    .action-group {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+    }
+
+    /* ═══ TABS ═══ */
+    .tabs {
+        display: flex;
+        gap: 2px;
+        border-bottom: 1px solid var(--border-light);
+        margin-bottom: 18px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .tab {
+        padding: 9px 16px;
+        font-size: .78rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        background: none;
+        border-top: none;
+        border-left: none;
+        border-right: none;
+        font-family: 'Inter', sans-serif;
+        white-space: nowrap;
+        transition: all .2s;
+    }
+
+    .tab:hover { color: var(--text-primary); }
+
+    .tab.active {
+        color: var(--primary);
+        border-bottom-color: var(--primary);
+        font-weight: 600;
+    }
+
+    /* ═══ LIVE DOT ═══ */
+    .live-dot {
+        width: 7px;
+        height: 7px;
+        background: var(--primary);
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+        display: inline-block;
+    }
+
+    /* ═══ SEARCH INPUT ═══ */
+    .search-input {
+        padding: 7px 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        font-family: 'Inter', sans-serif;
+        font-size: .78rem;
+        outline: none;
+        max-width: 100%;
+        width: 100%;
+        transition: all .2s;
+    }
+
+    .search-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-dim);
+    }
+
+    /* ═══ EMPTY STATE ═══ */
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-muted);
+    }
+
+    .empty-state i {
+        display: block;
+        margin: 0 auto 12px;
+    }
+
+    .empty-state p {
+        font-size: .875rem;
+    }
+
+    /* ═══ LOADING SPINNER ═══ */
+    .loading-spinner {
+        text-align: center;
+        padding: 40px;
+    }
+
+    .spinner {
+        width: 28px;
+        height: 28px;
+        border: 3px solid var(--border-light);
+        border-top-color: var(--primary);
+        border-radius: 50%;
+        margin: 0 auto 12px;
+        animation: spin .7s linear infinite;
+    }
+
+    /* ═══ MODAL ═══ */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 200;
+        background: rgba(0, 0, 0, .5);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        animation: fadeIn .2s;
+    }
+
+    .modal-content {
+        background: #fff;
+        border-radius: var(--radius-xl);
+        padding: 28px;
+        width: 100%;
+        max-width: 600px;
+        max-height: 85vh;
+        overflow-y: auto;
+        box-shadow: var(--shadow-lg);
+        animation: slideUpModal .35s ease;
+    }
+
+    .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+
+    .modal-title {
+        font-weight: 700;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--text-muted);
+        padding: 6px;
+        border-radius: var(--radius-sm);
+        transition: all .2s;
+    }
+
+    .modal-close:hover { background: var(--surface); color: var(--text-primary); }
+
+    /* ═══ DOCUMENTS MINI LIST ═══ */
+    .doc-mini-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-top: 12px;
+    }
+
+    .doc-mini-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: var(--surface);
+        border-radius: var(--radius-sm);
+        font-size: .75rem;
+    }
+
+    .doc-mini-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .doc-mini-status {
+        margin-left: auto;
+        font-size: .65rem;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 100px;
+    }
+
+    .doc-mini-pending { background: #FFF7ED; color: #F59E0B; }
+    .doc-mini-approved { background: #F0FDF4; color: #22C55E; }
+    .doc-mini-rejected { background: #FEF2F2; color: #EF4444; }
+
+    /* ═══ VERIFICATION CARD ═══ */
+    .verification-card {
+        background: #FFFFFF;
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        margin-bottom: 12px;
+        box-shadow: var(--shadow);
+    }
+
+    .verification-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+    }
+
+    .verification-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    /* ═══ TOAST NOTIFICATIONS ═══ */
+    .toast-container {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none;
+    }
+
+    .toast {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 20px;
+        background: #FFFFFF;
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius);
+        box-shadow: 0 10px 30px rgba(0,0,0,.12);
+        font-size: .875rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        pointer-events: auto;
+        min-width: 320px;
+        max-width: 420px;
+        animation: toastIn .3s ease;
+    }
+
+    .toast.success { border-left: 4px solid #22C55E; }
+    .toast.error { border-left: 4px solid #EF4444; }
+    .toast.warning { border-left: 4px solid #F59E0B; }
+    .toast.info { border-left: 4px solid #3B82F6; }
+
+    .toast-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .toast.success .toast-icon { background: #F0FDF4; color: #22C55E; }
+    .toast.error .toast-icon { background: #FEF2F2; color: #EF4444; }
+    .toast.warning .toast-icon { background: #FFFBEB; color: #F59E0B; }
+    .toast.info .toast-icon { background: #EFF6FF; color: #3B82F6; }
+
+    .toast-message { flex: 1; line-height: 1.4; }
+
+    .toast-close {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--text-muted);
+        padding: 4px;
+        border-radius: 6px;
+        transition: all .2s;
+        flex-shrink: 0;
+    }
+
+    .toast-close:hover { background: var(--surface); color: var(--text-primary); }
+
+    .toast.removing { animation: toastOut .3s ease forwards; }
+
+    /* ═══════════════════════════════════════════
+       BOTTOM NAVBAR MOBILE
+       ═══════════════════════════════════════════ */
+    .bottom-navbar {
+        display: none;
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        z-index: 150;
+        background: rgba(255,255,255,0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-top: 1px solid var(--border-light);
+        padding: 4px 2px;
+        padding-bottom: max(4px, env(safe-area-inset-bottom));
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+        animation: slideUpBottom .4s ease;
+    }
+
+    .bottom-nav-list {
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .bottom-nav-item { flex: 1; text-align: center; }
+
+    .bottom-nav-link {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        padding: 5px 3px;
+        text-decoration: none;
+        color: var(--text-muted);
+        font-size: .5625rem;
+        font-weight: 500;
+        font-family: 'Inter', sans-serif;
+        transition: all .2s;
+        border-radius: 10px;
+        position: relative;
+        min-height: 44px;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .bottom-nav-link i { width: 1.25rem; height: 1.25rem; transition: all .2s; }
+
+    .bottom-nav-link span {
+        line-height: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+
+    .bottom-nav-link.active { color: var(--primary); font-weight: 600; }
+
+    .bottom-nav-link.active::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 50%;
+        transform: translateX(-50%);
+        width: 20px;
+        height: 2px;
+        background: var(--primary);
+        border-radius: 0 0 2px 2px;
+    }
+
+    .bottom-nav-link:active {
+        transform: scale(.95);
+        background: var(--border-light);
+    }
+
+    /* ═══ MORE MENU DROPDOWN ═══ */
+    .more-menu-dropdown {
+        position: fixed;
+        bottom: calc(var(--bottom-nav-h) + 8px + env(safe-area-inset-bottom));
+        right: 8px;
+        background: #fff;
+        border: 1px solid var(--border-light);
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0,0,0,.12);
+        padding: 6px;
+        z-index: 160;
+        min-width: 160px;
+        animation: fadeUp .3s ease;
+    }
+
+    .more-menu-dropdown a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        text-decoration: none;
+        color: var(--text-primary);
+        font-size: .8125rem;
+        font-weight: 500;
+        font-family: 'Inter', sans-serif;
+        border-radius: 10px;
+        transition: background .2s;
+    }
+
+    .more-menu-dropdown a:hover { background: var(--surface); }
+    .more-menu-dropdown a i { width: 1.1rem; height: 1.1rem; color: var(--text-muted); }
+
+    /* ═══ MENU TOGGLE MOBILE ═══ */
+    .menu-toggle {
+        display: none;
+        position: fixed;
+        top: 12px; left: 12px;
+        z-index: 101;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 8px 12px;
+        cursor: pointer;
+        font-family: 'Inter', sans-serif;
+        font-size: .75rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        align-items: center;
+        gap: 6px;
+        box-shadow: var(--shadow);
+    }
+
+    /* ═══ RESPONSIVE ═══ */
+    @media (min-width: 1024px) {
+        .bottom-navbar { display: none !important; }
+        .menu-toggle { display: none !important; }
+        .sidebar { display: flex !important; }
+    }
+
+    @media (max-width: 1023px) {
+        .sidebar { display: none !important; }
+        .bottom-navbar { display: block; }
+        .menu-toggle { display: flex; }
+        .main-content {
+            margin-left: 0 !important;
+            padding: 20px 14px;
+            padding-bottom: calc(var(--bottom-nav-h) + 20px + env(safe-area-inset-bottom)) !important;
+        }
+        .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .stat-card { padding: 16px; }
+        .stat-value { font-size: 1.25rem; }
+        .page-title { font-size: 1.35rem; }
+        .modal-content { max-width: 95%; margin: 0; }
+    }
+
+    @media (max-width: 767px) {
+        .main-content {
+            padding: 16px 10px;
+            padding-bottom: calc(var(--bottom-nav-h) + 16px + env(safe-area-inset-bottom)) !important;
+            padding-top: 56px;
+        }
+        .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .section-card { padding: 16px; }
+        .modal-overlay { padding: 12px; align-items: flex-end; }
+        .modal-content {
+            max-width: 100%;
+            border-radius: 20px 20px 0 0;
+            padding: 24px 18px;
+            max-height: 88vh;
+            animation: slideUpMobile .35s ease;
+        }
+        .bottom-nav-link { font-size: .5rem; gap: 1px; }
+        .bottom-nav-link i { width: 1.15rem; height: 1.15rem; }
+        .toast {
+            min-width: auto;
+            max-width: calc(100vw - 32px);
+        }
+        .toast-container { right: 16px; left: 16px; }
+    }
+
+    @media (max-width: 480px) {
+        .main-content {
+            padding: 12px 6px;
+            padding-bottom: calc(var(--bottom-nav-h) + 12px + env(safe-area-inset-bottom)) !important;
+            padding-top: 52px;
+        }
+        .stats-grid { grid-template-columns: 1fr; gap: 8px; }
+        .page-title { font-size: 1.2rem; }
+        .stat-card { padding: 14px; }
+        .stat-value { font-size: 1.1rem; }
+        .btn { padding: 5px 10px; font-size: .68rem; }
+        .tab { padding: 7px 12px; font-size: .7rem; }
+        .modal-content { padding: 20px 14px; border-radius: 18px 18px 0 0; }
+        .bottom-nav-link { font-size: .45rem; }
+        .bottom-nav-link i { width: 1.1rem; height: 1.1rem; }
+    }
+</style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR (Desktop) ═══ -->
+<aside class="sidebar" id="sidebar">
+    <a href="#" class="sidebar-logo">
+            <img src="../asset/logo.svg" alt="travailici" style="height:52px;">
+    </a>
+    <ul class="sidebar-nav" id="sidebarNav">
+        <li><a href="#" class="active" data-tab="dashboard"><i data-lucide="layout-dashboard"></i> Tableau de bord</a></li>
+        <li><a href="#" data-tab="users"><i data-lucide="users"></i> Utilisateurs <span class="badge" id="pendingBadge">0</span></a></li>
+        <li><a href="#" data-tab="verification"><i data-lucide="shield-check"></i> Vérification</a></li>
+        <li><a href="#" data-tab="orders"><i data-lucide="shopping-bag"></i> Commandes</a></li>
+        <li><a href="#" data-tab="disputes"><i data-lucide="alert-triangle"></i> Litiges</a></li>
+        <li><a href="#" data-tab="payments"><i data-lucide="banknote"></i> Paiements</a></li>
+        <li><a href="#" data-tab="commissions"><i data-lucide="percent"></i> Commissions</a></li>
+        <li><a href="#" data-tab="security"><i data-lucide="shield"></i> Sécurité</a></li>
+        <li><a href="#" data-tab="analytics"><i data-lucide="bar-chart-3"></i> Analytics</a></li>
+        <li><a href="#" data-tab="support"><i data-lucide="headphones"></i> Support</a></li>
+    </ul>
+    <a href="../landing.html" onclick="logout()" class="sidebar-logout"><i data-lucide="log-out" style="width:1rem;height:1rem"></i> Déconnexion</a>
+</aside>
+
+<button class="menu-toggle" id="menuToggle" onclick="toggleAdminMenu()" style="display:none">
+    <i data-lucide="menu" style="width:1rem;height:1rem"></i> Menu
+</button>
+
+<main class="main-content" id="mainContent"></main>
+
+<nav class="bottom-navbar" id="bottomNavbar" aria-label="Navigation admin">
+    <div class="bottom-nav-list">
+        <div class="bottom-nav-item"><a href="#" class="bottom-nav-link active" data-tab="dashboard"><i data-lucide="layout-dashboard"></i><span>Accueil</span></a></div>
+        <div class="bottom-nav-item"><a href="#" class="bottom-nav-link" data-tab="users"><i data-lucide="users"></i><span>Users</span></a></div>
+        <div class="bottom-nav-item"><a href="#" class="bottom-nav-link" data-tab="orders"><i data-lucide="shopping-bag"></i><span>Cmd</span></a></div>
+        <div class="bottom-nav-item"><a href="#" class="bottom-nav-link" data-tab="verification"><i data-lucide="shield-check"></i><span>Vérif</span></a></div>
+        <div class="bottom-nav-item"><a href="#" class="bottom-nav-link" id="moreMenuTrigger" data-tab="more"><i data-lucide="more-horizontal"></i><span>Plus</span></a></div>
+    </div>
+</nav>
+
+<script>
+const SUPABASE_URL = 'https://cwubxwbzzuigctvgdygv.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dWJ4d2J6enVpZ2N0dmdkeWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzI2MTgsImV4cCI6MjA5MzgwODYxOH0.0mwBNo_S5yItQQjq2at9GNRN74ooZRBJIbZGDH9L2uk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+let currentTab = 'dashboard';
+
+const DOCUMENT_TYPES = {
+    'cni': 'CNI', 'passport': 'Passeport', 'permit': 'Permis',
+    'cv': 'CV', 'diploma': 'Diplôme', 'location_plan': 'Plan',
+    'other': 'Autre'
+};
+const DOC_ICONS = {
+    'cni':'id-card','passport':'book-open','permit':'car',
+    'cv':'file-text','diploma':'graduation-cap','location_plan':'map-pin','other':'file'
+};
+const DOC_COLORS = {
+    'cni':{bg:'#EFF6FF',color:'#3B82F6'},'passport':{bg:'#F5F3FF',color:'#7C3AED'},
+    'permit':{bg:'#FFF7ED',color:'#F59E0B'},'cv':{bg:'#F0FDF4',color:'#22C55E'},
+    'diploma':{bg:'#FEF2F2',color:'#EF4444'},'location_plan':{bg:'#FFFBEB',color:'#D97706'},
+    'other':{bg:'#F9FAFB',color:'#6B7280'}
+};
+
+lucide.createIcons();
+init();
+
+async function init() {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { window.location.href = '../login.html'; return; }
+    const { data: profile } = await sb.from('users').select('role').eq('id', user.id).single();
+    if (!profile || profile.role !== 'admin') { showToast('Accès refusé', 'error'); setTimeout(() => window.location.href = '../landing.html', 1500); return; }
+    
+    document.querySelectorAll('#sidebarNav a').forEach(a => a.addEventListener('click', function(e) { e.preventDefault(); setActiveTab(this.dataset.tab); }));
+    document.querySelectorAll('.bottom-nav-link').forEach(link => link.addEventListener('click', function(e) { e.preventDefault(); const tab = this.dataset.tab; if (tab === 'more') { toggleMoreMenu(); return; } setActiveTab(tab); }));
+    document.getElementById('menuToggle').addEventListener('click', toggleAdminMenu);
+    
+    loadTab('dashboard');
+    loadPendingCount();
+}
+
+function setActiveTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('#sidebarNav a').forEach(x => x.classList.remove('active'));
+    const sidebarLink = document.querySelector(`#sidebarNav a[data-tab="${tab}"]`);
+    if (sidebarLink) sidebarLink.classList.add('active');
+    document.querySelectorAll('.bottom-nav-link').forEach(x => x.classList.remove('active'));
+    const bottomLink = document.querySelector(`.bottom-nav-link[data-tab="${tab}"]`);
+    if (bottomLink) bottomLink.classList.add('active');
+    closeMoreMenu();
+    loadTab(tab);
+}
+
+async function loadPendingCount() {
+    const { count } = await sb.from('users').select('*', { count: 'exact', head: true }).eq('role', 'prestataire').eq('verification_status', 'pending');
+    document.getElementById('pendingBadge').textContent = count || 0;
+}
+
+// ═══ TOAST SYSTEM ═══
+function showToast(message, type = 'info') {
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+    
+    const icons = { success: 'check-circle', error: 'x-circle', warning: 'alert-triangle', info: 'info' };
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+        <div class="toast-icon"><i data-lucide="${icons[type] || 'info'}" style="width:1rem;height:1rem"></i></div>
+        <div class="toast-message">${message}</div>
+        <button class="toast-close" onclick="this.parentElement.remove()"><i data-lucide="x" style="width:1rem;height:1rem"></i></button>`;
+    
+    container.appendChild(toast);
+    lucide.createIcons({ nodes: [toast] });
+    
+    setTimeout(() => {
+        toast.classList.add('removing');
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+// ═══ MENU MOBILE ═══
+let adminMenuOpen = false;
+function toggleAdminMenu() {
+    const sidebar = document.getElementById('sidebar');
+    if (!adminMenuOpen) {
+        sidebar.style.display = 'flex'; sidebar.style.position = 'fixed'; sidebar.style.top = '0';
+        sidebar.style.left = '0'; sidebar.style.bottom = '0'; sidebar.style.zIndex = '300';
+        sidebar.style.width = '280px'; sidebar.style.boxShadow = '4px 0 24px rgba(0,0,0,.15)';
+        adminMenuOpen = true;
+    } else { sidebar.style.display = 'none'; adminMenuOpen = false; }
+}
+
+let moreMenuOpen = false;
+function toggleMoreMenu() { moreMenuOpen ? closeMoreMenu() : openMoreMenu(); }
+function openMoreMenu() {
+    closeMoreMenu();
+    const menu = document.createElement('div');
+    menu.className = 'more-menu-dropdown'; menu.id = 'moreMenuDropdown';
+    const items = [{tab:'disputes',icon:'alert-triangle',label:'Litiges'},{tab:'payments',icon:'banknote',label:'Paiements'},{tab:'commissions',icon:'percent',label:'Commissions'},{tab:'security',icon:'shield',label:'Sécurité'},{tab:'analytics',icon:'bar-chart-3',label:'Analytics'},{tab:'support',icon:'headphones',label:'Support'}];
+    menu.innerHTML = items.map(i => `<a href="#" data-tab="${i.tab}"><i data-lucide="${i.icon}"></i> ${i.label}</a>`).join('');
+    document.body.appendChild(menu);
+    menu.querySelectorAll('a').forEach(a => a.addEventListener('click', function(e) { e.preventDefault(); setActiveTab(this.dataset.tab); }));
+    lucide.createIcons(); moreMenuOpen = true;
+    setTimeout(() => document.addEventListener('click', closeMoreMenuOnClickOutside), 0);
+}
+function closeMoreMenu() { const m = document.getElementById('moreMenuDropdown'); if (m) m.remove(); moreMenuOpen = false; document.removeEventListener('click', closeMoreMenuOnClickOutside); }
+function closeMoreMenuOnClickOutside(e) { const m = document.getElementById('moreMenuDropdown'), t = document.getElementById('moreMenuTrigger'); if (m && !m.contains(e.target) && e.target !== t) closeMoreMenu(); }
+
+async function logout() { await sb.auth.signOut(); window.location.href = '../landing.html'; }
+function esc(t) { const d=document.createElement('div'); d.textContent=t||''; return d.innerHTML; }
+function fmt(p) { return new Intl.NumberFormat('fr-FR',{style:'currency',currency:'XAF',maximumFractionDigits:0}).format(p||0); }
+function fmtDate(d) { return d?new Date(d).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'—'; }
+
+async function loadTab(tab) {
+    const c = document.getElementById('mainContent');
+    switch(tab) {
+        case 'dashboard': c.innerHTML = await renderDashboard(); break;
+        case 'users': c.innerHTML = await renderUsers(); loadUsersData(); break;
+        case 'verification': c.innerHTML = await renderVerification(); loadVerificationData(); break;
+        case 'orders': c.innerHTML = await renderOrders(); loadOrdersData(); break;
+        case 'disputes': c.innerHTML = renderDisputes(); break;
+        case 'payments': c.innerHTML = renderPayments(); break;
+        case 'commissions': c.innerHTML = renderCommissions(); break;
+        case 'security': c.innerHTML = renderSecurity(); break;
+        case 'analytics': c.innerHTML = await renderAnalytics(); break;
+        case 'support': c.innerHTML = renderSupport(); break;
+    }
+    lucide.createIcons();
+}
+
+// ═══ DASHBOARD ═══
+async function renderDashboard() {
+    const [users, providers, clients, services, orders, pending, completedOrders, cancelledOrders] = await Promise.all([
+        sb.from('users').select('*',{count:'exact',head:true}),
+        sb.from('users').select('*',{count:'exact',head:true}).eq('role','prestataire'),
+        sb.from('users_clients').select('*',{count:'exact',head:true}),
+        sb.from('services').select('*',{count:'exact',head:true}),
+        sb.from('orders').select('*',{count:'exact',head:true}),
+        sb.from('users').select('*',{count:'exact',head:true}).eq('role','prestataire').eq('verification_status','pending'),
+        sb.from('orders').select('*',{count:'exact',head:true}).eq('status','completed'),
+        sb.from('orders').select('*',{count:'exact',head:true}).eq('status','cancelled')
+    ]);
+    return `<div class="page-header"><h1 class="page-title">Tableau de <span>bord</span></h1></div>
+    <div class="stats-grid">
+        ${stat('users','#3B82F6','#EFF6FF',users.count||0,'Utilisateurs totaux')}
+        ${stat('briefcase','#22C55E','#F0FDF4',providers.count||0,'Prestataires')}
+        ${stat('user-check','#7C3AED','#F5F3FF',clients.count||0,'Clients')}
+        ${stat('clock','#F59E0B','#FFFBEB',pending.count||0,'En attente','<div class="stat-trend up">⚠ Action requise</div>')}
+        ${stat('package','#EF4444','#FEF2F2',services.count||0,'Services')}
+        ${stat('shopping-bag','#3B82F6','#EFF6FF',orders.count||0,'Commandes')}
+        ${stat('check-circle','#22C55E','#F0FDF4',completedOrders.count||0,'Terminées','<div class="stat-trend up">↑ Taux réussite</div>')}
+        ${stat('x-circle','#EF4444','#FEF2F2',cancelledOrders.count||0,'Annulations','<div class="stat-trend down">↓ À surveiller</div>')}
+    </div>`;
+}
+
+function stat(icon,color,bg,val,label,trend='') {
+    return `<div class="stat-card"><div class="stat-icon" style="background:${bg};color:${color}"><i data-lucide="${icon}" style="width:1.1rem;height:1.1rem"></i></div><div class="stat-value">${val}</div><div class="stat-label">${label}</div>${trend}</div>`;
+}
+
+// ═══ USERS ═══
+async function renderUsers() {
+    return `<div class="page-header"><h1 class="page-title">Gestion des <span>utilisateurs</span></h1></div>
+    <div class="tabs">
+        <button class="tab active" onclick="filterUserTable('prestataire',this)">Prestataires</button>
+        <button class="tab" onclick="filterUserTable('client',this)">Clients</button>
+        <button class="tab" onclick="filterUserTable('all',this)">Tous</button>
+    </div>
+    <div class="section-card">
+        <div class="section-header"><h3 class="section-title"><i data-lucide="users"></i> <span id="userTableTitle">Prestataires</span></h3><input type="text" class="search-input" id="userSearch" placeholder="Rechercher..." oninput="filterUserTable()"></div>
+        <div class="table-wrapper" id="userTable"><div class="loading-spinner"><div class="spinner"></div></div></div>
+    </div>`;
+}
+
+let userFilter = 'prestataire';
+async function filterUserTable(filter, btn) {
+    if (filter) userFilter = filter;
+    if (btn) { document.querySelectorAll('#mainContent .tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active'); }
+    const q = (document.getElementById('userSearch')?.value||'').toLowerCase().trim();
+    let query = sb.from('users').select('*').order('full_name');
+    if (userFilter === 'prestataire') query = query.eq('role','prestataire');
+    else if (userFilter === 'client') query = query.eq('role','client');
+    const { data } = await query;
+    const filtered = q ? (data||[]).filter(u => (u.full_name||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q)) : (data||[]);
+    document.getElementById('userTableTitle').textContent = userFilter === 'prestataire' ? 'Prestataires' : userFilter === 'client' ? 'Clients' : 'Tous';
+    const statusLabels = { pending:'En attente', verified:'Vérifié', active:'Actif', blocked:'Bloqué' };
+    document.getElementById('userTable').innerHTML = filtered.length ? `<table><thead><tr><th>Utilisateur</th><th>Email</th><th>Téléphone</th><th>Ville</th><th>Rôle</th><th>Statut</th><th>Actions</th></tr></thead><tbody>${filtered.map(u=>`
+        <tr>
+            <td><div class="user-cell"><div class="user-avatar">${u.profile_photo_url?`<img src="${u.profile_photo_url}" alt="">`:(u.full_name||'?')[0].toUpperCase()}</div><strong>${esc(u.full_name)}</strong>${u.is_verified ? '<span class="verified-icon"><i data-lucide="check"></i></span>' : ''}</div></td>
+            <td>${esc(u.email)}</td><td>${esc(u.phone||'—')}</td><td>${esc(u.city||'—')}</td><td>${u.role}</td>
+            <td><span class="status-badge status-${u.status||'active'}">${statusLabels[u.status]||u.status}</span></td>
+            <td><div class="action-group">
+                <button class="btn btn-outline" onclick="viewProfile('${u.id}')"><i data-lucide="eye" style="width:.7rem;height:.7rem"></i></button>
+                ${u.role==='prestataire'&&!u.is_verified?`<button class="btn btn-primary" onclick="verifyProvider('${u.id}')"><i data-lucide="check" style="width:.7rem;height:.7rem"></i></button>`:''}
+                ${u.status!=='blocked'?`<button class="btn btn-danger" onclick="blockUser('${u.id}')"><i data-lucide="ban" style="width:.7rem;height:.7rem"></i></button>`:`<button class="btn btn-warning" onclick="unblockUser('${u.id}')"><i data-lucide="unlock" style="width:.7rem;height:.7rem"></i></button>`}
+            </div></td>
+        </tr>`).join('')}</tbody></table>` : '<div class="empty-state">Aucun utilisateur trouvé.</div>';
+    lucide.createIcons();
+}
+async function loadUsersData() { filterUserTable(userFilter); }
+
+// ═══ VERIFICATION (AMÉLIORÉE) ═══
+async function renderVerification() {
+    return `<div class="page-header"><h1 class="page-title">Vérification des <span>prestataires</span></h1></div>
+    <div class="section-card"><div class="section-header"><h3 class="section-title"><i data-lucide="clock"></i> En attente de validation</h3><span style="font-size:.75rem;color:var(--text-muted)" id="pendingCount"></span></div>
+    <div class="table-wrapper" id="verificationTable"><div class="loading-spinner"><div class="spinner"></div></div></div></div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// REMPLACER la fonction loadVerificationData() par celle-ci
+// ═══════════════════════════════════════════════════════════════
+
+async function loadVerificationData() {
+    // 1. Charger les utilisateurs en attente de vérification
+    const { data: users } = await sb
+        .from('users')
+        .select('*')
+        .eq('role', 'prestataire')
+        .eq('verification_status', 'pending')
+        .order('created_at');
+    
+    const container = document.getElementById('verificationTable');
+    
+    if (!users?.length) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i data-lucide="check-circle" style="color:var(--primary);width:3rem;height:3rem"></i>
+                <p style="font-weight:600;color:var(--primary);font-size:1rem">Tous les prestataires sont vérifiés !</p>
+                <p style="font-size:.8125rem;color:var(--text-muted)">Aucun document en attente de validation.</p>
+            </div>`;
+        document.getElementById('pendingCount').textContent = '0 en attente';
+        lucide.createIcons();
+        return;
+    }
+    
+    document.getElementById('pendingCount').textContent = `${users.length} prestataire(s) en attente`;
+    
+    // 2. Charger TOUS les documents pour ces utilisateurs
+    const userIds = users.map(u => u.id);
+    const { data: allDocs } = await sb
+        .from('verification_documents')
+        .select('*')
+        .in('user_id', userIds)
+        .order('submitted_at', { ascending: false });
+    
+    // 3. Grouper les documents par utilisateur
+    const docsByUser = {};
+    (allDocs || []).forEach(d => {
+        if (!docsByUser[d.user_id]) docsByUser[d.user_id] = [];
+        docsByUser[d.user_id].push(d);
+    });
+    
+    // 4. Rendu HTML
+    container.innerHTML = users.map(user => {
+        const userDocs = docsByUser[user.id] || [];
+        
+        return `
+        <div class="verification-card">
+            <!-- En-tête avec infos utilisateur -->
+            <div class="verification-card-header">
+                <div style="display:flex;align-items:center;gap:12px">
+                    <div class="user-avatar" style="width:44px;height:44px;font-size:.9rem">
+                        ${user.profile_photo_url 
+                            ? `<img src="${user.profile_photo_url}" alt="">` 
+                            : (user.full_name || '?')[0].toUpperCase()}
+                    </div>
+                    <div>
+                        <div style="font-weight:700;font-size:.9rem;display:flex;align-items:center;gap:6px">
+                            ${esc(user.full_name)}
+                            ${user.is_verified ? '<span class="verified-icon"><i data-lucide="check"></i></span>' : ''}
+                        </div>
+                        <div style="font-size:.75rem;color:var(--text-muted)">
+                            ${esc(user.email)} · ${esc(user.phone || '—')}
+                        </div>
+                        <div style="font-size:.7rem;color:var(--text-muted);margin-top:2px">
+                            ${esc(user.city || '—')}${user.neighborhood ? ' · ' + esc(user.neighborhood) : ''}
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align:right">
+                    <div style="font-size:.7rem;color:var(--text-muted)">Inscrit le</div>
+                    <div style="font-size:.75rem;font-weight:600">${fmtDate(user.created_at)}</div>
+                    <div style="margin-top:4px">
+                        <span class="status-badge status-pending">
+                            <span class="live-dot" style="width:6px;height:6px"></span> 
+                            ${userDocs.length} document(s)
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Liste des documents -->
+            ${userDocs.length > 0 ? `
+            <div style="background:var(--surface);border-radius:var(--radius);padding:4px;margin-bottom:8px">
+                <div style="font-weight:600;font-size:.75rem;color:var(--text-muted);padding:8px 12px 4px">
+                    📄 Documents soumis (${userDocs.length})
+                </div>
+                <div class="documents-list-admin">
+                    ${userDocs.map(doc => renderDocumentItem(doc)).join('')}
+                </div>
+            </div>
+            ` : `
+            <div style="background:var(--surface);border-radius:var(--radius);padding:16px;text-align:center;margin-bottom:8px">
+                <i data-lucide="file-x" style="width:1.5rem;height:1.5rem;color:var(--text-muted);margin-bottom:6px"></i>
+                <p style="font-size:.75rem;color:var(--text-muted)">Aucun document soumis</p>
+            </div>
+            `}
+            
+            <!-- Actions -->
+            <div class="verification-actions">
+                <button class="btn btn-primary" onclick="verifyProvider('${user.id}')">
+                    <i data-lucide="check"></i> Approuver tout
+                </button>
+                <button class="btn btn-outline" onclick="viewProfile('${user.id}')">
+                    <i data-lucide="eye"></i> Profil complet
+                </button>
+                <button class="btn btn-danger" onclick="rejectProvider('${user.id}')">
+                    <i data-lucide="x"></i> Rejeter tout
+                </button>
+            </div>
+        </div>`;
+    }).join('');
+    
+    lucide.createIcons();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FONCTION POUR AFFICHER UN DOCUMENT
+// ═══════════════════════════════════════════════════════════════
+function renderDocumentItem(doc) {
+    const typeConfig = DOC_COLORS[doc.document_type] || DOC_COLORS['other'];
+    const typeLabel = DOCUMENT_TYPES[doc.document_type] || doc.document_type;
+    const docIcon = DOC_ICONS[doc.document_type] || 'file';
+    
+    // Statut du document
+    let statusClass, statusLabel, statusIcon;
+    if (doc.document_status === 'approved') {
+        statusClass = 'doc-status-approved';
+        statusLabel = 'Approuvé';
+        statusIcon = 'check-circle';
+    } else if (doc.document_status === 'rejected') {
+        statusClass = 'doc-status-rejected';
+        statusLabel = 'Rejeté';
+        statusIcon = 'x-circle';
+    } else {
+        statusClass = 'doc-status-pending';
+        statusLabel = 'En attente';
+        statusIcon = 'clock';
+    }
+    
+    // Déterminer si on peut afficher un aperçu
+    const isImage = doc.document_url?.match(/\.(jpg|jpeg|png|webp|gif)(\?|$)/i);
+    const isPDF = doc.document_url?.match(/\.(pdf)(\?|$)/i);
+    
+    return `
+    <div class="document-admin-item ${statusClass}" id="doc-${doc.id}">
+        <div class="doc-admin-icon" style="background:${typeConfig.bg};color:${typeConfig.color}">
+            <i data-lucide="${docIcon}"></i>
+        </div>
+        <div class="doc-admin-info">
+            <div class="doc-admin-name">${typeLabel}</div>
+            <div class="doc-admin-date">${fmtDate(doc.submitted_at)}</div>
+            ${doc.reviewer_notes ? `<div class="doc-admin-note">📝 ${esc(doc.reviewer_notes)}</div>` : ''}
+        </div>
+        <div class="doc-admin-status">
+            <span class="doc-status-badge ${statusClass}">
+                <i data-lucide="${statusIcon}" style="width:.7rem;height:.7rem"></i> ${statusLabel}
+            </span>
+        </div>
+        <div class="doc-admin-actions">
+            ${isImage ? `
+            <button class="btn btn-outline" onclick="previewDocument('${doc.document_url}', '${typeLabel}', 'image')" title="Aperçu">
+                <i data-lucide="eye"></i>
+            </button>
+            ` : isPDF ? `
+            <button class="btn btn-outline" onclick="previewDocument('${doc.document_url}', '${typeLabel}', 'pdf')" title="Aperçu">
+                <i data-lucide="eye"></i>
+            </button>
+            ` : ''}
+            <a href="${doc.document_url}" target="_blank" class="btn btn-outline" title="Ouvrir">
+                <i data-lucide="external-link"></i>
+            </a>
+            ${doc.document_status === 'pending' ? `
+            <button class="btn btn-primary" onclick="approveDocument('${doc.id}', '${doc.user_id}')" title="Approuver">
+                <i data-lucide="check"></i>
+            </button>
+            <button class="btn btn-danger" onclick="rejectDocument('${doc.id}', '${doc.user_id}')" title="Rejeter">
+                <i data-lucide="x"></i>
+            </button>
+            ` : ''}
+        </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FONCTIONS D'ACTION SUR LES DOCUMENTS
+// ═══════════════════════════════════════════════════════════════
+
+async function approveDocument(docId, userId) {
+    try {
+        // Approuver le document
+        await sb.from('verification_documents')
+            .update({ 
+                document_status: 'approved', 
+                reviewed_at: new Date().toISOString() 
+            })
+            .eq('id', docId);
+        
+        // Vérifier si tous les documents sont approuvés
+        const { data: docs } = await sb
+            .from('verification_documents')
+            .select('document_status')
+            .eq('user_id', userId);
+        
+        const allApproved = docs?.every(d => d.document_status === 'approved');
+        
+        if (allApproved) {
+            // Si tous les docs sont approuvés, vérifier l'utilisateur
+            await sb.from('users')
+                .update({ 
+                    status: 'verified', 
+                    is_verified: true, 
+                    verification_status: 'verified' 
+                })
+                .eq('id', userId);
+            showToast('✅ Tous les documents sont approuvés ! Prestataire vérifié.', 'success');
+        } else {
+            showToast('✅ Document approuvé avec succès.', 'success');
+        }
+        
+        // Rafraîchir
+        loadVerificationData();
+        loadPendingCount();
+    } catch (err) {
+        showToast('❌ Erreur : ' + err.message, 'error');
+    }
+}
+
+async function rejectDocument(docId, userId) {
+    const note = prompt('Motif du rejet (optionnel) :');
+    if (note === null) return; // Annulé
+    
+    try {
+        // Rejeter le document
+        await sb.from('verification_documents')
+            .update({ 
+                document_status: 'rejected', 
+                reviewed_at: new Date().toISOString(),
+                reviewer_notes: note || null 
+            })
+            .eq('id', docId);
+        
+        // Mettre à jour le statut de l'utilisateur
+        await sb.from('users')
+            .update({ verification_status: 'rejected' })
+            .eq('id', userId);
+        
+        showToast('🚫 Document rejeté.', 'warning');
+        
+        // Rafraîchir
+        loadVerificationData();
+        loadPendingCount();
+    } catch (err) {
+        showToast('❌ Erreur : ' + err.message, 'error');
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// APERÇU DU DOCUMENT
+// ═══════════════════════════════════════════════════════════════
+function previewDocument(url, title, type) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '300';
+    overlay.onclick = function(e) { 
+        if (e.target === overlay) overlay.remove(); 
+    };
+    
+    let contentHtml = '';
+    
+    if (type === 'image') {
+        contentHtml = `
+            <div style="text-align:center">
+                <img src="${url}" alt="${title}" style="max-width:100%;max-height:70vh;border-radius:var(--radius);object-fit:contain">
+            </div>`;
+    } else if (type === 'pdf') {
+        contentHtml = `
+            <div style="text-align:center">
+                <iframe src="${url}" style="width:100%;height:70vh;border:none;border-radius:var(--radius)"></iframe>
+            </div>`;
+    } else {
+        contentHtml = `
+            <div style="text-align:center;padding:40px">
+                <i data-lucide="file-text" style="width:3rem;height:3rem;color:var(--text-muted);margin-bottom:16px"></i>
+                <p>Ce type de fichier ne peut pas être prévisualisé.</p>
+                <a href="${url}" target="_blank" class="btn btn-primary" style="margin-top:16px">
+                    <i data-lucide="external-link"></i> Ouvrir le fichier
+                </a>
+            </div>`;
+    }
+    
+    overlay.innerHTML = `
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width:800px;width:95%">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i data-lucide="file-text" style="color:var(--primary)"></i> ${title}
+                </h3>
+                <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            ${contentHtml}
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:16px;border-top:1px solid var(--border-light)">
+                <a href="${url}" target="_blank" class="btn btn-outline">
+                    <i data-lucide="external-link"></i> Ouvrir dans un nouvel onglet
+                </a>
+                <a href="${url}" download class="btn btn-primary">
+                    <i data-lucide="download"></i> Télécharger
+                </a>
+            </div>
+        </div>`;
+    
+    document.body.appendChild(overlay);
+    lucide.createIcons();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AJOUTER CE CSS DANS LA BALISE <style>
+// ═══════════════════════════════════════════════════════════════
+const additionalStyles = document.createElement('style');
+additionalStyles.textContent = `
+    /* Document admin item */
+    .documents-list-admin {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .document-admin-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        background: #FFFFFF;
+        border-radius: var(--radius-sm);
+        transition: all .2s;
+    }
+    
+    .document-admin-item:hover {
+        background: var(--primary-dim);
+    }
+    
+    .doc-admin-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    
+    .doc-admin-icon i {
+        width: 1rem;
+        height: 1rem;
+    }
+    
+    .doc-admin-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .doc-admin-name {
+        font-weight: 600;
+        font-size: .8125rem;
+        color: var(--text-primary);
+    }
+    
+    .doc-admin-date {
+        font-size: .6875rem;
+        color: var(--text-muted);
+        margin-top: 1px;
+    }
+    
+    .doc-admin-note {
+        font-size: .6875rem;
+        color: var(--accent);
+        margin-top: 2px;
+        font-style: italic;
+    }
+    
+    .doc-admin-status {
+        flex-shrink: 0;
+    }
+    
+    .doc-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 10px;
+        border-radius: 100px;
+        font-size: .6875rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    
+    .doc-status-pending { background: #FFF7ED; color: #F59E0B; }
+    .doc-status-approved { background: #F0FDF4; color: #22C55E; }
+    .doc-status-rejected { background: #FEF2F2; color: #EF4444; }
+    
+    .doc-admin-actions {
+        display: flex;
+        gap: 4px;
+        flex-shrink: 0;
+    }
+    
+    .doc-admin-actions .btn {
+        padding: 4px 8px;
+        font-size: .65rem;
+    }
+    
+    .doc-admin-actions .btn i {
+        width: .7rem;
+        height: .7rem;
+    }
+    
+    @media (max-width: 767px) {
+        .document-admin-item {
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .doc-admin-actions {
+            width: 100%;
+            justify-content: flex-end;
+        }
+    }
+`;
+document.head.appendChild(additionalStyles);
+
+// ═══ ORDERS ═══
+async function renderOrders() {
+    return `<div class="page-header"><h1 class="page-title">Gestion des <span>commandes</span></h1></div>
+    <div class="section-card"><div class="section-header"><h3 class="section-title"><i data-lucide="shopping-bag"></i> Toutes les commandes</h3></div>
+    <div class="table-wrapper" id="ordersTable"><div class="loading-spinner"><div class="spinner"></div></div></div></div>`;
+}
+async function loadOrdersData() {
+    const { data } = await sb.from('orders').select('*, service:service_id(title)').order('created_at',{ascending:false}).limit(50);
+    document.getElementById('ordersTable').innerHTML = data?.length ? `<table><thead><tr><th>Client</th><th>Téléphone</th><th>Service</th><th>Montant</th><th>Statut</th><th>Date</th></tr></thead><tbody>${data.map(o=>`<tr><td><strong>${esc(o.client_name||'—')}</strong></td><td>${esc(o.client_phone||'—')}</td><td>${esc(o.service?.title||'—')}</td><td>${fmt(o.total_amount)}</td><td><span class="status-badge status-${o.status}">${o.status}</span></td><td>${fmtDate(o.created_at)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty-state">Aucune commande.</div>';
+    lucide.createIcons();
+}
+
+// ═══ AUTRES ONGLETS ═══
+function renderDisputes() { return `<div class="page-header"><h1 class="page-title">Centre de <span>litiges</span></h1></div><div class="section-card"><div class="empty-state"><i data-lucide="check-circle" style="width:2rem;height:2rem;color:var(--primary)"></i><p>Aucun litige en cours.</p></div></div>`; }
+function renderPayments() { return `<div class="page-header"><h1 class="page-title">Gestion des <span>paiements</span></h1></div><div class="section-card"><div class="empty-state"><p>Historique des transactions · Module à venir</p></div></div>`; }
+function renderCommissions() { return `<div class="page-header"><h1 class="page-title"><span>Commissions</span></h1></div><div class="stats-grid">${stat('percent','#22C55E','#F0FDF4','10%','Commission globale')}${stat('settings','#3B82F6','#EFF6FF','Configurable','Par catégorie')}</div>`; }
+function renderSecurity() { return `<div class="page-header"><h1 class="page-title"><span>Sécurité</span></h1></div><div class="section-card"><div class="empty-state"><i data-lucide="shield-check" style="width:2rem;height:2rem;color:var(--primary)"></i><p>Système sécurisé · Aucune alerte</p></div></div>`; }
+async function renderAnalytics() {
+    const { count: svc } = await sb.from('services').select('*',{count:'exact',head:true});
+    const { count: ord } = await sb.from('orders').select('*',{count:'exact',head:true});
+    return `<div class="page-header"><h1 class="page-title"><span>Analytics</span></h1></div><div class="stats-grid">${stat('package','#22C55E','#F0FDF4',svc||0,'Services')}${stat('shopping-bag','#3B82F6','#EFF6FF',ord||0,'Commandes')}</div>`;
+}
+function renderSupport() { return `<div class="page-header"><h1 class="page-title">Support <span>client</span></h1></div><div class="section-card"><div class="empty-state"><p>Centre de support · Module à venir</p></div></div>`; }
+
+// ═══ ACTIONS AVEC TOASTS ═══
+async function verifyProvider(id) {
+    try {
+        // Approuver tous les documents en attente
+        await sb.from('verification_documents').update({ document_status: 'approved', reviewed_at: new Date().toISOString() }).eq('user_id', id).eq('document_status', 'pending');
+        
+        // Mettre à jour l'utilisateur
+        await sb.from('users').update({ status: 'verified', is_verified: true, verification_status: 'verified' }).eq('id', id);
+        
+        showToast('✅ Prestataire vérifié avec succès ! Tous ses documents ont été approuvés.', 'success');
+        loadTab(currentTab);
+        loadPendingCount();
+    } catch (err) {
+        showToast('❌ Erreur : ' + err.message, 'error');
+    }
+}
+
+async function rejectProvider(id) {
+    const note = prompt('Motif du rejet (optionnel) :');
+    if (note === null) return; // Annulé
+    
+    try {
+        // Rejeter tous les documents en attente
+        await sb.from('verification_documents').update({ document_status: 'rejected', reviewed_at: new Date().toISOString(), reviewer_notes: note || null }).eq('user_id', id).eq('document_status', 'pending');
+        
+        // Mettre à jour l'utilisateur
+        await sb.from('users').update({ verification_status: 'rejected' }).eq('id', id);
+        
+        showToast('🚫 Prestataire rejeté. Ses documents ont été marqués comme rejetés.', 'warning');
+        loadTab(currentTab);
+        loadPendingCount();
+    } catch (err) {
+        showToast('❌ Erreur : ' + err.message, 'error');
+    }
+}
+
+async function blockUser(id) {
+    if (!confirm('Bloquer cet utilisateur ?')) return;
+    await sb.from('users').update({ status: 'blocked' }).eq('id', id);
+    showToast('🚫 Utilisateur bloqué.', 'warning');
+    loadTab(currentTab);
+}
+
+async function unblockUser(id) {
+    if (!confirm('Débloquer cet utilisateur ?')) return;
+    await sb.from('users').update({ status: 'active' }).eq('id', id);
+    showToast('✅ Utilisateur débloqué.', 'success');
+    loadTab(currentTab);
+}
+
+// ═══ VIEW PROFILE (AMÉLIORÉ) ═══
+async function viewProfile(userId) {
+    const { data: user } = await sb.from('users').select('*').eq('id', userId).single();
+    if (!user) return;
+    
+    const [servicesRes, ordersRes, docsRes] = await Promise.all([
+        sb.from('services').select('*').eq('user_id', userId),
+        sb.from('orders').select('*, service:service_id(title)').eq('provider_id', userId).order('created_at', { ascending: false }).limit(10),
+        sb.from('verification_documents').select('*').eq('user_id', userId).order('submitted_at', { ascending: false })
+    ]);
+    
+    const services = servicesRes.data || [];
+    const orders = ordersRes.data || [];
+    const docs = docsRes.data || [];
+    const initials = (user.full_name || '?').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+    
+    overlay.innerHTML = `<div class="modal-content" onclick="event.stopPropagation()" style="max-width:650px">
+        <div class="modal-header">
+            <h3 class="modal-title">Profil utilisateur ${user.is_verified ? '<span class="verified-icon" style="width:20px;height:20px"><i data-lucide="check" style="width:12px;height:12px"></i></span>' : ''}</h3>
+            <button class="modal-close" onclick="this.closest('.modal-overlay').remove()"><i data-lucide="x"></i></button>
+        </div>
+        <div style="display:flex;gap:14px;align-items:center;margin-bottom:20px">
+            <div style="width:64px;height:64px;border-radius:50%;background:var(--text-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.2rem;overflow:hidden;flex-shrink:0">${user.profile_photo_url ? `<img src="${user.profile_photo_url}" style="width:100%;height:100%;object-fit:cover">` : initials}</div>
+            <div>
+                <div style="font-weight:700;font-size:1.1rem;display:flex;align-items:center;gap:6px">${esc(user.full_name)}${user.is_verified ? '<span class="verified-icon" style="width:18px;height:18px"><i data-lucide="check" style="width:11px;height:11px"></i></span>' : ''}</div>
+                <div style="font-size:.8125rem;color:var(--text-muted)">${esc(user.email)} · ${esc(user.phone || '—')}</div>
+                <div style="font-size:.75rem;color:var(--text-muted);margin-top:2px">${esc(user.city || '—')}${user.neighborhood ? ' · ' + esc(user.neighborhood) : ''}</div>
+            </div>
+        </div>
+        
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;text-align:center;background:var(--surface);border-radius:12px;padding:14px;margin-bottom:16px">
+            <div><div style="font-weight:800;font-size:1.1rem">${services.length}</div><div style="font-size:.65rem;color:var(--text-muted)">Services</div></div>
+            <div><div style="font-weight:800;font-size:1.1rem">${orders.length}</div><div style="font-size:.65rem;color:var(--text-muted)">Commandes</div></div>
+            <div><div style="font-weight:800;font-size:1.1rem">${user.is_verified ? '✅' : '❌'}</div><div style="font-size:.65rem;color:var(--text-muted)">Vérifié</div></div>
+            <div><div style="font-weight:800;font-size:1.1rem">${user.status || 'actif'}</div><div style="font-size:.65rem;color:var(--text-muted)">Statut</div></div>
+        </div>
+        
+        ${docs.length ? `
+        <div style="font-weight:700;font-size:.85rem;margin-bottom:8px;display:flex;align-items:center;gap:6px"><i data-lucide="file-text" style="width:1rem;height:1rem;color:var(--primary)"></i> Documents (${docs.length})</div>
+        <div class="doc-mini-list" style="margin-bottom:16px">
+            ${docs.map(d => {
+                const dc = DOC_COLORS[d.document_type] || DOC_COLORS['other'];
+                const statusClass = d.document_status === 'approved' ? 'doc-mini-approved' : d.document_status === 'rejected' ? 'doc-mini-rejected' : 'doc-mini-pending';
+                const statusLabel = d.document_status === 'approved' ? 'Approuvé' : d.document_status === 'rejected' ? 'Rejeté' : 'En attente';
+                return `<div class="doc-mini-item">
+                    <div class="doc-mini-icon" style="background:${dc.bg};color:${dc.color}"><i data-lucide="${DOC_ICONS[d.document_type]||'file'}" style="width:.8rem;height:.8rem"></i></div>
+                    <span style="flex:1">${DOCUMENT_TYPES[d.document_type]||d.document_type}</span>
+                    <span class="doc-mini-status ${statusClass}">${statusLabel}</span>
+                    <a href="${d.document_url}" target="_blank" style="font-size:.65rem;color:var(--blue);text-decoration:none;margin-left:8px">Voir</a>
+                </div>`;
+            }).join('')}
+        </div>` : ''}
+        
+        ${orders.length ? `
+        <div style="font-weight:700;font-size:.85rem;margin-bottom:8px;display:flex;align-items:center;gap:6px"><i data-lucide="shopping-bag" style="width:1rem;height:1rem;color:var(--primary)"></i> Dernières commandes</div>
+        <div class="table-wrapper"><table style="min-width:400px;font-size:.72rem"><thead><tr><th>Client</th><th>Service</th><th>Montant</th><th>Date</th></tr></thead><tbody>${orders.map(o => `<tr><td>${esc(o.client_name || '—')}</td><td>${esc(o.service?.title || '—')}</td><td>${fmt(o.total_amount)}</td><td>${fmtDate(o.created_at)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+        
+        ${!user.is_verified ? `
+        <div style="display:flex;gap:8px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border-light)">
+            <button class="btn btn-primary" onclick="verifyProvider('${user.id}');this.closest('.modal-overlay').remove();">✅ Approuver</button>
+            <button class="btn btn-danger" onclick="rejectProvider('${user.id}');this.closest('.modal-overlay').remove();">❌ Rejeter</button>
+        </div>` : ''}
+    </div>`;
+    
+    document.body.appendChild(overlay);
+    lucide.createIcons();
+}
+
+const menuStyle = document.createElement('style');
+menuStyle.textContent = `@keyframes slideInLeft{from{transform:translateX(-100%)}to{transform:translateX(0)}}`;
+document.head.appendChild(menuStyle);
+</script>
+</body>
+</html>

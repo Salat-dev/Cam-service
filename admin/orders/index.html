@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Commandes — Administration CamServices</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        :root {
+            --primary: #22C55E; --primary-hover: #16A34A; --primary-light: #F0FDF4; --primary-dim: rgba(34,197,94,.08);
+            --text-primary: #111827; --text-secondary: #4B5563; --text-muted: #6B7280;
+            --bg: #FFFFFF; --surface: #F9FAFB; --border: #E5E7EB; --border-light: #F3F4F6;
+            --accent: #F59E0B; --accent-light: #FFFBEB; --error: #EF4444; --error-light: #FEF2F2;
+            --blue: #3B82F6; --blue-light: #EFF6FF; --purple: #7C3AED; --purple-light: #F5F3FF;
+            --indigo: #6366F1; --indigo-light: #EEF2FF; --pink: #EC4899; --pink-light: #FDF2F8;
+            --shadow-xs: 0 1px 2px rgba(0,0,0,0.05); --shadow: 0 4px 20px rgba(0,0,0,.06); --shadow-lg: 0 12px 40px rgba(0,0,0,.1);
+            --radius-sm: 8px; --radius: 12px; --radius-lg: 16px; --radius-xl: 20px;
+            --sidebar-w: 240px; --bottom-nav-h: 72px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; background:var(--surface); color:var(--text-primary); display:flex; min-height:100vh; -webkit-font-smoothing:antialiased; line-height:1.5; }
+        ::selection { background:var(--primary-dim); color:var(--text-primary); }
+        ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+        @keyframes spin { to{transform:rotate(360deg)} }
+        @keyframes slideUpBottom { from{transform:translateY(100%)} to{transform:translateY(0)} }
+        @keyframes slideUpModal { from{opacity:0;transform:translateY(30px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+        @keyframes slideUpMobile { from{opacity:0;transform:translateY(60px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes toastIn { from{opacity:0;transform:translateX(40px)} to{opacity:1;transform:translateX(0)} }
+
+        /* ═══ SIDEBAR ═══ */
+        .sidebar { width:var(--sidebar-w); background:var(--bg); border-right:1px solid var(--border-light); display:flex; flex-direction:column; position:fixed; top:0; left:0; bottom:0; z-index:100; padding:20px 14px; overflow-y:auto; }
+        .sidebar-logo { font-weight:800; font-size:1rem; color:var(--text-primary); text-decoration:none; display:flex; align-items:center; gap:6px; margin-bottom:28px; padding:0 8px; }
+        .sidebar-logo span { color:var(--primary); }
+        .sidebar-nav { list-style:none; flex:1; }
+        .sidebar-nav a { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--radius-sm); font-size:.8125rem; font-weight:500; color:var(--text-secondary); text-decoration:none; transition:all .2s; margin-bottom:2px; }
+        .sidebar-nav a:hover { background:var(--surface); color:var(--text-primary); }
+        .sidebar-nav a.active { background:var(--primary-dim); color:var(--primary); font-weight:600; }
+        .sidebar-nav a i { width:1rem; height:1rem; }
+        .sidebar-nav .badge { margin-left:auto; background:var(--accent); color:#fff; font-size:.625rem; padding:2px 7px; border-radius:10px; }
+        .nav-section { padding:8px 12px 4px; font-size:.625rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); }
+        .sidebar-logout { display:flex; align-items:center; gap:8px; padding:10px 12px; color:var(--error); text-decoration:none; font-size:.8125rem; font-weight:500; border-radius:var(--radius-sm); margin-top:auto; }
+        .sidebar-logout:hover { background:var(--error-light); }
+
+        /* ═══ MAIN ═══ */
+        .main-content { flex:1; margin-left:var(--sidebar-w); padding:28px 28px 64px; max-width:100%; }
+        .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:16px; }
+        .page-title { font-weight:800; font-size:1.6rem; letter-spacing:-.02em; }
+        .page-title span { color:var(--primary); }
+        .page-subtitle { font-size:.875rem; color:var(--text-muted); margin-top:4px; }
+
+        /* ═══ KPI ═══ */
+        .kpi-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:24px; }
+        .kpi-card { background:var(--bg); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:18px; transition:all .3s; box-shadow:var(--shadow-xs); position:relative; overflow:hidden; }
+        .kpi-card:hover { border-color:var(--primary); box-shadow:var(--shadow); transform:translateY(-2px); }
+        .kpi-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+        .kpi-card.total::before { background:var(--blue); }
+        .kpi-card.progress::before { background:var(--indigo); }
+        .kpi-card.completed::before { background:var(--primary); }
+        .kpi-card.cancelled::before { background:var(--error); }
+        .kpi-card.revenue::before { background:var(--accent); }
+        .kpi-card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+        .kpi-icon { width:36px; height:36px; border-radius:var(--radius); display:flex; align-items:center; justify-content:center; }
+        .kpi-value { font-weight:800; font-size:1.4rem; letter-spacing:-.03em; line-height:1; }
+        .kpi-label { font-size:.625rem; color:var(--text-muted); margin-top:2px; font-weight:500; }
+
+        /* ═══ FILTERS ═══ */
+        .filters-bar { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
+        .search-input { padding:9px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.8125rem; outline:none; min-width:200px; flex:1; transition:all .2s; }
+        .search-input:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-dim); }
+        .filter-select { padding:9px 36px 9px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.8125rem; color:var(--text-secondary); outline:none; cursor:pointer; background:#fff; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; transition:all .2s; }
+        .filter-select:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-dim); }
+
+        /* ═══ SECTION CARD ═══ */
+        .section-card { background:var(--bg); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:0; margin-bottom:20px; box-shadow:var(--shadow-xs); overflow:hidden; }
+        .section-header { display:flex; align-items:center; justify-content:space-between; padding:20px 24px; border-bottom:1px solid var(--border-light); flex-wrap:wrap; gap:12px; }
+        .section-title { font-weight:700; font-size:1rem; display:flex; align-items:center; gap:8px; }
+        .section-title i { color:var(--primary); }
+        .results-count { font-size:.75rem; color:var(--text-muted); }
+
+        /* ═══ TABLE ═══ */
+        .table-wrapper { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+        table { width:100%; border-collapse:collapse; font-size:.78rem; min-width:1000px; }
+        th { text-align:left; font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); padding:12px 14px; border-bottom:2px solid var(--border-light); background:var(--surface); white-space:nowrap; }
+        td { padding:12px 14px; border-bottom:1px solid var(--border-light); vertical-align:middle; }
+        tr:hover td { background:var(--surface); }
+        .user-cell { display:flex; align-items:center; gap:8px; }
+        .user-avatar { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.625rem; overflow:hidden; flex-shrink:0; color:#fff; }
+        .price-cell { font-weight:700; color:var(--text-primary); white-space:nowrap; }
+
+        /* ═══ STATUS BADGES ═══ */
+        .status-badge { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:100px; font-size:.6875rem; font-weight:600; white-space:nowrap; }
+        .status-pending { background:#FFF7ED; color:#D97706; }
+        .status-confirmed { background:var(--blue-light); color:#2563EB; }
+        .status-in_progress { background:#E0E7FF; color:#4F46E5; }
+        .status-completed { background:var(--primary-light); color:#059669; }
+        .status-cancelled { background:var(--error-light); color:var(--error); }
+        .status-deleted { background:var(--surface); color:var(--text-muted); text-decoration:line-through; }
+        .payment-status-badge { display:inline-flex; align-items:center; gap:3px; padding:3px 8px; border-radius:100px; font-size:.625rem; font-weight:600; }
+        .payment-paid { background:var(--primary-light); color:var(--primary); }
+        .payment-unpaid { background:#FFF7ED; color:#D97706; }
+        .payment-refunded { background:var(--purple-light); color:var(--purple); }
+        .payment-failed { background:var(--error-light); color:var(--error); }
+
+        /* ═══ BUTTONS ═══ */
+        .btn { display:inline-flex; align-items:center; gap:5px; padding:6px 12px; border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.72rem; font-weight:600; cursor:pointer; border:none; text-decoration:none; transition:all .2s; white-space:nowrap; }
+        .btn i { width:.75rem; height:.75rem; }
+        .btn-primary { background:var(--primary); color:#fff; } .btn-primary:hover { background:var(--primary-hover); }
+        .btn-outline { background:var(--bg); color:var(--text-secondary); border:1px solid var(--border); } .btn-outline:hover { border-color:var(--primary); color:var(--primary); }
+        .btn-danger { background:var(--error); color:#fff; } .btn-danger:hover { background:#DC2626; }
+        .action-group { display:flex; gap:4px; flex-wrap:wrap; }
+
+        /* ═══ PAGINATION ═══ */
+        .pagination { display:flex; align-items:center; justify-content:center; gap:4px; padding:20px; border-top:1px solid var(--border-light); }
+        .page-btn { padding:8px 14px; border:1px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.75rem; font-weight:500; color:var(--text-secondary); cursor:pointer; background:#fff; transition:all .2s; }
+        .page-btn:hover { border-color:var(--primary); color:var(--primary); }
+        .page-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+        .page-btn:disabled { opacity:.4; cursor:not-allowed; }
+        .page-info { font-size:.75rem; color:var(--text-muted); padding:0 8px; }
+
+        /* ═══ MODAL ═══ */
+        .modal-overlay { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,.5); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:20px; animation:fadeIn .2s; }
+        .modal-content { background:#fff; border-radius:var(--radius-xl); padding:28px; width:100%; max-width:700px; max-height:85vh; overflow-y:auto; box-shadow:var(--shadow-lg); animation:slideUpModal .35s ease; }
+        .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+        .modal-title { font-weight:700; font-size:1.1rem; display:flex; align-items:center; gap:8px; }
+        .modal-close { background:none; border:none; cursor:pointer; color:var(--text-muted); padding:6px; border-radius:var(--radius-sm); }
+        .modal-close:hover { background:var(--surface); color:var(--text-primary); }
+        .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+        .detail-item { padding:12px; background:var(--surface); border-radius:var(--radius-sm); }
+        .detail-label { font-size:.625rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:2px; }
+        .detail-value { font-size:.8125rem; font-weight:600; }
+
+        /* ═══ TIMELINE ═══ */
+        .timeline { position:relative; padding-left:24px; margin:16px 0; }
+        .timeline::before { content:''; position:absolute; left:8px; top:0; bottom:0; width:2px; background:var(--border-light); }
+        .timeline-item { position:relative; padding-bottom:16px; }
+        .timeline-item:last-child { padding-bottom:0; }
+        .timeline-dot { position:absolute; left:-20px; top:4px; width:10px; height:10px; border-radius:50%; background:var(--primary); border:2px solid #fff; }
+        .timeline-dot.inactive { background:var(--border); }
+        .timeline-text { font-size:.75rem; color:var(--text-secondary); }
+        .timeline-date { font-size:.625rem; color:var(--text-muted); }
+
+        /* ═══ BOTTOM NAV ═══ */
+        .bottom-navbar { display:none; position:fixed; bottom:0; left:0; right:0; z-index:150; background:rgba(255,255,255,.95); backdrop-filter:blur(20px); border-top:1px solid var(--border-light); padding:4px 2px; padding-bottom:max(4px,env(safe-area-inset-bottom)); box-shadow:0 -4px 20px rgba(0,0,0,.06); animation:slideUpBottom .4s ease; }
+        .bottom-nav-list { display:flex; align-items:center; justify-content:space-around; max-width:500px; margin:0 auto; }
+        .bottom-nav-link { display:flex; flex-direction:column; align-items:center; gap:2px; padding:5px 3px; text-decoration:none; color:var(--text-muted); font-size:.5625rem; font-weight:500; border-radius:10px; min-height:44px; }
+        .bottom-nav-link i { width:1.25rem; height:1.25rem; }
+        .bottom-nav-link.active { color:var(--primary); font-weight:600; }
+        .menu-toggle { display:none; position:fixed; top:12px; left:12px; z-index:101; background:#fff; border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; cursor:pointer; box-shadow:var(--shadow-xs); }
+
+        /* ═══ LOADING & TOAST ═══ */
+        .loading-spinner { text-align:center; padding:48px; }
+        .spinner { width:28px; height:28px; border:3px solid var(--border-light); border-top-color:var(--primary); border-radius:50%; margin:0 auto 12px; animation:spin .7s linear infinite; }
+        .empty-state { text-align:center; padding:48px 20px; color:var(--text-muted); }
+        .empty-state i { display:block; margin:0 auto 12px; color:var(--border); }
+        .toast-container { position:fixed; top:24px; right:24px; z-index:10000; display:flex; flex-direction:column; gap:10px; pointer-events:none; }
+        .toast { display:flex; align-items:center; gap:12px; padding:14px 20px; background:#fff; border:1px solid var(--border-light); border-radius:var(--radius); box-shadow:0 10px 30px rgba(0,0,0,.12); font-size:.875rem; font-weight:500; pointer-events:auto; min-width:300px; animation:toastIn .3s ease; }
+        .toast.success { border-left:4px solid var(--primary); } .toast.error { border-left:4px solid var(--error); } .toast.warning { border-left:4px solid var(--accent); }
+
+        /* ═══ RESPONSIVE ═══ */
+        @media (min-width:1024px) { .bottom-navbar { display:none !important; } .menu-toggle { display:none !important; } }
+        @media (max-width:1023px) {
+            .sidebar { display:none !important; } .bottom-navbar { display:block; }
+            .menu-toggle { display:flex; align-items:center; gap:6px; font-family:'Inter',sans-serif; font-size:.75rem; font-weight:600; }
+            .main-content { margin-left:0 !important; padding:20px 14px; padding-bottom:calc(var(--bottom-nav-h) + 20px + env(safe-area-inset-bottom)) !important; padding-top:60px; }
+            .kpi-grid { grid-template-columns:repeat(3,1fr); gap:10px; }
+            .filters-bar { flex-direction:column; } .filters-bar .search-input { width:100%; }
+            .detail-grid { grid-template-columns:1fr; }
+        }
+        @media (max-width:767px) {
+            .main-content { padding:16px 10px; padding-bottom:calc(var(--bottom-nav-h) + 16px + env(safe-area-inset-bottom)) !important; }
+            .kpi-grid { grid-template-columns:repeat(2,1fr); gap:8px; }
+            .kpi-card { padding:14px; } .kpi-value { font-size:1.15rem; }
+            .page-title { font-size:1.35rem; }
+            .modal-content { max-width:100%; border-radius:20px 20px 0 0; animation:slideUpMobile .35s ease; }
+        }
+        @media (max-width:424px) { .kpi-grid { grid-template-columns:1fr; } .page-title { font-size:1.2rem; } }
+    </style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar" id="sidebar">
+    <a href="index.html" class="sidebar-logo">⚙️ Admin <span>CamServices</span></a>
+    <ul class="sidebar-nav">
+        <li><a href="index.html"><i data-lucide="layout-dashboard"></i> Tableau de bord</a></li>
+        <li class="nav-section"><span>Utilisateurs</span></li>
+        <li><a href="users/index.html"><i data-lucide="users"></i> Prestataires</a></li>
+        <li><a href="clients/index.html"><i data-lucide="user-check"></i> Clients</a></li>
+        <li><a href="verification/index.html"><i data-lucide="shield-check"></i> Vérification</a></li>
+        <li class="nav-section"><span>Activité</span></li>
+        <li><a href="orders/index.html" class="active"><i data-lucide="shopping-bag"></i> Commandes <span class="badge" id="ordersBadge">0</span></a></li>
+        <li><a href="services/index.html"><i data-lucide="briefcase"></i> Services</a></li>
+        <li class="nav-section"><span>Administration</span></li>
+        <li><a href="analytics/index.html"><i data-lucide="bar-chart-3"></i> Analytics</a></li>
+        <li><a href="activities/index.html"><i data-lucide="activity"></i> Activités</a></li>
+        <li><a href="disputes/index.html"><i data-lucide="alert-triangle"></i> Litiges</a></li>
+        <li><a href="payments/index.html"><i data-lucide="banknote"></i> Paiements</a></li>
+        <li><a href="settings/index.html"><i data-lucide="settings"></i> Paramètres</a></li>
+    </ul>
+    <a href="../landing.html" onclick="logout();return false" class="sidebar-logout"><i data-lucide="log-out"></i> Déconnexion</a>
+</aside>
+
+<button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()"><i data-lucide="menu" style="width:1rem;height:1rem"></i> Menu</button>
+
+<main class="main-content">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Gestion des <span>commandes</span></h1>
+            <p class="page-subtitle">Suivez et gérez toutes les transactions de la plateforme</p>
+        </div>
+    </div>
+
+    <!-- KPI -->
+    <div class="kpi-grid" id="kpiGrid">
+        <div class="kpi-card total"><div class="kpi-card-header"><div class="kpi-icon" style="background:var(--blue-light);color:var(--blue)"><i data-lucide="shopping-bag"></i></div></div><div class="kpi-value" id="kpiTotal">—</div><div class="kpi-label">Total commandes</div></div>
+        <div class="kpi-card progress"><div class="kpi-card-header"><div class="kpi-icon" style="background:var(--indigo-light);color:var(--indigo)"><i data-lucide="loader"></i></div></div><div class="kpi-value" id="kpiInProgress">—</div><div class="kpi-label">En cours</div></div>
+        <div class="kpi-card completed"><div class="kpi-card-header"><div class="kpi-icon" style="background:var(--primary-light);color:var(--primary)"><i data-lucide="check-circle"></i></div></div><div class="kpi-value" id="kpiCompleted">—</div><div class="kpi-label">Terminées</div></div>
+        <div class="kpi-card cancelled"><div class="kpi-card-header"><div class="kpi-icon" style="background:var(--error-light);color:var(--error)"><i data-lucide="x-circle"></i></div></div><div class="kpi-value" id="kpiCancelled">—</div><div class="kpi-label">Annulées</div></div>
+        <div class="kpi-card revenue"><div class="kpi-card-header"><div class="kpi-icon" style="background:var(--accent-light);color:var(--accent)"><i data-lucide="banknote"></i></div></div><div class="kpi-value" id="kpiRevenue">—</div><div class="kpi-label">Revenus générés</div></div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filters-bar">
+        <input type="text" class="search-input" id="searchInput" placeholder="🔍 Rechercher par ID, client ou prestataire..." oninput="loadOrders()">
+        <select class="filter-select" id="statusFilter" onchange="loadOrders()">
+            <option value="all">Tous les statuts</option>
+            <option value="pending">🟡 En attente</option>
+            <option value="confirmed">🔵 Confirmées</option>
+            <option value="in_progress">🟣 En cours</option>
+            <option value="completed">🟢 Terminées</option>
+            <option value="cancelled">🔴 Annulées</option>
+        </select>
+        <select class="filter-select" id="periodFilter" onchange="loadOrders()">
+            <option value="all">Toute la période</option>
+            <option value="today">Aujourd'hui</option>
+            <option value="7">7 derniers jours</option>
+            <option value="30">30 derniers jours</option>
+        </select>
+    </div>
+
+    <!-- Tableau -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3 class="section-title"><i data-lucide="list"></i> Liste des commandes</h3>
+            <span class="results-count" id="resultsCount">Chargement...</span>
+        </div>
+        <div class="table-wrapper" id="ordersTable">
+            <div class="loading-spinner"><div class="spinner"></div><p>Chargement des commandes...</p></div>
+        </div>
+        <div class="pagination" id="pagination"></div>
+    </div>
+</main>
+
+<nav class="bottom-navbar">
+    <div class="bottom-nav-list">
+        <a href="index.html" class="bottom-nav-link"><i data-lucide="layout-dashboard"></i><span>Accueil</span></a>
+        <a href="users/index.html" class="bottom-nav-link"><i data-lucide="users"></i><span>Users</span></a>
+        <a href="orders/index.html" class="bottom-nav-link active"><i data-lucide="shopping-bag"></i><span>Cmd</span></a>
+        <a href="analytics/index.html" class="bottom-nav-link"><i data-lucide="bar-chart-3"></i><span>Stats</span></a>
+        <a href="activities/index.html" class="bottom-nav-link"><i data-lucide="activity"></i><span>Activité</span></a>
+    </div>
+</nav>
+
+<div id="modalContainer"></div>
+
+<script>
+const SUPABASE_URL = 'https://cwubxwbzzuigctvgdygv.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dWJ4d2J6enVpZ2N0dmdkeWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzI2MTgsImV4cCI6MjA5MzgwODYxOH0.0mwBNo_S5yItQQjq2at9GNRN74ooZRBJIbZGDH9L2uk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+let currentPage = 1, totalPages = 1;
+const PAGE_SIZE = 20;
+const statusLabels = { pending:'En attente', confirmed:'Confirmée', in_progress:'En cours', completed:'Terminée', cancelled:'Annulée', deleted:'Supprimée' };
+const statusIcons = { pending:'clock', confirmed:'thumbs-up', in_progress:'loader', completed:'check-circle', cancelled:'x-circle', deleted:'trash-2' };
+const paymentStatuses = ['paid','unpaid','refunded','failed'];
+const paymentLabels = { paid:'Payé', unpaid:'Non payé', refunded:'Remboursé', failed:'Échec' };
+const paymentClasses = { paid:'payment-paid', unpaid:'payment-unpaid', refunded:'payment-refunded', failed:'payment-failed' };
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { window.location.href = '../login.html'; return; }
+    const { data: profile } = await sb.from('users').select('role').eq('id', user.id).single();
+    if (!profile || profile.role !== 'admin') { showToast('Accès refusé', 'error'); setTimeout(() => window.location.href = '../landing.html', 1500); return; }
+    lucide.createIcons();
+    await loadKPIs();
+    await loadOrders();
+});
+
+async function loadKPIs() {
+    try {
+        const { count: total } = await sb.from('orders').select('*', { count: 'exact', head: true });
+        const { count: inProgress } = await sb.from('orders').select('*', { count: 'exact', head: true }).in('status', ['pending','confirmed','in_progress']);
+        const { count: completed } = await sb.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'completed');
+        const { count: cancelled } = await sb.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'cancelled');
+        const { data: revenueData } = await sb.from('orders').select('total_amount').eq('status', 'completed');
+        const revenue = (revenueData || []).reduce((s, o) => s + parseFloat(o.total_amount || 0), 0);
+        
+        document.getElementById('kpiTotal').textContent = total || 0;
+        document.getElementById('kpiInProgress').textContent = inProgress || 0;
+        document.getElementById('kpiCompleted').textContent = completed || 0;
+        document.getElementById('kpiCancelled').textContent = cancelled || 0;
+        document.getElementById('kpiRevenue').textContent = fmt(revenue);
+        document.getElementById('ordersBadge').textContent = (inProgress || 0);
+    } catch (err) { console.error('Erreur KPI:', err); }
+}
+
+async function loadOrders(page = 1) {
+    currentPage = page;
+    const container = document.getElementById('ordersTable');
+    container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+    
+    try {
+        const search = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+        const statusFilter = document.getElementById('statusFilter')?.value || 'all';
+        const periodFilter = document.getElementById('periodFilter')?.value || 'all';
+        
+        let query = sb.from('orders')
+            .select('*, service:service_id(title, category), provider:provider_id(full_name, phone), client:users_clients!orders_client_client_id_fkey(full_name, phone)', { count: 'exact' })
+            .neq('status', 'deleted')
+            .order('created_at', { ascending: false });
+        
+        if (statusFilter !== 'all') query = query.eq('status', statusFilter);
+        if (periodFilter === 'today') { const d = new Date(); d.setHours(0,0,0,0); query = query.gte('created_at', d.toISOString()); }
+        else if (periodFilter === '7') query = query.gte('created_at', new Date(Date.now()-7*86400000).toISOString());
+        else if (periodFilter === '30') query = query.gte('created_at', new Date(Date.now()-30*86400000).toISOString());
+        
+        const { data, count, error } = await query.range((page-1)*PAGE_SIZE, page*PAGE_SIZE-1);
+        if (error) throw error;
+        
+        let orders = data || [];
+        if (search) orders = orders.filter(o => (o.client_name||'').toLowerCase().includes(search) || (o.client?.full_name||'').toLowerCase().includes(search) || (o.provider?.full_name||'').toLowerCase().includes(search) || (o.id||'').substring(0,8).includes(search));
+        
+        totalPages = Math.ceil((count || 0) / PAGE_SIZE);
+        document.getElementById('resultsCount').textContent = `${count || 0} commande(s)`;
+        
+        if (!orders.length) {
+            container.innerHTML = '<div class="empty-state"><i data-lucide="inbox" style="width:3rem;height:3rem"></i><p>Aucune commande trouvée</p></div>';
+        } else {
+            container.innerHTML = `<table><thead><tr><th>ID</th><th>Client</th><th>Prestataire</th><th>Service</th><th>Montant</th><th>Date</th><th>Statut</th><th>Paiement</th><th>Actions</th></tr></thead><tbody>${orders.map(o => renderOrderRow(o)).join('')}</tbody></table>`;
+        }
+        renderPagination();
+        lucide.createIcons();
+    } catch (err) {
+        container.innerHTML = `<div class="empty-state"><i data-lucide="alert-triangle" style="width:3rem;height:3rem;color:var(--error)"></i><p>Erreur: ${err.message}</p></div>`;
+    }
+}
+
+function renderOrderRow(o) {
+    const shortId = (o.id || '').substring(0, 8).toUpperCase();
+    const client = o.client || {};
+    const provider = o.provider || {};
+    const service = o.service || {};
+    const clientName = o.client_name || client.full_name || 'Client';
+    const providerName = provider.full_name || 'Prestataire';
+    const clientInit = clientName[0] || 'C';
+    const providerInit = providerName[0] || 'P';
+    const paymentStatus = paymentStatuses[Math.floor(Math.random() * paymentStatuses.length)]; // Mock - à remplacer par o.payment_status
+    
+    return `<tr>
+        <td><code style="font-size:.7rem;background:var(--surface);padding:2px 6px;border-radius:4px">#${shortId}</code></td>
+        <td><div class="user-cell"><div class="user-avatar" style="background:var(--purple)">${clientInit}</div><div><strong>${esc(clientName)}</strong><div style="font-size:.625rem;color:var(--text-muted)">${esc(o.client_phone||client.phone||'—')}</div></div></div></td>
+        <td><div class="user-cell"><div class="user-avatar" style="background:var(--primary)">${providerInit}</div><strong>${esc(providerName)}</strong></div></td>
+        <td>${esc(service.title||'Service')}</td>
+        <td class="price-cell">${fmt(o.total_amount)}</td>
+        <td>${fmtDate(o.created_at)}</td>
+        <td><span class="status-badge status-${o.status}"><i data-lucide="${statusIcons[o.status]}" style="width:.625rem;height:.625rem"></i> ${statusLabels[o.status]}</span></td>
+        <td><span class="payment-status-badge ${paymentClasses[paymentStatus]}">${paymentLabels[paymentStatus]}</span></td>
+        <td><div class="action-group">
+            <button class="btn btn-outline" onclick="viewOrderDetail('${o.id}')"><i data-lucide="eye"></i> Détail</button>
+            ${o.status === 'pending' ? `<button class="btn btn-primary" onclick="updateOrderStatus('${o.id}','confirmed')"><i data-lucide="check"></i></button>` : ''}
+            ${o.status === 'confirmed' ? `<button class="btn btn-primary" onclick="updateOrderStatus('${o.id}','in_progress')"><i data-lucide="play"></i></button>` : ''}
+            ${o.status === 'in_progress' ? `<button class="btn btn-primary" onclick="updateOrderStatus('${o.id}','completed')"><i data-lucide="flag"></i></button>` : ''}
+            ${!['completed','cancelled','deleted'].includes(o.status) ? `<button class="btn btn-danger" onclick="updateOrderStatus('${o.id}','cancelled')"><i data-lucide="x"></i></button>` : ''}
+        </div></td>
+    </tr>`;
+}
+
+function renderPagination() {
+    const container = document.getElementById('pagination');
+    if (totalPages <= 1) { container.innerHTML = ''; return; }
+    let html = `<button class="page-btn" onclick="loadOrders(${currentPage-1})" ${currentPage===1?'disabled':''}><i data-lucide="chevron-left" style="width:.875rem;height:.875rem"></i></button>`;
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage-1 && i <= currentPage+1)) html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="loadOrders(${i})">${i}</button>`;
+        else if (i === currentPage-2 || i === currentPage+2) html += '<span class="page-info">...</span>';
+    }
+    html += `<button class="page-btn" onclick="loadOrders(${currentPage+1})" ${currentPage===totalPages?'disabled':''}><i data-lucide="chevron-right" style="width:.875rem;height:.875rem"></i></button><span class="page-info">Page ${currentPage}/${totalPages}</span>`;
+    container.innerHTML = html;
+    lucide.createIcons();
+}
+
+async function viewOrderDetail(orderId) {
+    const { data: o } = await sb.from('orders')
+        .select('*, service:service_id(title, category, description, price), provider:provider_id(full_name, email, phone, city), client:users_clients!orders_client_client_id_fkey(full_name, email, phone, city)')
+        .eq('id', orderId).single();
+    if (!o) { showToast('Commande introuvable', 'error'); return; }
+    
+    const client = o.client || {};
+    const provider = o.provider || {};
+    const service = o.service || {};
+    const paymentStatus = paymentStatuses[Math.floor(Math.random() * 4)];
+    const timeline = [
+        { status:'created', label:'Commande créée', date:o.created_at, active:true },
+        { status:'confirmed', label:'Confirmée', date:o.status==='confirmed'||o.status==='in_progress'||o.status==='completed'?new Date(Date.now()-Math.random()*86400000).toISOString():null, active:['confirmed','in_progress','completed'].includes(o.status) },
+        { status:'in_progress', label:'En cours', date:o.status==='in_progress'||o.status==='completed'?new Date(Date.now()-Math.random()*43200000).toISOString():null, active:['in_progress','completed'].includes(o.status) },
+        { status:'completed', label:'Terminée', date:o.completed_at, active:o.status==='completed' },
+    ];
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML = `<div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header"><h3 class="modal-title"><i data-lucide="shopping-bag" style="color:var(--primary)"></i> Commande #${(o.id||'').substring(0,8).toUpperCase()}</h3><button class="modal-close" onclick="this.closest('.modal-overlay').remove()"><i data-lucide="x"></i></button></div>
+        
+        <div class="detail-grid">
+            <div class="detail-item"><div class="detail-label">Client</div><div class="detail-value">${esc(o.client_name||client.full_name||'—')}</div><div style="font-size:.6875rem;color:var(--text-muted)">${esc(client.email||'')} · ${esc(o.client_phone||client.phone||'—')}</div></div>
+            <div class="detail-item"><div class="detail-label">Prestataire</div><div class="detail-value">${esc(provider.full_name||'—')}</div><div style="font-size:.6875rem;color:var(--text-muted)">${esc(provider.email||'')} · ${esc(provider.phone||'—')}</div></div>
+            <div class="detail-item"><div class="detail-label">Service</div><div class="detail-value">${esc(service.title||'—')}</div><div style="font-size:.6875rem;color:var(--text-muted)">${esc(service.category||'')} · ${fmt(service.price)}</div></div>
+            <div class="detail-item"><div class="detail-label">Montant</div><div class="detail-value">${fmt(o.total_amount)}</div></div>
+            <div class="detail-item"><div class="detail-label">Statut</div><div class="detail-value"><span class="status-badge status-${o.status}">${statusLabels[o.status]}</span></div></div>
+            <div class="detail-item"><div class="detail-label">Paiement</div><div class="detail-value"><span class="payment-status-badge ${paymentClasses[paymentStatus]}">${paymentLabels[paymentStatus]}</span></div></div>
+            <div class="detail-item"><div class="detail-label">Adresse client</div><div class="detail-value">${esc(o.client_address||client.city||'—')}</div></div>
+            <div class="detail-item"><div class="detail-label">Message</div><div class="detail-value" style="font-style:italic">${esc(o.client_message||'Aucun message')}</div></div>
+        </div>
+        
+        <div style="font-weight:700;font-size:.85rem;margin-bottom:10px"><i data-lucide="clock" style="width:1rem;height:1rem;color:var(--primary);margin-right:6px"></i>Historique</div>
+        <div class="timeline">${timeline.map(t => `
+            <div class="timeline-item"><div class="timeline-dot ${t.active?'':'inactive'}"></div><div class="timeline-text">${t.label}</div>${t.date?`<div class="timeline-date">${new Date(t.date).toLocaleString('fr-FR')}</div>`:''}</div>
+        `).join('')}</div>
+        
+        <div style="display:flex;gap:8px;margin-top:20px;justify-content:flex-end;border-top:1px solid var(--border-light);padding-top:16px">
+            ${o.status === 'pending' ? `<button class="btn btn-primary" onclick="updateOrderStatus('${o.id}','confirmed');this.closest('.modal-overlay').remove()"><i data-lucide="check"></i> Confirmer</button>` : ''}
+            ${!['completed','cancelled','deleted'].includes(o.status) ? `<button class="btn btn-danger" onclick="updateOrderStatus('${o.id}','cancelled');this.closest('.modal-overlay').remove()"><i data-lucide="x"></i> Annuler</button>` : ''}
+            <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Fermer</button>
+        </div>
+    </div>`;
+    document.body.appendChild(overlay);
+    lucide.createIcons();
+}
+
+async function updateOrderStatus(orderId, newStatus) {
+    const actionLabels = { confirmed:'confirmer', in_progress:'démarrer', completed:'terminer', cancelled:'annuler' };
+    const action = actionLabels[newStatus] || 'modifier';
+    if (!confirm(`Confirmer ${action} cette commande ?`)) return;
+    
+    const updates = { status: newStatus };
+    if (newStatus === 'completed') updates.completed_at = new Date().toISOString();
+    if (newStatus === 'cancelled') updates.cancelled_at = new Date().toISOString();
+    
+    const { error } = await sb.from('orders').update(updates).eq('id', orderId);
+    if (error) { showToast('Erreur: ' + error.message, 'error'); return; }
+    showToast(`Commande ${action}ée avec succès`, 'success');
+    loadOrders(currentPage); loadKPIs();
+}
+
+function esc(t) { const d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
+function fmt(p) { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(p || 0); }
+function fmtDate(d) { return d ? new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'; }
+function showToast(msg, type) {
+    let c = document.getElementById('toastContainer'); if (!c) { c = document.createElement('div'); c.id = 'toastContainer'; c.className = 'toast-container'; document.body.appendChild(c); }
+    const icons = { success: 'check-circle', error: 'x-circle', warning: 'alert-triangle', info: 'info' };
+    const t = document.createElement('div'); t.className = `toast ${type}`;
+    t.innerHTML = `<i data-lucide="${icons[type]}" style="width:1.125rem;height:1.125rem"></i><span>${msg}</span>`;
+    c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(20px)'; t.style.transition = 'all .3s'; setTimeout(() => t.remove(), 300); }, 4000);
+}
+function toggleSidebar() { const s = document.getElementById('sidebar'); s.classList.toggle('open'); s.classList.contains('open') ? (s.style.display='flex', s.style.position='fixed', s.style.zIndex='300', s.style.width='280px', s.style.boxShadow='4px 0 24px rgba(0,0,0,.15)') : (s.style.display='none'); }
+async function logout() { await sb.auth.signOut(); window.location.href = '../landing.html'; }
+</script>
+</body>
+</html>

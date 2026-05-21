@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Clients — Administration CamServices</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        :root {
+            --primary: #22C55E; --primary-hover: #16A34A; --primary-light: #F0FDF4; --primary-dim: rgba(34,197,94,.08);
+            --text-primary: #111827; --text-secondary: #4B5563; --text-muted: #6B7280;
+            --bg: #FFFFFF; --surface: #F9FAFB; --border: #E5E7EB; --border-light: #F3F4F6;
+            --accent: #F59E0B; --accent-light: #FFFBEB; --error: #EF4444; --error-light: #FEF2F2;
+            --blue: #3B82F6; --blue-light: #EFF6FF; --purple: #7C3AED; --purple-light: #F5F3FF;
+            --shadow-xs: 0 1px 2px rgba(0,0,0,0.05); --shadow: 0 4px 20px rgba(0,0,0,.06); --shadow-lg: 0 12px 40px rgba(0,0,0,.1);
+            --radius-sm: 8px; --radius: 12px; --radius-lg: 16px; --radius-xl: 20px;
+            --sidebar-w: 240px; --bottom-nav-h: 72px;
+        }
+        
+        * { margin:0; padding:0; box-sizing:border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--surface); color: var(--text-primary);
+            display: flex; min-height: 100vh;
+            -webkit-font-smoothing: antialiased; line-height: 1.5;
+        }
+        
+        ::selection { background: var(--primary-dim); color: var(--text-primary); }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        
+        @keyframes fadeUp { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+        @keyframes spin { to { transform:rotate(360deg) } }
+        @keyframes slideUpBottom { from { transform:translateY(100%) } to { transform:translateY(0) } }
+        @keyframes slideUpModal { from { opacity:0; transform:translateY(30px) scale(.97) } to { opacity:1; transform:translateY(0) scale(1) } }
+        @keyframes slideUpMobile { from { opacity:0; transform:translateY(60px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes toastIn { from { opacity:0; transform:translateX(40px) } to { opacity:1; transform:translateX(0) } }
+        @keyframes shimmer { 0% { background-position:200% 0 } 100% { background-position:-200% 0 } }
+
+        /* ═══ SIDEBAR ═══ */
+        .sidebar { width:var(--sidebar-w); background:var(--bg); border-right:1px solid var(--border-light); display:flex; flex-direction:column; position:fixed; top:0; left:0; bottom:0; z-index:100; padding:20px 14px; overflow-y:auto; }
+        .sidebar-logo { font-weight:800; font-size:1rem; color:var(--text-primary); text-decoration:none; display:flex; align-items:center; gap:6px; margin-bottom:28px; padding:0 8px; }
+        .sidebar-logo span { color:var(--primary); }
+        .sidebar-nav { list-style:none; flex:1; }
+        .sidebar-nav a { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--radius-sm); font-size:.8125rem; font-weight:500; color:var(--text-secondary); text-decoration:none; transition:all .2s; margin-bottom:2px; }
+        .sidebar-nav a:hover { background:var(--surface); color:var(--text-primary); }
+        .sidebar-nav a.active { background:var(--primary-dim); color:var(--primary); font-weight:600; }
+        .sidebar-nav a i { width:1rem; height:1rem; }
+        .sidebar-nav .badge { margin-left:auto; background:var(--accent); color:#fff; font-size:.625rem; padding:2px 7px; border-radius:10px; }
+        .nav-section { padding:8px 12px 4px; font-size:.625rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); }
+        .sidebar-logout { display:flex; align-items:center; gap:8px; padding:10px 12px; color:var(--error); text-decoration:none; font-size:.8125rem; font-weight:500; border-radius:var(--radius-sm); margin-top:auto; }
+        .sidebar-logout:hover { background:var(--error-light); }
+
+        /* ═══ MAIN CONTENT ═══ */
+        .main-content { flex:1; margin-left:var(--sidebar-w); padding:28px 28px 64px; max-width:100%; }
+        .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:16px; }
+        .page-title { font-weight:800; font-size:1.6rem; letter-spacing:-.02em; }
+        .page-title span { color:var(--primary); }
+        .page-subtitle { font-size:.875rem; color:var(--text-muted); margin-top:4px; }
+        .page-actions { display:flex; gap:8px; flex-wrap:wrap; }
+
+        /* ═══ KPI GRID ═══ */
+        .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+        .kpi-card { background:var(--bg); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:20px; transition:all .3s; box-shadow:var(--shadow-xs); position:relative; overflow:hidden; }
+        .kpi-card:hover { border-color:var(--primary); box-shadow:var(--shadow); transform:translateY(-2px); }
+        .kpi-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+        .kpi-card.primary::before { background:var(--primary); }
+        .kpi-card.blue::before { background:var(--blue); }
+        .kpi-card.purple::before { background:var(--purple); }
+        .kpi-card.error::before { background:var(--error); }
+        .kpi-card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+        .kpi-icon { width:38px; height:38px; border-radius:var(--radius); display:flex; align-items:center; justify-content:center; }
+        .kpi-icon.primary { background:var(--primary-dim); color:var(--primary); }
+        .kpi-icon.blue { background:var(--blue-light); color:var(--blue); }
+        .kpi-icon.purple { background:var(--purple-light); color:var(--purple); }
+        .kpi-icon.error { background:var(--error-light); color:var(--error); }
+        .kpi-value { font-weight:800; font-size:1.5rem; letter-spacing:-.03em; line-height:1; }
+        .kpi-label { font-size:.6875rem; color:var(--text-muted); margin-top:3px; font-weight:500; }
+
+        /* ═══ FILTERS BAR ═══ */
+        .filters-bar { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
+        .search-input { padding:9px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.8125rem; outline:none; min-width:200px; flex:1; transition:all .2s; }
+        .search-input:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-dim); }
+        .filter-select { padding:9px 36px 9px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.8125rem; color:var(--text-secondary); outline:none; cursor:pointer; background:#fff; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; transition:all .2s; }
+        .filter-select:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-dim); }
+
+        /* ═══ SECTION CARD ═══ */
+        .section-card { background:var(--bg); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:0; margin-bottom:20px; box-shadow:var(--shadow-xs); overflow:hidden; }
+        .section-header { display:flex; align-items:center; justify-content:space-between; padding:20px 24px; border-bottom:1px solid var(--border-light); flex-wrap:wrap; gap:12px; }
+        .section-title { font-weight:700; font-size:1rem; display:flex; align-items:center; gap:8px; }
+        .section-title i { color:var(--primary); }
+        .results-count { font-size:.75rem; color:var(--text-muted); }
+
+        /* ═══ TABLE ═══ */
+        .table-wrapper { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+        table { width:100%; border-collapse:collapse; font-size:.78rem; min-width:800px; }
+        th { text-align:left; font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); padding:12px 14px; border-bottom:2px solid var(--border-light); background:var(--surface); white-space:nowrap; }
+        td { padding:12px 14px; border-bottom:1px solid var(--border-light); }
+        tr:hover td { background:var(--surface); }
+        .user-cell { display:flex; align-items:center; gap:10px; }
+        .user-avatar { width:32px; height:32px; border-radius:50%; background:var(--purple-dim, rgba(124,58,237,.08)); color:var(--purple); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.7rem; overflow:hidden; flex-shrink:0; }
+        .user-avatar img { width:100%; height:100%; object-fit:cover; }
+
+        /* ═══ STATUS BADGES ═══ */
+        .status-badge { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:100px; font-size:.6875rem; font-weight:600; white-space:nowrap; }
+        .status-active { background:var(--primary-light); color:var(--primary); }
+        .status-inactive { background:var(--surface); color:var(--text-muted); border:1px solid var(--border); }
+        .status-banned { background:var(--error-light); color:var(--error); }
+
+        /* ═══ BUTTONS ═══ */
+        .btn { display:inline-flex; align-items:center; gap:5px; padding:6px 12px; border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.72rem; font-weight:600; cursor:pointer; border:none; text-decoration:none; transition:all .2s; white-space:nowrap; }
+        .btn i { width:.75rem; height:.75rem; }
+        .btn-primary { background:var(--primary); color:#fff; } .btn-primary:hover { background:var(--primary-hover); }
+        .btn-outline { background:var(--bg); color:var(--text-secondary); border:1px solid var(--border); } .btn-outline:hover { border-color:var(--primary); color:var(--primary); }
+        .btn-danger { background:var(--error); color:#fff; } .btn-danger:hover { background:#DC2626; }
+        .btn-warning { background:var(--accent); color:#fff; } .btn-warning:hover { background:#D97706; }
+        .action-group { display:flex; gap:4px; flex-wrap:wrap; }
+
+        /* ═══ PAGINATION ═══ */
+        .pagination { display:flex; align-items:center; justify-content:center; gap:4px; padding:20px; border-top:1px solid var(--border-light); }
+        .page-btn { padding:8px 14px; border:1px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.75rem; font-weight:500; color:var(--text-secondary); cursor:pointer; background:#fff; transition:all .2s; }
+        .page-btn:hover { border-color:var(--primary); color:var(--primary); }
+        .page-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+        .page-btn:disabled { opacity:.4; cursor:not-allowed; }
+        .page-info { font-size:.75rem; color:var(--text-muted); padding:0 8px; }
+
+        /* ═══ MODAL ═══ */
+        .modal-overlay { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,.5); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:20px; animation:fadeIn .2s; }
+        .modal-content { background:#fff; border-radius:var(--radius-xl); padding:28px; width:100%; max-width:650px; max-height:85vh; overflow-y:auto; box-shadow:var(--shadow-lg); animation:slideUpModal .35s ease; }
+        .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+        .modal-title { font-weight:700; font-size:1.1rem; display:flex; align-items:center; gap:8px; }
+        .modal-close { background:none; border:none; cursor:pointer; color:var(--text-muted); padding:6px; border-radius:var(--radius-sm); }
+        .modal-close:hover { background:var(--surface); color:var(--text-primary); }
+        .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+        .detail-item { padding:10px; background:var(--surface); border-radius:var(--radius-sm); }
+        .detail-label { font-size:.625rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:2px; }
+        .detail-value { font-size:.8125rem; font-weight:600; }
+
+        /* ═══ BOTTOM NAV ═══ */
+        .bottom-navbar { display:none; position:fixed; bottom:0; left:0; right:0; z-index:150; background:rgba(255,255,255,.95); backdrop-filter:blur(20px); border-top:1px solid var(--border-light); padding:4px 2px; padding-bottom:max(4px,env(safe-area-inset-bottom)); box-shadow:0 -4px 20px rgba(0,0,0,.06); animation:slideUpBottom .4s ease; }
+        .bottom-nav-list { display:flex; align-items:center; justify-content:space-around; max-width:500px; margin:0 auto; }
+        .bottom-nav-link { display:flex; flex-direction:column; align-items:center; gap:2px; padding:5px 3px; text-decoration:none; color:var(--text-muted); font-size:.5625rem; font-weight:500; border-radius:10px; min-height:44px; }
+        .bottom-nav-link i { width:1.25rem; height:1.25rem; }
+        .bottom-nav-link.active { color:var(--primary); font-weight:600; }
+        .menu-toggle { display:none; position:fixed; top:12px; left:12px; z-index:101; background:#fff; border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; cursor:pointer; box-shadow:var(--shadow-xs); }
+
+        /* ═══ LOADING ═══ */
+        .loading-spinner { text-align:center; padding:48px; }
+        .spinner { width:28px; height:28px; border:3px solid var(--border-light); border-top-color:var(--primary); border-radius:50%; margin:0 auto 12px; animation:spin .7s linear infinite; }
+        .empty-state { text-align:center; padding:48px 20px; color:var(--text-muted); }
+        .empty-state i { display:block; margin:0 auto 12px; color:var(--border); }
+
+        /* ═══ TOAST ═══ */
+        .toast-container { position:fixed; top:24px; right:24px; z-index:10000; display:flex; flex-direction:column; gap:10px; pointer-events:none; }
+        .toast { display:flex; align-items:center; gap:12px; padding:14px 20px; background:#fff; border:1px solid var(--border-light); border-radius:var(--radius); box-shadow:0 10px 30px rgba(0,0,0,.12); font-size:.875rem; font-weight:500; pointer-events:auto; min-width:300px; animation:toastIn .3s ease; }
+        .toast.success { border-left:4px solid var(--primary); }
+        .toast.error { border-left:4px solid var(--error); }
+        .toast.warning { border-left:4px solid var(--accent); }
+
+        /* ═══ RESPONSIVE ═══ */
+        @media (min-width:1024px) { .bottom-navbar { display:none !important; } .menu-toggle { display:none !important; } }
+        
+        @media (max-width:1023px) {
+            .sidebar { display:none !important; }
+            .bottom-navbar { display:block; }
+            .menu-toggle { display:flex; align-items:center; gap:6px; font-family:'Inter',sans-serif; font-size:.75rem; font-weight:600; }
+            .main-content { margin-left:0 !important; padding:20px 14px; padding-bottom:calc(var(--bottom-nav-h) + 20px + env(safe-area-inset-bottom)) !important; padding-top:60px; }
+            .kpi-grid { grid-template-columns:repeat(2,1fr); gap:10px; }
+            .filters-bar { flex-direction:column; }
+            .filters-bar .search-input { width:100%; }
+            .detail-grid { grid-template-columns:1fr; }
+        }
+        
+        @media (max-width:767px) {
+            .main-content { padding:16px 10px; padding-bottom:calc(var(--bottom-nav-h) + 16px + env(safe-area-inset-bottom)) !important; }
+            .kpi-grid { grid-template-columns:1fr; gap:8px; }
+            .kpi-card { padding:14px; }
+            .kpi-value { font-size:1.25rem; }
+            .page-title { font-size:1.35rem; }
+            .modal-content { max-width:100%; border-radius:20px 20px 0 0; animation:slideUpMobile .35s ease; }
+        }
+        
+        @media (max-width:424px) {
+            .page-title { font-size:1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar" id="sidebar">
+    <a href="index.html" class="sidebar-logo">⚙️ Admin <span>CamServices</span></a>
+    <ul class="sidebar-nav">
+        <li><a href="index.html"><i data-lucide="layout-dashboard"></i> Tableau de bord</a></li>
+        <li class="nav-section"><span>Utilisateurs</span></li>
+        <li><a href="users/index.html"><i data-lucide="users"></i> Prestataires</a></li>
+        <li><a href="clients/index.html" class="active"><i data-lucide="user-check"></i> Clients <span class="badge" id="clientsCountBadge">0</span></a></li>
+        <li><a href="verification/index.html"><i data-lucide="shield-check"></i> Vérification <span class="badge" id="pendingBadge">0</span></a></li>
+        <li class="nav-section"><span>Activité</span></li>
+        <li><a href="orders/index.html"><i data-lucide="shopping-bag"></i> Commandes</a></li>
+        <li><a href="services/index.html"><i data-lucide="briefcase"></i> Services</a></li>
+        <li class="nav-section"><span>Administration</span></li>
+        <li><a href="analytics/index.html"><i data-lucide="bar-chart-3"></i> Analytics</a></li>
+        <li><a href="activities/index.html"><i data-lucide="activity"></i> Activités</a></li>
+        <li><a href="disputes/index.html"><i data-lucide="alert-triangle"></i> Litiges</a></li>
+        <li><a href="payments/index.html"><i data-lucide="banknote"></i> Paiements</a></li>
+        <li><a href="settings/index.html"><i data-lucide="settings"></i> Paramètres</a></li>
+    </ul>
+    <a href="../landing.html" onclick="logout();return false" class="sidebar-logout"><i data-lucide="log-out"></i> Déconnexion</a>
+</aside>
+
+<!-- ═══ MENU MOBILE ═══ -->
+<button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()"><i data-lucide="menu" style="width:1rem;height:1rem"></i> Menu</button>
+
+<!-- ═══ MAIN CONTENT ═══ -->
+<main class="main-content">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Gestion des <span>clients</span></h1>
+            <p class="page-subtitle">Gérez tous les clients utilisateurs de la plateforme</p>
+        </div>
+        <div class="page-actions">
+            <button class="btn btn-outline" onclick="exportClients()"><i data-lucide="download"></i> Exporter</button>
+        </div>
+    </div>
+
+    <!-- KPI -->
+    <div class="kpi-grid" id="kpiGrid">
+        <div class="kpi-card primary"><div class="kpi-card-header"><div class="kpi-icon primary"><i data-lucide="users"></i></div></div><div class="kpi-value" id="kpiTotal">—</div><div class="kpi-label">Total clients</div></div>
+        <div class="kpi-card blue"><div class="kpi-card-header"><div class="kpi-icon blue"><i data-lucide="user-check"></i></div></div><div class="kpi-value" id="kpiActive">—</div><div class="kpi-label">Clients actifs</div></div>
+        <div class="kpi-card purple"><div class="kpi-card-header"><div class="kpi-icon purple"><i data-lucide="user-plus"></i></div></div><div class="kpi-value" id="kpiNew">—</div><div class="kpi-label">Nouveaux (7 jours)</div></div>
+        <div class="kpi-card error"><div class="kpi-card-header"><div class="kpi-icon error"><i data-lucide="ban"></i></div></div><div class="kpi-value" id="kpiBlocked">—</div><div class="kpi-label">Clients bloqués</div></div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filters-bar">
+        <input type="text" class="search-input" id="searchInput" placeholder="🔍 Rechercher par nom, email ou téléphone..." oninput="loadClients()">
+        <select class="filter-select" id="statusFilter" onchange="loadClients()">
+            <option value="all">Tous les statuts</option>
+            <option value="active">✅ Actifs</option>
+            <option value="inactive">⏸️ Inactifs</option>
+            <option value="banned">🚫 Bloqués</option>
+        </select>
+        <select class="filter-select" id="sortFilter" onchange="loadClients()">
+            <option value="recent">Plus récents</option>
+            <option value="oldest">Plus anciens</option>
+            <option value="name_asc">Nom A→Z</option>
+            <option value="orders_desc">Plus de commandes</option>
+        </select>
+    </div>
+
+    <!-- Table -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3 class="section-title"><i data-lucide="list"></i> Liste des clients</h3>
+            <span class="results-count" id="resultsCount">Chargement...</span>
+        </div>
+        <div class="table-wrapper" id="clientsTable">
+            <div class="loading-spinner"><div class="spinner"></div><p>Chargement des clients...</p></div>
+        </div>
+        <div class="pagination" id="pagination"></div>
+    </div>
+</main>
+
+<!-- ═══ BOTTOM NAVBAR ═══ -->
+<nav class="bottom-navbar">
+    <div class="bottom-nav-list">
+        <a href="index.html" class="bottom-nav-link"><i data-lucide="layout-dashboard"></i><span>Accueil</span></a>
+        <a href="users/index.html" class="bottom-nav-link"><i data-lucide="users"></i><span>Users</span></a>
+        <a href="orders/index.html" class="bottom-nav-link"><i data-lucide="shopping-bag"></i><span>Cmd</span></a>
+        <a href="clients/index.html" class="bottom-nav-link active"><i data-lucide="user-check"></i><span>Clients</span></a>
+        <a href="analytics/index.html" class="bottom-nav-link"><i data-lucide="bar-chart-3"></i><span>Stats</span></a>
+    </div>
+</nav>
+
+<div id="modalContainer"></div>
+
+<script>
+// ═══════════════════════════════════════════
+// SUPABASE
+// ═══════════════════════════════════════════
+const SUPABASE_URL = 'https://cwubxwbzzuigctvgdygv.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dWJ4d2J6enVpZ2N0dmdkeWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzI2MTgsImV4cCI6MjA5MzgwODYxOH0.0mwBNo_S5yItQQjq2at9GNRN74ooZRBJIbZGDH9L2uk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let currentPage = 1, totalPages = 1;
+const PAGE_SIZE = 20;
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { window.location.href = '../login.html'; return; }
+    const { data: profile } = await sb.from('users').select('role').eq('id', user.id).single();
+    if (!profile || profile.role !== 'admin') { showToast('Accès refusé', 'error'); setTimeout(() => window.location.href = '../landing.html', 1500); return; }
+    
+    lucide.createIcons();
+    await loadKPIs();
+    await loadClients();
+});
+
+// ═══ KPI ═══
+async function loadKPIs() {
+    try {
+        const [{ count: total }, { count: active }, { count: blocked }] = await Promise.all([
+            sb.from('users_clients').select('*', { count: 'exact', head: true }),
+            sb.from('users_clients').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+            sb.from('users_clients').select('*', { count: 'exact', head: true }).eq('status', 'banned')
+        ]);
+        
+        const weekAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString();
+        const { count: newClients } = await sb.from('users_clients').select('*', { count: 'exact', head: true }).gte('created_at', weekAgo);
+        
+        document.getElementById('kpiTotal').textContent = total || 0;
+        document.getElementById('kpiActive').textContent = active || 0;
+        document.getElementById('kpiNew').textContent = newClients || 0;
+        document.getElementById('kpiBlocked').textContent = blocked || 0;
+        document.getElementById('clientsCountBadge').textContent = total || 0;
+    } catch (err) { console.error('Erreur KPI:', err); }
+}
+
+// ═══ CHARGER LES CLIENTS ═══
+async function loadClients(page = 1) {
+    currentPage = page;
+    const container = document.getElementById('clientsTable');
+    container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+    
+    try {
+        const search = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+        const statusFilter = document.getElementById('statusFilter')?.value || 'all';
+        const sortFilter = document.getElementById('sortFilter')?.value || 'recent';
+        
+        let query = sb.from('users_clients').select('*', { count: 'exact' });
+        
+        if (statusFilter !== 'all') query = query.eq('status', statusFilter);
+        
+        // Tri
+        if (sortFilter === 'recent') query = query.order('created_at', { ascending: false });
+        else if (sortFilter === 'oldest') query = query.order('created_at', { ascending: true });
+        else if (sortFilter === 'name_asc') query = query.order('full_name', { ascending: true });
+        else if (sortFilter === 'orders_desc') query = query.order('created_at', { ascending: false });
+        
+        const { data, count, error } = await query.range((page-1)*PAGE_SIZE, page*PAGE_SIZE-1);
+        if (error) throw error;
+        
+        let clients = data || [];
+        
+        // Filtre recherche (côté client)
+        if (search) {
+            clients = clients.filter(c => 
+                (c.full_name || '').toLowerCase().includes(search) ||
+                (c.email || '').toLowerCase().includes(search) ||
+                (c.phone || '').toLowerCase().includes(search)
+            );
+        }
+        
+        // Charger les commandes pour chaque client
+        const clientIds = clients.map(c => c.id);
+        const { data: allOrders } = await sb.from('orders').select('client_client_id').in('client_client_id', clientIds);
+        const orderCounts = {};
+        (allOrders || []).forEach(o => { orderCounts[o.client_client_id] = (orderCounts[o.client_client_id] || 0) + 1; });
+        
+        totalPages = Math.ceil((count || 0) / PAGE_SIZE);
+        document.getElementById('resultsCount').textContent = `${count || 0} client(s)`;
+        
+        if (!clients.length) {
+            container.innerHTML = '<div class="empty-state"><i data-lucide="users" style="width:3rem;height:3rem"></i><p>Aucun client trouvé</p></div>';
+        } else {
+            container.innerHTML = `<table><thead><tr><th>Client</th><th>Contact</th><th>Ville</th><th>Commandes</th><th>Inscription</th><th>Statut</th><th>Actions</th></tr></thead><tbody>${clients.map(c => renderClientRow(c, orderCounts[c.id] || 0)).join('')}</tbody></table>`;
+        }
+        
+        renderPagination();
+        lucide.createIcons();
+        
+    } catch (err) {
+        console.error('Erreur:', err);
+        container.innerHTML = '<div class="empty-state"><i data-lucide="alert-triangle" style="width:3rem;height:3rem;color:var(--error)"></i><p>Erreur: ' + err.message + '</p></div>';
+    }
+}
+
+function renderClientRow(c, orderCount) {
+    const initials = (c.full_name || '?')[0].toUpperCase();
+    const statusLabels = { active: 'Actif', inactive: 'Inactif', banned: 'Bloqué' };
+    const statusClass = c.status === 'active' ? 'status-active' : c.status === 'banned' ? 'status-banned' : 'status-inactive';
+    
+    return `<tr>
+        <td><div class="user-cell"><div class="user-avatar">${c.avatar_url ? `<img src="${c.avatar_url}" alt="">` : initials}</div><div><strong>${esc(c.full_name)}</strong></div></div></td>
+        <td><div style="font-size:.75rem">${esc(c.email)}</div><div style="font-size:.6875rem;color:var(--text-muted)">${esc(c.phone || '—')}</div></td>
+        <td>${esc(c.city || '—')}</td>
+        <td><span style="font-weight:600">${orderCount}</span></td>
+        <td>${fmtDate(c.created_at)}</td>
+        <td><span class="status-badge ${statusClass}">${statusLabels[c.status] || c.status}</span></td>
+        <td><div class="action-group">
+            <button class="btn btn-outline" onclick="viewClientProfile('${c.id}')"><i data-lucide="eye"></i> Profil</button>
+            <button class="btn btn-outline" onclick="viewClientOrders('${c.id}')"><i data-lucide="shopping-bag"></i> Cmd</button>
+            ${c.status === 'banned' 
+                ? `<button class="btn btn-primary" onclick="toggleClientStatus('${c.id}','active')"><i data-lucide="unlock"></i></button>`
+                : `<button class="btn btn-danger" onclick="toggleClientStatus('${c.id}','banned')"><i data-lucide="ban"></i></button>`}
+        </div></td>
+    </tr>`;
+}
+
+// ═══ PAGINATION ═══
+function renderPagination() {
+    const container = document.getElementById('pagination');
+    if (totalPages <= 1) { container.innerHTML = ''; return; }
+    let html = '';
+    html += `<button class="page-btn" onclick="loadClients(${currentPage-1})" ${currentPage===1?'disabled':''}><i data-lucide="chevron-left" style="width:.875rem;height:.875rem"></i></button>`;
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage-1 && i <= currentPage+1)) {
+            html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="loadClients(${i})">${i}</button>`;
+        } else if (i === currentPage-2 || i === currentPage+2) {
+            html += '<span class="page-info">...</span>';
+        }
+    }
+    html += `<button class="page-btn" onclick="loadClients(${currentPage+1})" ${currentPage===totalPages?'disabled':''}><i data-lucide="chevron-right" style="width:.875rem;height:.875rem"></i></button>`;
+    html += `<span class="page-info">Page ${currentPage}/${totalPages}</span>`;
+    container.innerHTML = html;
+    lucide.createIcons();
+}
+
+// ═══ VOIR PROFIL CLIENT ═══
+async function viewClientProfile(clientId) {
+    const { data: client } = await sb.from('users_clients').select('*').eq('id', clientId).single();
+    if (!client) { showToast('Client introuvable', 'error'); return; }
+    
+    const { data: orders } = await sb.from('orders').select('*, service:service_id(title)').eq('client_client_id', clientId).order('created_at', { ascending: false }).limit(10);
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML = `<div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header"><h3 class="modal-title"><i data-lucide="user" style="color:var(--primary)"></i> Profil client</h3><button class="modal-close" onclick="this.closest('.modal-overlay').remove()"><i data-lucide="x"></i></button></div>
+        <div style="display:flex;gap:16px;align-items:center;margin-bottom:20px">
+            <div style="width:56px;height:56px;border-radius:50%;background:var(--purple-light);color:var(--purple);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.2rem;overflow:hidden">${client.avatar_url ? `<img src="${client.avatar_url}" style="width:100%;height:100%;object-fit:cover">` : (client.full_name||'?')[0].toUpperCase()}</div>
+            <div><div style="font-weight:700;font-size:1.1rem">${esc(client.full_name)}</div><div style="font-size:.8125rem;color:var(--text-muted)">${esc(client.email)} · ${esc(client.phone||'—')}</div></div>
+        </div>
+        <div class="detail-grid">
+            <div class="detail-item"><div class="detail-label">Ville</div><div class="detail-value">${esc(client.city||'—')}</div></div>
+            <div class="detail-item"><div class="detail-label">Adresse</div><div class="detail-value">${esc(client.address||'—')}</div></div>
+            <div class="detail-item"><div class="detail-label">Statut</div><div class="detail-value"><span class="status-badge ${client.status==='active'?'status-active':client.status==='banned'?'status-banned':'status-inactive'}">${client.status}</span></div></div>
+            <div class="detail-item"><div class="detail-label">Inscrit le</div><div class="detail-value">${fmtDate(client.created_at)}</div></div>
+        </div>
+        ${orders?.length ? `<div style="font-weight:700;font-size:.85rem;margin-bottom:8px"><i data-lucide="shopping-bag" style="width:1rem;height:1rem;color:var(--primary);margin-right:6px"></i>Dernières commandes (${orders.length})</div>
+        <div class="table-wrapper"><table style="min-width:400px;font-size:.72rem"><thead><tr><th>Service</th><th>Montant</th><th>Statut</th><th>Date</th></tr></thead><tbody>${orders.map(o => `<tr><td>${esc(o.service?.title||'—')}</td><td>${fmt(o.total_amount)}</td><td><span class="status-badge status-active">${o.status}</span></td><td>${fmtDate(o.created_at)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+        <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+            ${client.status === 'banned' 
+                ? `<button class="btn btn-primary" onclick="toggleClientStatus('${client.id}','active');this.closest('.modal-overlay').remove()"><i data-lucide="unlock"></i> Débloquer</button>`
+                : `<button class="btn btn-danger" onclick="toggleClientStatus('${client.id}','banned');this.closest('.modal-overlay').remove()"><i data-lucide="ban"></i> Bloquer</button>`}
+        </div>
+    </div>`;
+    document.body.appendChild(overlay);
+    lucide.createIcons();
+}
+
+// ═══ VOIR COMMANDES CLIENT ═══
+async function viewClientOrders(clientId) {
+    const { data: client } = await sb.from('users_clients').select('full_name').eq('id', clientId).single();
+    const { data: orders } = await sb.from('orders').select('*, service:service_id(title)').eq('client_client_id', clientId).order('created_at', { ascending: false });
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML = `<div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header"><h3 class="modal-title"><i data-lucide="shopping-bag" style="color:var(--primary)"></i> Commandes de ${esc(client?.full_name||'Client')}</h3><button class="modal-close" onclick="this.closest('.modal-overlay').remove()"><i data-lucide="x"></i></button></div>
+        ${orders?.length ? `<div class="table-wrapper"><table style="min-width:500px;font-size:.72rem"><thead><tr><th>Service</th><th>Montant</th><th>Statut</th><th>Message</th><th>Date</th></tr></thead><tbody>${orders.map(o => `<tr><td>${esc(o.service?.title||'—')}</td><td>${fmt(o.total_amount)}</td><td><span class="status-badge status-active">${o.status}</span></td><td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(o.client_message||'—')}</td><td>${fmtDate(o.created_at)}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty-state"><p>Aucune commande</p></div>'}
+    </div>`;
+    document.body.appendChild(overlay);
+    lucide.createIcons();
+}
+
+// ═══ ACTIONS ═══
+async function toggleClientStatus(clientId, newStatus) {
+    const action = newStatus === 'banned' ? 'bloquer' : 'débloquer';
+    if (!confirm(`Confirmer ${action} ce client ?`)) return;
+    
+    const { error } = await sb.from('users_clients').update({ status: newStatus }).eq('id', clientId);
+    if (error) { showToast('Erreur: ' + error.message, 'error'); return; }
+    
+    showToast(`Client ${action === 'bloquer' ? 'bloqué' : 'débloqué'} avec succès`, 'success');
+    loadClients(currentPage);
+    loadKPIs();
+}
+
+function exportClients() {
+    showToast('Export en cours...', 'info');
+}
+
+// ═══ UTILITAIRES ═══
+function esc(t) { const d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
+function fmt(p) { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(p || 0); }
+function fmtDate(d) { return d ? new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'; }
+function showToast(msg, type) {
+    let c = document.getElementById('toastContainer'); if (!c) { c = document.createElement('div'); c.id = 'toastContainer'; c.className = 'toast-container'; document.body.appendChild(c); }
+    const icons = { success: 'check-circle', error: 'x-circle', warning: 'alert-triangle', info: 'info' };
+    const t = document.createElement('div'); t.className = `toast ${type}`;
+    t.innerHTML = `<i data-lucide="${icons[type]}" style="width:1.125rem;height:1.125rem"></i><span>${msg}</span>`;
+    c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(20px)'; t.style.transition = 'all .3s'; setTimeout(() => t.remove(), 300); }, 4000);
+}
+function toggleSidebar() { const s = document.getElementById('sidebar'); s.classList.toggle('open'); s.classList.contains('open') ? (s.style.display='flex', s.style.position='fixed', s.style.zIndex='300', s.style.width='280px', s.style.boxShadow='4px 0 24px rgba(0,0,0,.15)') : (s.style.display='none'); }
+async function logout() { await sb.auth.signOut(); window.location.href = '../landing.html'; }
+</script>
+</body>
+</html>

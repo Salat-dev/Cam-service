@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Paiements — Administration CamServices</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        :root {
+            --primary: #22C55E; --primary-hover: #16A34A; --primary-light: #F0FDF4; --primary-dim: rgba(34,197,94,.08);
+            --text-primary: #111827; --text-secondary: #4B5563; --text-muted: #6B7280;
+            --bg: #FFFFFF; --surface: #F9FAFB; --border: #E5E7EB; --border-light: #F3F4F6;
+            --accent: #F59E0B; --accent-light: #FFFBEB; --error: #EF4444; --error-light: #FEF2F2;
+            --blue: #3B82F6; --blue-light: #EFF6FF; --purple: #7C3AED; --purple-light: #F5F3FF;
+            --indigo: #6366F1; --indigo-light: #EEF2FF; --teal: #14B8A6; --teal-light: #F0FDFA;
+            --shadow-xs: 0 1px 2px rgba(0,0,0,0.05); --shadow: 0 4px 20px rgba(0,0,0,.06); --shadow-lg: 0 12px 40px rgba(0,0,0,.1);
+            --radius-sm: 8px; --radius: 12px; --radius-lg: 16px; --radius-xl: 20px;
+            --sidebar-w: 240px; --bottom-nav-h: 72px;
+        }
+        
+        * { margin:0; padding:0; box-sizing:border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--surface); color: var(--text-primary);
+            display: flex; min-height: 100vh;
+            -webkit-font-smoothing: antialiased; line-height: 1.5;
+        }
+        
+        ::selection { background: var(--primary-dim); color: var(--text-primary); }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        
+        @keyframes fadeUp { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+        @keyframes spin { to { transform:rotate(360deg) } }
+        @keyframes slideUpBottom { from { transform:translateY(100%) } to { transform:translateY(0) } }
+        @keyframes slideUpModal { from { opacity:0; transform:translateY(30px) scale(.97) } to { opacity:1; transform:translateY(0) scale(1) } }
+        @keyframes slideUpMobile { from { opacity:0; transform:translateY(60px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes toastIn { from { opacity:0; transform:translateX(40px) } to { opacity:1; transform:translateX(0) } }
+        @keyframes shimmer { 0% { background-position:200% 0 } 100% { background-position:-200% 0 } }
+
+        /* ═══ SIDEBAR ═══ */
+        .sidebar { width:var(--sidebar-w); background:var(--bg); border-right:1px solid var(--border-light); display:flex; flex-direction:column; position:fixed; top:0; left:0; bottom:0; z-index:100; padding:20px 14px; overflow-y:auto; }
+        .sidebar-logo { font-weight:800; font-size:1rem; color:var(--text-primary); text-decoration:none; display:flex; align-items:center; gap:6px; margin-bottom:28px; padding:0 8px; }
+        .sidebar-logo span { color:var(--primary); }
+        .sidebar-nav { list-style:none; flex:1; }
+        .sidebar-nav a { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--radius-sm); font-size:.8125rem; font-weight:500; color:var(--text-secondary); text-decoration:none; transition:all .2s; margin-bottom:2px; }
+        .sidebar-nav a:hover { background:var(--surface); color:var(--text-primary); }
+        .sidebar-nav a.active { background:var(--primary-dim); color:var(--primary); font-weight:600; }
+        .sidebar-nav a i { width:1rem; height:1rem; }
+        .sidebar-nav .badge { margin-left:auto; background:var(--accent); color:#fff; font-size:.625rem; padding:2px 7px; border-radius:10px; }
+        .nav-section { padding:8px 12px 4px; font-size:.625rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); }
+        .sidebar-logout { display:flex; align-items:center; gap:8px; padding:10px 12px; color:var(--error); text-decoration:none; font-size:.8125rem; font-weight:500; border-radius:var(--radius-sm); margin-top:auto; }
+        .sidebar-logout:hover { background:var(--error-light); }
+
+        /* ═══ MAIN ═══ */
+        .main-content { flex:1; margin-left:var(--sidebar-w); padding:28px 28px 64px; max-width:100%; }
+        .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:16px; }
+        .page-title { font-weight:800; font-size:1.6rem; letter-spacing:-.02em; }
+        .page-title span { color:var(--primary); }
+        .page-subtitle { font-size:.875rem; color:var(--text-muted); margin-top:4px; }
+
+        /* ═══ KPI ═══ */
+        .kpi-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:24px; }
+        .kpi-card { background:var(--bg); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:20px; transition:all .3s; box-shadow:var(--shadow-xs); position:relative; overflow:hidden; }
+        .kpi-card:hover { border-color:var(--primary); box-shadow:var(--shadow); transform:translateY(-2px); }
+        .kpi-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+        .kpi-card.teal::before { background:var(--teal); }
+        .kpi-card.primary::before { background:var(--primary); }
+        .kpi-card.accent::before { background:var(--accent); }
+        .kpi-card.error::before { background:var(--error); }
+        .kpi-card.indigo::before { background:var(--indigo); }
+        .kpi-card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+        .kpi-icon { width:38px; height:38px; border-radius:var(--radius); display:flex; align-items:center; justify-content:center; }
+        .kpi-icon.teal { background:var(--teal-light); color:var(--teal); }
+        .kpi-icon.primary { background:var(--primary-dim); color:var(--primary); }
+        .kpi-icon.accent { background:var(--accent-light); color:var(--accent); }
+        .kpi-icon.error { background:var(--error-light); color:var(--error); }
+        .kpi-icon.indigo { background:var(--indigo-light); color:var(--indigo); }
+        .kpi-value { font-weight:800; font-size:1.5rem; letter-spacing:-.03em; line-height:1; }
+        .kpi-label { font-size:.6875rem; color:var(--text-muted); margin-top:3px; font-weight:500; }
+
+        /* ═══ FILTERS ═══ */
+        .filters-bar { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
+        .search-input { padding:9px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.8125rem; outline:none; min-width:200px; flex:1; transition:all .2s; }
+        .search-input:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-dim); }
+        .filter-select { padding:9px 36px 9px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.8125rem; color:var(--text-secondary); outline:none; cursor:pointer; background:#fff; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; transition:all .2s; }
+        .filter-select:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-dim); }
+
+        /* ═══ SECTION CARD ═══ */
+        .section-card { background:var(--bg); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:0; margin-bottom:20px; box-shadow:var(--shadow-xs); overflow:hidden; }
+        .section-header { display:flex; align-items:center; justify-content:space-between; padding:20px 24px; border-bottom:1px solid var(--border-light); flex-wrap:wrap; gap:12px; }
+        .section-title { font-weight:700; font-size:1rem; display:flex; align-items:center; gap:8px; }
+        .section-title i { color:var(--primary); }
+        .results-count { font-size:.75rem; color:var(--text-muted); }
+
+        /* ═══ TABLE ═══ */
+        .table-wrapper { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+        table { width:100%; border-collapse:collapse; font-size:.78rem; min-width:1100px; }
+        th { text-align:left; font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); padding:12px 14px; border-bottom:2px solid var(--border-light); background:var(--surface); white-space:nowrap; }
+        td { padding:12px 14px; border-bottom:1px solid var(--border-light); vertical-align:middle; }
+        tr:hover td { background:var(--surface); }
+        .price-cell { font-weight:700; color:var(--text-primary); }
+        .user-cell { display:flex; align-items:center; gap:8px; }
+        .user-avatar { width:28px; height:28px; border-radius:50%; background:var(--text-primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.625rem; overflow:hidden; flex-shrink:0; }
+        .user-avatar img { width:100%; height:100%; object-fit:cover; }
+
+        /* ═══ BADGES ═══ */
+        .status-badge { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:100px; font-size:.6875rem; font-weight:600; white-space:nowrap; }
+        .status-paid { background:var(--primary-light); color:var(--primary); }
+        .status-pending { background:var(--accent-light); color:#D97706; }
+        .status-failed { background:var(--error-light); color:var(--error); }
+        .status-refunded { background:var(--blue-light); color:var(--blue); }
+        .status-processing { background:var(--purple-light); color:var(--purple); }
+        .method-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:100px; font-size:.6875rem; font-weight:600; background:var(--surface); border:1px solid var(--border); color:var(--text-secondary); }
+
+        /* ═══ BUTTONS ═══ */
+        .btn { display:inline-flex; align-items:center; gap:5px; padding:6px 12px; border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.72rem; font-weight:600; cursor:pointer; border:none; text-decoration:none; transition:all .2s; white-space:nowrap; }
+        .btn i { width:.75rem; height:.75rem; }
+        .btn-primary { background:var(--primary); color:#fff; } .btn-primary:hover { background:var(--primary-hover); }
+        .btn-outline { background:var(--bg); color:var(--text-secondary); border:1px solid var(--border); } .btn-outline:hover { border-color:var(--primary); color:var(--primary); }
+        .btn-danger { background:var(--error); color:#fff; } .btn-danger:hover { background:#DC2626; }
+        .btn-warning { background:var(--accent); color:#fff; } .btn-warning:hover { background:#D97706; }
+        .action-group { display:flex; gap:4px; flex-wrap:wrap; }
+
+        /* ═══ PAGINATION ═══ */
+        .pagination { display:flex; align-items:center; justify-content:center; gap:4px; padding:20px; border-top:1px solid var(--border-light); }
+        .page-btn { padding:8px 14px; border:1px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.75rem; font-weight:500; color:var(--text-secondary); cursor:pointer; background:#fff; transition:all .2s; }
+        .page-btn:hover { border-color:var(--primary); color:var(--primary); }
+        .page-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+        .page-btn:disabled { opacity:.4; cursor:not-allowed; }
+        .page-info { font-size:.75rem; color:var(--text-muted); padding:0 8px; }
+
+        /* ═══ CHARTS ═══ */
+        .charts-grid { display:grid; grid-template-columns:2fr 1fr; gap:20px; margin-bottom:24px; }
+        .chart-card { background:var(--bg); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:24px; box-shadow:var(--shadow-xs); }
+        .chart-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:12px; }
+        .chart-title { font-weight:700; font-size:.9375rem; display:flex; align-items:center; gap:8px; }
+        .chart-title i { color:var(--primary); }
+        .bar-chart { display:flex; align-items:flex-end; gap:10px; height:180px; padding:0 4px; }
+        .bar-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%; }
+        .bar-wrapper { flex:1; width:100%; display:flex; align-items:flex-end; }
+        .bar { width:100%; border-radius:6px 6px 0 0; position:relative; min-height:4px; transition:all .4s ease; cursor:pointer; }
+        .bar:hover { opacity:.85; }
+        .bar-tooltip { position:absolute; top:-28px; left:50%; transform:translateX(-50%); background:var(--text-primary); color:#fff; padding:3px 8px; border-radius:4px; font-size:.625rem; font-weight:600; white-space:nowrap; opacity:0; transition:opacity .2s; pointer-events:none; }
+        .bar:hover .bar-tooltip { opacity:1; }
+        .bar-label { font-size:.625rem; color:var(--text-muted); text-align:center; }
+        .bar-summary { display:flex; justify-content:space-between; margin-top:12px; font-size:.6875rem; color:var(--text-muted); }
+        .donut-chart { width:130px; height:130px; border-radius:50%; position:relative; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .donut-center { width:72px; height:72px; border-radius:50%; background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+        .donut-value { font-weight:800; font-size:1.1rem; }
+        .donut-label { font-size:.6rem; color:var(--text-muted); }
+        .legend { display:flex; flex-direction:column; gap:5px; }
+        .legend-item { display:flex; align-items:center; gap:6px; }
+        .legend-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+        .legend-text { font-size:.7rem; color:var(--text-secondary); flex:1; }
+        .legend-value { font-size:.7rem; font-weight:600; }
+
+        /* ═══ MODAL ═══ */
+        .modal-overlay { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,.5); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:20px; animation:fadeIn .2s; }
+        .modal-content { background:#fff; border-radius:var(--radius-xl); padding:28px; width:100%; max-width:650px; max-height:85vh; overflow-y:auto; box-shadow:var(--shadow-lg); animation:slideUpModal .35s ease; }
+        .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+        .modal-title { font-weight:700; font-size:1.1rem; display:flex; align-items:center; gap:8px; }
+        .modal-close { background:none; border:none; cursor:pointer; color:var(--text-muted); padding:6px; border-radius:var(--radius-sm); }
+        .modal-close:hover { background:var(--surface); color:var(--text-primary); }
+        .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+        .detail-item { padding:10px 12px; background:var(--surface); border-radius:var(--radius-sm); }
+        .detail-label { font-size:.625rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:2px; }
+        .detail-value { font-size:.8125rem; font-weight:600; }
+        .commission-breakdown { background:var(--surface); border-radius:var(--radius); padding:16px; margin-bottom:16px; }
+        .commission-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; }
+        .commission-row.total { border-top:1px solid var(--border); margin-top:8px; padding-top:12px; font-weight:700; }
+
+        /* ═══ BOTTOM NAV ═══ */
+        .bottom-navbar { display:none; position:fixed; bottom:0; left:0; right:0; z-index:150; background:rgba(255,255,255,.95); backdrop-filter:blur(20px); border-top:1px solid var(--border-light); padding:4px 2px; padding-bottom:max(4px,env(safe-area-inset-bottom)); box-shadow:0 -4px 20px rgba(0,0,0,.06); animation:slideUpBottom .4s ease; }
+        .bottom-nav-list { display:flex; align-items:center; justify-content:space-around; max-width:500px; margin:0 auto; }
+        .bottom-nav-link { display:flex; flex-direction:column; align-items:center; gap:2px; padding:5px 3px; text-decoration:none; color:var(--text-muted); font-size:.5625rem; font-weight:500; border-radius:10px; min-height:44px; }
+        .bottom-nav-link i { width:1.25rem; height:1.25rem; }
+        .bottom-nav-link.active { color:var(--primary); font-weight:600; }
+        .menu-toggle { display:none; position:fixed; top:12px; left:12px; z-index:101; background:#fff; border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; cursor:pointer; box-shadow:var(--shadow-xs); }
+
+        /* ═══ LOADING & EMPTY ═══ */
+        .loading-spinner { text-align:center; padding:48px; }
+        .spinner { width:28px; height:28px; border:3px solid var(--border-light); border-top-color:var(--primary); border-radius:50%; margin:0 auto 12px; animation:spin .7s linear infinite; }
+        .empty-state { text-align:center; padding:48px 20px; color:var(--text-muted); }
+        .empty-state i { display:block; margin:0 auto 12px; color:var(--border); }
+
+        /* ═══ TOAST ═══ */
+        .toast-container { position:fixed; top:24px; right:24px; z-index:10000; display:flex; flex-direction:column; gap:10px; pointer-events:none; }
+        .toast { display:flex; align-items:center; gap:12px; padding:14px 20px; background:#fff; border:1px solid var(--border-light); border-radius:var(--radius); box-shadow:0 10px 30px rgba(0,0,0,.12); font-size:.875rem; font-weight:500; pointer-events:auto; min-width:300px; animation:toastIn .3s ease; }
+        .toast.success { border-left:4px solid var(--primary); }
+        .toast.error { border-left:4px solid var(--error); }
+        .toast.warning { border-left:4px solid var(--accent); }
+
+        /* ═══ RESPONSIVE ═══ */
+        @media (min-width:1024px) { .bottom-navbar { display:none !important; } .menu-toggle { display:none !important; } }
+        @media (max-width:1023px) {
+            .sidebar { display:none !important; } .bottom-navbar { display:block; }
+            .menu-toggle { display:flex; align-items:center; gap:6px; font-family:'Inter',sans-serif; font-size:.75rem; font-weight:600; }
+            .main-content { margin-left:0 !important; padding:20px 14px; padding-bottom:calc(var(--bottom-nav-h) + 20px + env(safe-area-inset-bottom)) !important; padding-top:60px; }
+            .kpi-grid { grid-template-columns:repeat(3,1fr); gap:10px; }
+            .charts-grid { grid-template-columns:1fr; }
+            .filters-bar { flex-direction:column; } .filters-bar .search-input { width:100%; }
+            .detail-grid { grid-template-columns:1fr; }
+        }
+        @media (max-width:767px) {
+            .main-content { padding:16px 10px; padding-bottom:calc(var(--bottom-nav-h) + 16px + env(safe-area-inset-bottom)) !important; }
+            .kpi-grid { grid-template-columns:repeat(2,1fr); gap:8px; }
+            .kpi-card { padding:14px; } .kpi-value { font-size:1.25rem; }
+            .page-title { font-size:1.35rem; }
+            .modal-content { max-width:100%; border-radius:20px 20px 0 0; animation:slideUpMobile .35s ease; }
+        }
+        @media (max-width:424px) { .kpi-grid { grid-template-columns:1fr; } .page-title { font-size:1.2rem; } }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+    <a href="index.html" class="sidebar-logo">⚙️ Admin <span>CamServices</span></a>
+    <ul class="sidebar-nav">
+        <li><a href="index.html"><i data-lucide="layout-dashboard"></i> Tableau de bord</a></li>
+        <li class="nav-section"><span>Utilisateurs</span></li>
+        <li><a href="users/index.html"><i data-lucide="users"></i> Prestataires</a></li>
+        <li><a href="clients/index.html"><i data-lucide="user-check"></i> Clients</a></li>
+        <li><a href="verification/index.html"><i data-lucide="shield-check"></i> Vérification</a></li>
+        <li class="nav-section"><span>Activité</span></li>
+        <li><a href="orders/index.html"><i data-lucide="shopping-bag"></i> Commandes</a></li>
+        <li><a href="services/index.html"><i data-lucide="briefcase"></i> Services</a></li>
+        <li class="nav-section"><span>Administration</span></li>
+        <li><a href="analytics/index.html"><i data-lucide="bar-chart-3"></i> Analytics</a></li>
+        <li><a href="activities/index.html"><i data-lucide="activity"></i> Activités</a></li>
+        <li><a href="disputes/index.html"><i data-lucide="alert-triangle"></i> Litiges</a></li>
+        <li><a href="payments/index.html" class="active"><i data-lucide="banknote"></i> Paiements</a></li>
+        <li><a href="settings/index.html"><i data-lucide="settings"></i> Paramètres</a></li>
+    </ul>
+    <a href="../landing.html" onclick="logout();return false" class="sidebar-logout"><i data-lucide="log-out"></i> Déconnexion</a>
+</aside>
+
+<button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()"><i data-lucide="menu" style="width:1rem;height:1rem"></i> Menu</button>
+
+<main class="main-content">
+    <div class="page-header">
+        <div><h1 class="page-title">Gestion des <span>paiements</span></h1><p class="page-subtitle">Suivez toutes les transactions financières de la plateforme</p></div>
+        <button class="btn btn-outline" onclick="exportPayments()"><i data-lucide="download"></i> Exporter</button>
+    </div>
+
+    <!-- KPI -->
+    <div class="kpi-grid" id="kpiGrid">
+        <div class="kpi-card teal"><div class="kpi-card-header"><div class="kpi-icon teal"><i data-lucide="banknote"></i></div></div><div class="kpi-value" id="kpiRevenue">—</div><div class="kpi-label">Revenus totaux</div></div>
+        <div class="kpi-card primary"><div class="kpi-card-header"><div class="kpi-icon primary"><i data-lucide="check-circle"></i></div></div><div class="kpi-value" id="kpiPaid">—</div><div class="kpi-label">Paiements réussis</div></div>
+        <div class="kpi-card accent"><div class="kpi-card-header"><div class="kpi-icon accent"><i data-lucide="clock"></i></div></div><div class="kpi-value" id="kpiPending">—</div><div class="kpi-label">En attente</div></div>
+        <div class="kpi-card error"><div class="kpi-card-header"><div class="kpi-icon error"><i data-lucide="undo-2"></i></div></div><div class="kpi-value" id="kpiRefunded">—</div><div class="kpi-label">Remboursements</div></div>
+        <div class="kpi-card indigo"><div class="kpi-card-header"><div class="kpi-icon indigo"><i data-lucide="percent"></i></div></div><div class="kpi-value" id="kpiCommission">—</div><div class="kpi-label">Commissions générées</div></div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+        <div class="chart-card">
+            <div class="chart-header"><h3 class="chart-title"><i data-lucide="trending-up"></i> Revenus par période</h3></div>
+            <div id="revenueChart"><div class="loading-spinner"><div class="spinner"></div></div></div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-header"><h3 class="chart-title"><i data-lucide="pie-chart"></i> Méthodes de paiement</h3></div>
+            <div id="methodsDonut"><div class="loading-spinner"><div class="spinner"></div></div></div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filters-bar">
+        <input type="text" class="search-input" id="searchInput" placeholder="🔍 Rechercher par ID, client ou prestataire..." oninput="loadPayments()">
+        <select class="filter-select" id="statusFilter" onchange="loadPayments()">
+            <option value="all">Tous les statuts</option><option value="paid">✅ Payé</option><option value="pending">🟡 En attente</option><option value="processing">🟣 En cours</option><option value="failed">🔴 Échoué</option><option value="refunded">🔵 Remboursé</option>
+        </select>
+        <select class="filter-select" id="methodFilter" onchange="loadPayments()">
+            <option value="all">Toutes méthodes</option><option value="mtn_momo">MTN Mobile Money</option><option value="orange_money">Orange Money</option><option value="card">Carte bancaire</option><option value="bank_transfer">Virement bancaire</option><option value="wallet">Wallet interne</option>
+        </select>
+    </div>
+
+    <!-- Tableau -->
+    <div class="section-card">
+        <div class="section-header"><h3 class="section-title"><i data-lucide="list"></i> Historique des transactions</h3><span class="results-count" id="resultsCount">Chargement...</span></div>
+        <div class="table-wrapper" id="paymentsTable"><div class="loading-spinner"><div class="spinner"></div><p>Chargement des paiements...</p></div></div>
+        <div class="pagination" id="pagination"></div>
+    </div>
+</main>
+
+<nav class="bottom-navbar">
+    <div class="bottom-nav-list">
+        <a href="index.html" class="bottom-nav-link"><i data-lucide="layout-dashboard"></i><span>Accueil</span></a>
+        <a href="users/index.html" class="bottom-nav-link"><i data-lucide="users"></i><span>Users</span></a>
+        <a href="orders/index.html" class="bottom-nav-link"><i data-lucide="shopping-bag"></i><span>Cmd</span></a>
+        <a href="payments/index.html" class="bottom-nav-link active"><i data-lucide="banknote"></i><span>Paiements</span></a>
+        <a href="analytics/index.html" class="bottom-nav-link"><i data-lucide="bar-chart-3"></i><span>Stats</span></a>
+    </div>
+</nav>
+
+<div id="modalContainer"></div>
+
+<script>
+const SUPABASE_URL = 'https://cwubxwbzzuigctvgdygv.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dWJ4d2J6enVpZ2N0dmdkeWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzI2MTgsImV4cCI6MjA5MzgwODYxOH0.0mwBNo_S5yItQQjq2at9GNRN74ooZRBJIbZGDH9L2uk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+let currentPage = 1, totalPages = 1;
+const PAGE_SIZE = 20;
+
+const mockPayments = [
+    { id:'PAY-001', client_name:'Jean Dupont', provider_name:'Marie Koné', order_id:'ORD-123', method:'mtn_momo', amount:25000, commission:2500, provider_amount:22500, status:'paid', created_at:'2025-05-20T10:30:00', reference:'MTN-20250520-001' },
+    { id:'PAY-002', client_name:'Alice Foka', provider_name:'Paul Tchinda', order_id:'ORD-456', method:'orange_money', amount:15000, commission:1500, provider_amount:13500, status:'paid', created_at:'2025-05-19T14:00:00', reference:'OM-20250519-002' },
+    { id:'PAY-003', client_name:'Pierre Ngangue', provider_name:'Sophie Mbarga', order_id:'ORD-789', method:'card', amount:85000, commission:8500, provider_amount:76500, status:'processing', created_at:'2025-05-18T09:00:00', reference:'CB-20250518-003' },
+    { id:'PAY-004', client_name:'Fatou Diallo', provider_name:'Ibrahim Touré', order_id:'ORD-012', method:'bank_transfer', amount:45000, commission:4500, provider_amount:40500, status:'pending', created_at:'2025-05-15T16:00:00', reference:'VIR-20250515-004' },
+    { id:'PAY-005', client_name:'David Ekambi', provider_name:'Christine Eto\'o', order_id:'ORD-345', method:'mtn_momo', amount:12000, commission:1200, provider_amount:10800, status:'failed', created_at:'2025-05-12T11:00:00', reference:'MTN-20250512-005' },
+    { id:'PAY-006', client_name:'Grace Bello', provider_name:'Michel Fotso', order_id:'ORD-678', method:'orange_money', amount:65000, commission:6500, provider_amount:58500, status:'refunded', created_at:'2025-05-10T08:00:00', reference:'OM-20250510-006' },
+    { id:'PAY-007', client_name:'Hervé Kamga', provider_name:'Lucie Tamo', order_id:'ORD-901', method:'wallet', amount:32000, commission:3200, provider_amount:28800, status:'paid', created_at:'2025-05-08T15:30:00', reference:'WAL-20250508-007' },
+    { id:'PAY-008', client_name:'Esther Njoya', provider_name:'Franck Bikai', order_id:'ORD-234', method:'card', amount:18000, commission:1800, provider_amount:16200, status:'paid', created_at:'2025-05-05T10:00:00', reference:'CB-20250505-008' },
+    { id:'PAY-009', client_name:'Marc Owona', provider_name:'Denise Atangana', order_id:'ORD-567', method:'mtn_momo', amount:95000, commission:9500, provider_amount:85500, status:'paid', created_at:'2025-05-03T09:30:00', reference:'MTN-20250503-009' },
+    { id:'PAY-010', client_name:'Sarah Bilong', provider_name:'Eric Mbah', order_id:'ORD-890', method:'orange_money', amount:28000, commission:2800, provider_amount:25200, status:'pending', created_at:'2025-05-01T14:00:00', reference:'OM-20250501-010' }
+];
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { window.location.href = '../login.html'; return; }
+    const { data: profile } = await sb.from('users').select('role').eq('id', user.id).single();
+    if (!profile || profile.role !== 'admin') { showToast('Accès refusé', 'error'); setTimeout(() => window.location.href = '../landing.html', 1500); return; }
+    lucide.createIcons();
+    updateKPIs();
+    loadPayments();
+    renderRevenueChart();
+    renderMethodsDonut();
+});
+
+function updateKPIs() {
+    const p = mockPayments;
+    const total = p.reduce((s, x) => s + x.amount, 0);
+    const commission = p.filter(x => x.status === 'paid').reduce((s, x) => s + x.commission, 0);
+    document.getElementById('kpiRevenue').textContent = fmt(total);
+    document.getElementById('kpiPaid').textContent = p.filter(x => x.status === 'paid').length;
+    document.getElementById('kpiPending').textContent = p.filter(x => x.status === 'pending').length;
+    document.getElementById('kpiRefunded').textContent = fmt(p.filter(x => x.status === 'refunded').reduce((s, x) => s + x.amount, 0));
+    document.getElementById('kpiCommission').textContent = fmt(commission);
+}
+
+function loadPayments(page = 1) {
+    currentPage = page;
+    const container = document.getElementById('paymentsTable');
+    const search = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+    const statusFilter = document.getElementById('statusFilter')?.value || 'all';
+    const methodFilter = document.getElementById('methodFilter')?.value || 'all';
+    
+    let payments = [...mockPayments];
+    if (statusFilter !== 'all') payments = payments.filter(p => p.status === statusFilter);
+    if (methodFilter !== 'all') payments = payments.filter(p => p.method === methodFilter);
+    if (search) payments = payments.filter(p => p.id.toLowerCase().includes(search) || p.client_name.toLowerCase().includes(search) || p.provider_name.toLowerCase().includes(search));
+    
+    totalPages = Math.ceil(payments.length / PAGE_SIZE);
+    const paginated = payments.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE);
+    document.getElementById('resultsCount').textContent = `${payments.length} transaction(s)`;
+    
+    if (!paginated.length) {
+        container.innerHTML = '<div class="empty-state"><i data-lucide="banknote" style="width:3rem;height:3rem"></i><p>Aucune transaction trouvée</p></div>';
+    } else {
+        const methodLabels = { mtn_momo:'MTN MoMo', orange_money:'Orange Money', card:'Carte bancaire', bank_transfer:'Virement', wallet:'Wallet' };
+        const statusLabels = { paid:'Payé', pending:'En attente', processing:'En cours', failed:'Échoué', refunded:'Remboursé' };
+        container.innerHTML = `<table><thead><tr><th>ID</th><th>Client</th><th>Prestataire</th><th>Commande</th><th>Méthode</th><th>Montant</th><th>Commission</th><th>Prestataire</th><th>Date</th><th>Statut</th><th>Actions</th></tr></thead><tbody>${paginated.map(p => `
+        <tr>
+            <td><code style="font-size:.7rem;background:var(--surface);padding:2px 6px;border-radius:4px">${p.id}</code></td>
+            <td><div class="user-cell"><div class="user-avatar" style="background:var(--purple-light);color:var(--purple)">${p.client_name[0]}</div>${esc(p.client_name)}</div></td>
+            <td><div class="user-cell"><div class="user-avatar" style="background:var(--primary-dim);color:var(--primary)">${p.provider_name[0]}</div>${esc(p.provider_name)}</div></td>
+            <td><code>${p.order_id}</code></td>
+            <td><span class="method-badge">${methodLabels[p.method]}</span></td>
+            <td class="price-cell">${fmt(p.amount)}</td>
+            <td style="color:var(--text-muted)">${fmt(p.commission)}</td>
+            <td class="price-cell" style="color:var(--primary)">${fmt(p.provider_amount)}</td>
+            <td>${fmtDate(p.created_at)}</td>
+            <td><span class="status-badge status-${p.status}">${statusLabels[p.status]}</span></td>
+            <td><div class="action-group">
+                <button class="btn btn-outline" onclick="viewPaymentDetail('${p.id}')"><i data-lucide="eye"></i></button>
+                ${p.status==='pending'?`<button class="btn btn-primary" onclick="validatePayment('${p.id}')"><i data-lucide="check"></i></button>`:''}
+                ${p.status==='paid'?`<button class="btn btn-warning" onclick="refundPayment('${p.id}')"><i data-lucide="undo-2"></i></button>`:''}
+            </div></td>
+        </tr>`).join('')}</tbody></table>`;
+    }
+    renderPagination();
+    lucide.createIcons();
+}
+
+function renderPagination() {
+    const container = document.getElementById('pagination');
+    if (totalPages <= 1) { container.innerHTML = ''; return; }
+    let html = `<button class="page-btn" onclick="loadPayments(${currentPage-1})" ${currentPage===1?'disabled':''}><i data-lucide="chevron-left" style="width:.875rem;height:.875rem"></i></button>`;
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage-1 && i <= currentPage+1)) html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="loadPayments(${i})">${i}</button>`;
+        else if (i === currentPage-2 || i === currentPage+2) html += '<span class="page-info">...</span>';
+    }
+    html += `<button class="page-btn" onclick="loadPayments(${currentPage+1})" ${currentPage===totalPages?'disabled':''}><i data-lucide="chevron-right" style="width:.875rem;height:.875rem"></i></button><span class="page-info">Page ${currentPage}/${totalPages}</span>`;
+    container.innerHTML = html;
+    lucide.createIcons();
+}
+
+function renderRevenueChart() {
+    const byDay = {};
+    mockPayments.filter(p => p.status === 'paid').forEach(p => {
+        const d = new Date(p.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+        byDay[d] = (byDay[d] || 0) + p.amount;
+    });
+    const days = Object.keys(byDay), values = Object.values(byDay), max = Math.max(...values, 1), total = values.reduce((a, b) => a + b, 0);
+    document.getElementById('revenueChart').innerHTML = days.length ? `
+        <div class="bar-chart">${days.map((d, i) => `<div class="bar-item"><div class="bar-wrapper"><div class="bar" style="height:${(values[i]/max)*100}%;background:var(--teal)"><span class="bar-tooltip">${fmt(values[i])}</span></div></div><span class="bar-label">${d}</span></div>`).join('')}</div>
+        <div class="bar-summary"><span>Total: ${fmt(total)}</span><span>Moy: ${fmt(Math.round(total/(days.length||1)))}/jour</span></div>` : '<div class="empty-state"><p>Aucune donnée</p></div>';
+}
+
+function renderMethodsDonut() {
+    const counts = {}; mockPayments.forEach(p => { counts[p.method] = (counts[p.method] || 0) + 1; });
+    const total = mockPayments.length;
+    const colors = { mtn_momo:'#F59E0B', orange_money:'#EF4444', card:'#3B82F6', bank_transfer:'#7C3AED', wallet:'#22C55E' };
+    const labels = { mtn_momo:'MTN MoMo', orange_money:'Orange Money', card:'Carte', bank_transfer:'Virement', wallet:'Wallet' };
+    let cum = 0;
+    const segs = Object.entries(counts).map(([m, c]) => { const p = (c/total)*100, start = cum; cum += p; return { method:m, count:c, percent:p, color:colors[m]||'#6B7280', start }; });
+    document.getElementById('methodsDonut').innerHTML = `
+        <div style="display:flex;align-items:center;gap:24px;padding:8px">
+            <div class="donut-chart" style="background:conic-gradient(${segs.map(s => `${s.color} ${s.start}% ${s.start+s.percent}%`).join(',')})"><div class="donut-center"><span class="donut-value">${total}</span><span class="donut-label">Total</span></div></div>
+            <div class="legend">${segs.map(s => `<div class="legend-item"><span class="legend-dot" style="background:${s.color}"></span><span class="legend-text">${labels[s.method]}</span><span class="legend-value">${s.count} (${Math.round(s.percent)}%)</span></div>`).join('')}</div>
+        </div>`;
+}
+
+function viewPaymentDetail(id) {
+    const p = mockPayments.find(x => x.id === id); if (!p) return;
+    const methodLabels = { mtn_momo:'MTN Mobile Money', orange_money:'Orange Money', card:'Carte bancaire', bank_transfer:'Virement bancaire', wallet:'Wallet interne' };
+    const statusLabels = { paid:'Payé', pending:'En attente', processing:'En cours', failed:'Échoué', refunded:'Remboursé' };
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML = `<div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header"><h3 class="modal-title"><i data-lucide="banknote" style="color:var(--primary)"></i> Transaction ${p.id}</h3><button class="modal-close" onclick="this.closest('.modal-overlay').remove()"><i data-lucide="x"></i></button></div>
+        <div class="detail-grid">
+            <div class="detail-item"><div class="detail-label">Client</div><div class="detail-value">${esc(p.client_name)}</div></div>
+            <div class="detail-item"><div class="detail-label">Prestataire</div><div class="detail-value">${esc(p.provider_name)}</div></div>
+            <div class="detail-item"><div class="detail-label">Commande</div><div class="detail-value"><code>${p.order_id}</code></div></div>
+            <div class="detail-item"><div class="detail-label">Méthode</div><div class="detail-value">${methodLabels[p.method]}</div></div>
+            <div class="detail-item"><div class="detail-label">Référence</div><div class="detail-value"><code>${p.reference}</code></div></div>
+            <div class="detail-item"><div class="detail-label">Date</div><div class="detail-value">${fmtDate(p.created_at)}</div></div>
+            <div class="detail-item"><div class="detail-label">Statut</div><div class="detail-value"><span class="status-badge status-${p.status}">${statusLabels[p.status]}</span></div></div>
+        </div>
+        <div class="commission-breakdown">
+            <h4 style="font-size:.8rem;margin-bottom:8px">📊 Répartition financière</h4>
+            <div class="commission-row"><span>Montant total</span><span style="font-weight:600">${fmt(p.amount)}</span></div>
+            <div class="commission-row"><span>Commission plateforme (10%)</span><span style="color:var(--error)">- ${fmt(p.commission)}</span></div>
+            <div class="commission-row total"><span>Revenu prestataire</span><span style="color:var(--primary);font-size:1rem">${fmt(p.provider_amount)}</span></div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+            ${p.status==='pending'?`<button class="btn btn-primary" onclick="validatePayment('${p.id}');this.closest('.modal-overlay').remove()"><i data-lucide="check"></i> Valider</button>`:''}
+            ${p.status==='paid'?`<button class="btn btn-warning" onclick="refundPayment('${p.id}');this.closest('.modal-overlay').remove()"><i data-lucide="undo-2"></i> Rembourser</button>`:''}
+        </div>
+    </div>`;
+    document.body.appendChild(overlay);
+    lucide.createIcons();
+}
+
+function validatePayment(id) { if(!confirm('Valider ce paiement ?'))return; const p = mockPayments.find(x => x.id === id); if(p) p.status = 'paid'; showToast('Paiement validé', 'success'); updateKPIs(); loadPayments(currentPage); }
+function refundPayment(id) { const reason = prompt('Motif du remboursement :'); if(reason===null)return; const p = mockPayments.find(x => x.id === id); if(p) p.status = 'refunded'; showToast('Remboursement effectué', 'warning'); updateKPIs(); loadPayments(currentPage); }
+function exportPayments() { showToast('Export en cours...', 'info'); }
+
+function esc(t) { const d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
+function fmt(p) { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(p || 0); }
+function fmtDate(d) { return d ? new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'; }
+function showToast(msg, type) {
+    let c = document.getElementById('toastContainer'); if (!c) { c = document.createElement('div'); c.id = 'toastContainer'; c.className = 'toast-container'; document.body.appendChild(c); }
+    const icons = { success: 'check-circle', error: 'x-circle', warning: 'alert-triangle', info: 'info' };
+    const t = document.createElement('div'); t.className = `toast ${type}`;
+    t.innerHTML = `<i data-lucide="${icons[type]}" style="width:1.125rem;height:1.125rem"></i><span>${msg}</span>`;
+    c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(20px)'; t.style.transition = 'all .3s'; setTimeout(() => t.remove(), 300); }, 4000);
+}
+function toggleSidebar() { const s = document.getElementById('sidebar'); s.classList.toggle('open'); s.classList.contains('open') ? (s.style.display='flex', s.style.position='fixed', s.style.zIndex='300', s.style.width='280px', s.style.boxShadow='4px 0 24px rgba(0,0,0,.15)') : (s.style.display='none'); }
+async function logout() { await sb.auth.signOut(); window.location.href = '../landing.html'; }
+</script>
+</body>
+</html>

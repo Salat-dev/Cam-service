@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Litiges — Administration CamServices</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        :root {
+            --primary: #22C55E; --primary-hover: #16A34A; --primary-light: #F0FDF4; --primary-dim: rgba(34,197,94,.08);
+            --text-primary: #111827; --text-secondary: #4B5563; --text-muted: #6B7280;
+            --bg: #FFFFFF; --surface: #F9FAFB; --border: #E5E7EB; --border-light: #F3F4F6;
+            --accent: #F59E0B; --accent-light: #FFFBEB; --error: #EF4444; --error-light: #FEF2F2;
+            --blue: #3B82F6; --blue-light: #EFF6FF; --purple: #7C3AED; --purple-light: #F5F3FF;
+            --shadow-xs: 0 1px 2px rgba(0,0,0,0.05); --shadow: 0 4px 20px rgba(0,0,0,.06); --shadow-lg: 0 12px 40px rgba(0,0,0,.1);
+            --radius-sm: 8px; --radius: 12px; --radius-lg: 16px; --radius-xl: 20px;
+            --sidebar-w: 240px; --bottom-nav-h: 72px;
+        }
+        
+        * { margin:0; padding:0; box-sizing:border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--surface); color: var(--text-primary);
+            display: flex; min-height: 100vh;
+            -webkit-font-smoothing: antialiased; line-height: 1.5;
+        }
+        
+        ::selection { background: var(--primary-dim); color: var(--text-primary); }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        
+        @keyframes fadeUp { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+        @keyframes spin { to { transform:rotate(360deg) } }
+        @keyframes slideUpBottom { from { transform:translateY(100%) } to { transform:translateY(0) } }
+        @keyframes slideUpModal { from { opacity:0; transform:translateY(30px) scale(.97) } to { opacity:1; transform:translateY(0) scale(1) } }
+        @keyframes slideUpMobile { from { opacity:0; transform:translateY(60px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes toastIn { from { opacity:0; transform:translateX(40px) } to { opacity:1; transform:translateX(0) } }
+        @keyframes pulse { 0%,100%{ opacity:1 } 50%{ opacity:.5 } }
+
+        /* ═══ SIDEBAR ═══ */
+        .sidebar { width:var(--sidebar-w); background:var(--bg); border-right:1px solid var(--border-light); display:flex; flex-direction:column; position:fixed; top:0; left:0; bottom:0; z-index:100; padding:20px 14px; overflow-y:auto; }
+        .sidebar-logo { font-weight:800; font-size:1rem; color:var(--text-primary); text-decoration:none; display:flex; align-items:center; gap:6px; margin-bottom:28px; padding:0 8px; }
+        .sidebar-logo span { color:var(--primary); }
+        .sidebar-nav { list-style:none; flex:1; }
+        .sidebar-nav a { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--radius-sm); font-size:.8125rem; font-weight:500; color:var(--text-secondary); text-decoration:none; transition:all .2s; margin-bottom:2px; }
+        .sidebar-nav a:hover { background:var(--surface); color:var(--text-primary); }
+        .sidebar-nav a.active { background:var(--primary-dim); color:var(--primary); font-weight:600; }
+        .sidebar-nav a i { width:1rem; height:1rem; }
+        .sidebar-nav .badge { margin-left:auto; background:var(--accent); color:#fff; font-size:.625rem; padding:2px 7px; border-radius:10px; }
+        .nav-section { padding:8px 12px 4px; font-size:.625rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); }
+        .sidebar-logout { display:flex; align-items:center; gap:8px; padding:10px 12px; color:var(--error); text-decoration:none; font-size:.8125rem; font-weight:500; border-radius:var(--radius-sm); margin-top:auto; }
+        .sidebar-logout:hover { background:var(--error-light); }
+
+        /* ═══ MAIN CONTENT ═══ */
+        .main-content { flex:1; margin-left:var(--sidebar-w); padding:28px 28px 64px; max-width:100%; }
+        .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:16px; }
+        .page-title { font-weight:800; font-size:1.6rem; letter-spacing:-.02em; }
+        .page-title span { color:var(--primary); }
+        .page-subtitle { font-size:.875rem; color:var(--text-muted); margin-top:4px; }
+
+        /* ═══ KPI GRID ═══ */
+        .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+        .kpi-card { background:var(--bg); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:20px; transition:all .3s; box-shadow:var(--shadow-xs); position:relative; overflow:hidden; }
+        .kpi-card:hover { border-color:var(--primary); box-shadow:var(--shadow); transform:translateY(-2px); }
+        .kpi-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+        .kpi-card.total::before { background:var(--blue); }
+        .kpi-card.open::before { background:var(--error); animation:pulse 2s infinite; }
+        .kpi-card.resolved::before { background:var(--primary); }
+        .kpi-card.urgent::before { background:var(--accent); }
+        .kpi-card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+        .kpi-icon { width:38px; height:38px; border-radius:var(--radius); display:flex; align-items:center; justify-content:center; }
+        .kpi-icon.total { background:var(--blue-light); color:var(--blue); }
+        .kpi-icon.open { background:var(--error-light); color:var(--error); }
+        .kpi-icon.resolved { background:var(--primary-dim); color:var(--primary); }
+        .kpi-icon.urgent { background:var(--accent-light); color:var(--accent); }
+        .kpi-value { font-weight:800; font-size:1.5rem; letter-spacing:-.03em; line-height:1; }
+        .kpi-label { font-size:.6875rem; color:var(--text-muted); margin-top:3px; font-weight:500; }
+
+        /* ═══ FILTERS ═══ */
+        .filters-bar { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
+        .search-input { padding:9px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.8125rem; outline:none; min-width:200px; flex:1; transition:all .2s; }
+        .search-input:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-dim); }
+        .filter-select { padding:9px 36px 9px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.8125rem; color:var(--text-secondary); outline:none; cursor:pointer; background:#fff; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; transition:all .2s; }
+        .filter-select:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-dim); }
+        .btn-filter { padding:9px 16px; border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.75rem; font-weight:600; cursor:pointer; border:1.5px solid var(--border); background:#fff; color:var(--text-secondary); transition:all .2s; white-space:nowrap; }
+        .btn-filter:hover { border-color:var(--primary); color:var(--primary); }
+        .btn-filter.urgent { border-color:var(--error); color:var(--error); }
+        .btn-filter.urgent:hover { background:var(--error); color:#fff; border-color:var(--error); }
+
+        /* ═══ SECTION CARD ═══ */
+        .section-card { background:var(--bg); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:0; margin-bottom:20px; box-shadow:var(--shadow-xs); overflow:hidden; }
+        .section-header { display:flex; align-items:center; justify-content:space-between; padding:20px 24px; border-bottom:1px solid var(--border-light); flex-wrap:wrap; gap:12px; }
+        .section-title { font-weight:700; font-size:1rem; display:flex; align-items:center; gap:8px; }
+        .section-title i { color:var(--primary); }
+        .results-count { font-size:.75rem; color:var(--text-muted); }
+
+        /* ═══ TABLE ═══ */
+        .table-wrapper { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+        table { width:100%; border-collapse:collapse; font-size:.78rem; min-width:900px; }
+        th { text-align:left; font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); padding:12px 14px; border-bottom:2px solid var(--border-light); background:var(--surface); white-space:nowrap; }
+        td { padding:12px 14px; border-bottom:1px solid var(--border-light); vertical-align:middle; }
+        tr:hover td { background:var(--surface); }
+        .user-cell { display:flex; align-items:center; gap:8px; }
+        .user-avatar { width:28px; height:28px; border-radius:50%; background:var(--text-primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.625rem; overflow:hidden; flex-shrink:0; }
+        .user-avatar img { width:100%; height:100%; object-fit:cover; }
+
+        /* ═══ STATUS & PRIORITY BADGES ═══ */
+        .status-badge { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:100px; font-size:.6875rem; font-weight:600; white-space:nowrap; }
+        .status-open { background:var(--error-light); color:var(--error); }
+        .status-pending { background:var(--accent-light); color:#D97706; }
+        .status-resolved { background:var(--primary-light); color:var(--primary); }
+        .status-rejected { background:var(--surface); color:var(--text-muted); border:1px solid var(--border); }
+        .priority-badge { display:inline-flex; align-items:center; gap:3px; padding:3px 8px; border-radius:100px; font-size:.625rem; font-weight:700; text-transform:uppercase; }
+        .priority-high { background:var(--error-light); color:var(--error); }
+        .priority-medium { background:var(--accent-light); color:#D97706; }
+        .priority-low { background:var(--blue-light); color:var(--blue); }
+
+        /* ═══ BUTTONS ═══ */
+        .btn { display:inline-flex; align-items:center; gap:5px; padding:6px 12px; border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.72rem; font-weight:600; cursor:pointer; border:none; text-decoration:none; transition:all .2s; white-space:nowrap; }
+        .btn i { width:.75rem; height:.75rem; }
+        .btn-primary { background:var(--primary); color:#fff; } .btn-primary:hover { background:var(--primary-hover); }
+        .btn-outline { background:var(--bg); color:var(--text-secondary); border:1px solid var(--border); } .btn-outline:hover { border-color:var(--primary); color:var(--primary); }
+        .btn-danger { background:var(--error); color:#fff; } .btn-danger:hover { background:#DC2626; }
+        .btn-warning { background:var(--accent); color:#fff; } .btn-warning:hover { background:#D97706; }
+        .action-group { display:flex; gap:4px; flex-wrap:wrap; }
+
+        /* ═══ PAGINATION ═══ */
+        .pagination { display:flex; align-items:center; justify-content:center; gap:4px; padding:20px; border-top:1px solid var(--border-light); }
+        .page-btn { padding:8px 14px; border:1px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.75rem; font-weight:500; color:var(--text-secondary); cursor:pointer; background:#fff; transition:all .2s; }
+        .page-btn:hover { border-color:var(--primary); color:var(--primary); }
+        .page-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+        .page-btn:disabled { opacity:.4; cursor:not-allowed; }
+        .page-info { font-size:.75rem; color:var(--text-muted); padding:0 8px; }
+
+        /* ═══ MODAL ═══ */
+        .modal-overlay { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,.5); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:20px; animation:fadeIn .2s; }
+        .modal-content { background:#fff; border-radius:var(--radius-xl); padding:28px; width:100%; max-width:700px; max-height:85vh; overflow-y:auto; box-shadow:var(--shadow-lg); animation:slideUpModal .35s ease; }
+        .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+        .modal-title { font-weight:700; font-size:1.1rem; display:flex; align-items:center; gap:8px; }
+        .modal-close { background:none; border:none; cursor:pointer; color:var(--text-muted); padding:6px; border-radius:var(--radius-sm); }
+        .modal-close:hover { background:var(--surface); color:var(--text-primary); }
+        
+        .dispute-detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+        .dispute-detail-item { padding:12px; background:var(--surface); border-radius:var(--radius-sm); }
+        .dispute-detail-label { font-size:.625rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:3px; }
+        .dispute-detail-value { font-size:.8125rem; font-weight:600; }
+        
+        .chat-bubble { padding:12px 16px; border-radius:var(--radius); margin-bottom:8px; }
+        .chat-bubble.client { background:var(--blue-light); border-left:3px solid var(--blue); }
+        .chat-bubble.provider { background:var(--purple-light); border-left:3px solid var(--purple); }
+        .chat-bubble.admin { background:var(--primary-light); border-left:3px solid var(--primary); }
+        .chat-author { font-size:.6875rem; font-weight:600; margin-bottom:2px; }
+        .chat-message { font-size:.8125rem; color:var(--text-secondary); }
+        .chat-time { font-size:.625rem; color:var(--text-muted); margin-top:4px; }
+
+        /* ═══ BOTTOM NAV ═══ */
+        .bottom-navbar { display:none; position:fixed; bottom:0; left:0; right:0; z-index:150; background:rgba(255,255,255,.95); backdrop-filter:blur(20px); border-top:1px solid var(--border-light); padding:4px 2px; padding-bottom:max(4px,env(safe-area-inset-bottom)); box-shadow:0 -4px 20px rgba(0,0,0,.06); animation:slideUpBottom .4s ease; }
+        .bottom-nav-list { display:flex; align-items:center; justify-content:space-around; max-width:500px; margin:0 auto; }
+        .bottom-nav-link { display:flex; flex-direction:column; align-items:center; gap:2px; padding:5px 3px; text-decoration:none; color:var(--text-muted); font-size:.5625rem; font-weight:500; border-radius:10px; min-height:44px; }
+        .bottom-nav-link i { width:1.25rem; height:1.25rem; }
+        .bottom-nav-link.active { color:var(--primary); font-weight:600; }
+        .menu-toggle { display:none; position:fixed; top:12px; left:12px; z-index:101; background:#fff; border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; cursor:pointer; box-shadow:var(--shadow-xs); }
+
+        /* ═══ LOADING & EMPTY ═══ */
+        .loading-spinner { text-align:center; padding:48px; }
+        .spinner { width:28px; height:28px; border:3px solid var(--border-light); border-top-color:var(--primary); border-radius:50%; margin:0 auto 12px; animation:spin .7s linear infinite; }
+        .empty-state { text-align:center; padding:48px 20px; color:var(--text-muted); }
+        .empty-state i { display:block; margin:0 auto 12px; color:var(--border); }
+
+        /* ═══ TOAST ═══ */
+        .toast-container { position:fixed; top:24px; right:24px; z-index:10000; display:flex; flex-direction:column; gap:10px; pointer-events:none; }
+        .toast { display:flex; align-items:center; gap:12px; padding:14px 20px; background:#fff; border:1px solid var(--border-light); border-radius:var(--radius); box-shadow:0 10px 30px rgba(0,0,0,.12); font-size:.875rem; font-weight:500; pointer-events:auto; min-width:300px; animation:toastIn .3s ease; }
+        .toast.success { border-left:4px solid var(--primary); }
+        .toast.error { border-left:4px solid var(--error); }
+        .toast.warning { border-left:4px solid var(--accent); }
+
+        /* ═══ RESPONSIVE ═══ */
+        @media (min-width:1024px) { .bottom-navbar { display:none !important; } .menu-toggle { display:none !important; } }
+        @media (max-width:1023px) {
+            .sidebar { display:none !important; } .bottom-navbar { display:block; }
+            .menu-toggle { display:flex; align-items:center; gap:6px; font-family:'Inter',sans-serif; font-size:.75rem; font-weight:600; }
+            .main-content { margin-left:0 !important; padding:20px 14px; padding-bottom:calc(var(--bottom-nav-h) + 20px + env(safe-area-inset-bottom)) !important; padding-top:60px; }
+            .kpi-grid { grid-template-columns:repeat(2,1fr); gap:10px; }
+            .filters-bar { flex-direction:column; } .filters-bar .search-input { width:100%; }
+            .dispute-detail-grid { grid-template-columns:1fr; }
+        }
+        @media (max-width:767px) {
+            .main-content { padding:16px 10px; padding-bottom:calc(var(--bottom-nav-h) + 16px + env(safe-area-inset-bottom)) !important; }
+            .kpi-grid { grid-template-columns:1fr; gap:8px; }
+            .kpi-card { padding:14px; } .kpi-value { font-size:1.25rem; }
+            .page-title { font-size:1.35rem; }
+            .modal-content { max-width:100%; border-radius:20px 20px 0 0; animation:slideUpMobile .35s ease; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar" id="sidebar">
+    <a href="index.html" class="sidebar-logo">⚙️ Admin <span>CamServices</span></a>
+    <ul class="sidebar-nav">
+        <li><a href="index.html"><i data-lucide="layout-dashboard"></i> Tableau de bord</a></li>
+        <li class="nav-section"><span>Utilisateurs</span></li>
+        <li><a href="users/index.html"><i data-lucide="users"></i> Prestataires</a></li>
+        <li><a href="clients/index.html"><i data-lucide="user-check"></i> Clients</a></li>
+        <li><a href="verification/index.html"><i data-lucide="shield-check"></i> Vérification</a></li>
+        <li class="nav-section"><span>Activité</span></li>
+        <li><a href="orders/index.html"><i data-lucide="shopping-bag"></i> Commandes</a></li>
+        <li><a href="services/index.html"><i data-lucide="briefcase"></i> Services</a></li>
+        <li class="nav-section"><span>Administration</span></li>
+        <li><a href="analytics/index.html"><i data-lucide="bar-chart-3"></i> Analytics</a></li>
+        <li><a href="activities/index.html"><i data-lucide="activity"></i> Activités</a></li>
+        <li><a href="disputes/index.html" class="active"><i data-lucide="alert-triangle"></i> Litiges <span class="badge" id="openBadge">0</span></a></li>
+        <li><a href="payments/index.html"><i data-lucide="banknote"></i> Paiements</a></li>
+        <li><a href="settings/index.html"><i data-lucide="settings"></i> Paramètres</a></li>
+    </ul>
+    <a href="../landing.html" onclick="logout();return false" class="sidebar-logout"><i data-lucide="log-out"></i> Déconnexion</a>
+</aside>
+
+<button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()"><i data-lucide="menu" style="width:1rem;height:1rem"></i> Menu</button>
+
+<main class="main-content">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Centre de <span>litiges</span></h1>
+            <p class="page-subtitle">Gérez les réclamations et résolvez les conflits rapidement</p>
+        </div>
+        <div class="page-actions">
+            <button class="btn-filter urgent" onclick="filterUrgent()"><i data-lucide="alert-triangle" style="width:.875rem;height:.875rem"></i> Urgents</button>
+        </div>
+    </div>
+
+    <!-- KPI -->
+    <div class="kpi-grid" id="kpiGrid">
+        <div class="kpi-card total"><div class="kpi-card-header"><div class="kpi-icon total"><i data-lucide="file-text"></i></div></div><div class="kpi-value" id="kpiTotal">—</div><div class="kpi-label">Total litiges</div></div>
+        <div class="kpi-card open"><div class="kpi-card-header"><div class="kpi-icon open"><i data-lucide="alert-circle"></i></div></div><div class="kpi-value" id="kpiOpen">—</div><div class="kpi-label">Litiges ouverts</div></div>
+        <div class="kpi-card resolved"><div class="kpi-card-header"><div class="kpi-icon resolved"><i data-lucide="check-circle"></i></div></div><div class="kpi-value" id="kpiResolved">—</div><div class="kpi-label">Litiges résolus</div></div>
+        <div class="kpi-card urgent"><div class="kpi-card-header"><div class="kpi-icon urgent"><i data-lucide="zap"></i></div></div><div class="kpi-value" id="kpiUrgent">—</div><div class="kpi-label">Litiges urgents</div></div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filters-bar">
+        <input type="text" class="search-input" id="searchInput" placeholder="🔍 Rechercher par ID, client ou prestataire..." oninput="loadDisputes()">
+        <select class="filter-select" id="statusFilter" onchange="loadDisputes()">
+            <option value="all">Tous les statuts</option>
+            <option value="open">🔴 Ouverts</option>
+            <option value="pending">🟡 En attente</option>
+            <option value="resolved">🟢 Résolus</option>
+            <option value="rejected">⚫ Rejetés</option>
+        </select>
+        <select class="filter-select" id="priorityFilter" onchange="loadDisputes()">
+            <option value="all">Toutes priorités</option>
+            <option value="high">🔴 Haute</option>
+            <option value="medium">🟡 Moyenne</option>
+            <option value="low">🔵 Basse</option>
+        </select>
+    </div>
+
+    <!-- Tableau -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3 class="section-title"><i data-lucide="list"></i> Liste des litiges</h3>
+            <span class="results-count" id="resultsCount">Chargement...</span>
+        </div>
+        <div class="table-wrapper" id="disputesTable">
+            <div class="loading-spinner"><div class="spinner"></div><p>Chargement des litiges...</p></div>
+        </div>
+        <div class="pagination" id="pagination"></div>
+    </div>
+</main>
+
+<nav class="bottom-navbar">
+    <div class="bottom-nav-list">
+        <a href="index.html" class="bottom-nav-link"><i data-lucide="layout-dashboard"></i><span>Accueil</span></a>
+        <a href="users/index.html" class="bottom-nav-link"><i data-lucide="users"></i><span>Users</span></a>
+        <a href="orders/index.html" class="bottom-nav-link"><i data-lucide="shopping-bag"></i><span>Cmd</span></a>
+        <a href="disputes/index.html" class="bottom-nav-link active"><i data-lucide="alert-triangle"></i><span>Litiges</span></a>
+        <a href="analytics/index.html" class="bottom-nav-link"><i data-lucide="bar-chart-3"></i><span>Stats</span></a>
+    </div>
+</nav>
+
+<div id="modalContainer"></div>
+
+<script>
+const SUPABASE_URL = 'https://cwubxwbzzuigctvgdygv.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dWJ4d2J6enVpZ2N0dmdkeWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzI2MTgsImV4cCI6MjA5MzgwODYxOH0.0mwBNo_S5yItQQjq2at9GNRN74ooZRBJIbZGDH9L2uk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+let currentPage = 1, totalPages = 1;
+const PAGE_SIZE = 20;
+
+// ═══ DONNÉES MOCKÉES (en attendant la table disputes) ═══
+const mockDisputes = [
+    { id:'DSP-001', client_name:'Jean Dupont', provider_name:'Marie Koné', service_title:'Plomberie urgence', reason:'Prestation non conforme', status:'open', priority:'high', created_at:'2025-05-20T10:30:00', order_id:'ORD-123', messages:[{author:'client',text:'Le plombier n\'a pas réparé la fuite correctement',time:'2025-05-20T10:35:00'},{author:'provider',text:'J\'ai fait le travail demandé, la fuite vient d\'un autre tuyau',time:'2025-05-20T11:00:00'}] },
+    { id:'DSP-002', client_name:'Alice Foka', provider_name:'Paul Tchinda', service_title:'Cours de maths', reason:'Annulation sans remboursement', status:'pending', priority:'medium', created_at:'2025-05-19T14:00:00', order_id:'ORD-456', messages:[{author:'client',text:'Le professeur a annulé 3 séances sans me rembourser',time:'2025-05-19T14:30:00'}] },
+    { id:'DSP-003', client_name:'Pierre Ngangue', provider_name:'Sophie Mbarga', service_title:'Photographie mariage', reason:'Photos non livrées', status:'open', priority:'high', created_at:'2025-05-18T09:00:00', order_id:'ORD-789', messages:[{author:'client',text:'Mon mariage était il y a 2 mois, je n\'ai toujours pas les photos',time:'2025-05-18T09:15:00'},{author:'provider',text:'Je finalise la retouche, livraison cette semaine',time:'2025-05-18T10:00:00'},{author:'client',text:'C\'est ce que vous disiez le mois dernier !',time:'2025-05-18T10:30:00'}] },
+    { id:'DSP-004', client_name:'Fatou Diallo', provider_name:'Ibrahim Touré', service_title:'Transport déménagement', reason:'Surfacturation', status:'resolved', priority:'low', created_at:'2025-05-15T16:00:00', order_id:'ORD-012', messages:[] },
+    { id:'DSP-005', client_name:'David Ekambi', provider_name:'Christine Eto\'o', service_title:'Coiffure mariage', reason:'Retard de 3h le jour J', status:'rejected', priority:'medium', created_at:'2025-05-12T11:00:00', order_id:'ORD-345', messages:[] },
+    { id:'DSP-006', client_name:'Grace Bello', provider_name:'Michel Fotso', service_title:'Réparation électrique', reason:'Dégâts causés pendant l\'intervention', status:'open', priority:'high', created_at:'2025-05-21T08:00:00', order_id:'ORD-678', messages:[{author:'client',text:'L\'électricien a percé un mur porteur par erreur',time:'2025-05-21T08:15:00'}] },
+    { id:'DSP-007', client_name:'Hervé Kamga', provider_name:'Lucie Tamo', service_title:'Ménage bureau', reason:'Objets disparus après le ménage', status:'pending', priority:'high', created_at:'2025-05-20T15:30:00', order_id:'ORD-901', messages:[{author:'client',text:'Il manque 2 ordinateurs portables après le passage de l\'équipe',time:'2025-05-20T16:00:00'},{author:'provider',text:'Mes employés sont honnêtes, vérifiez vos caméras',time:'2025-05-20T17:00:00'}] },
+    { id:'DSP-008', client_name:'Esther Njoya', provider_name:'Franck Bikai', service_title:'Design logo', reason:'Travail non conforme au brief', status:'resolved', priority:'low', created_at:'2025-05-10T10:00:00', order_id:'ORD-234', messages:[] }
+];
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { window.location.href = '../login.html'; return; }
+    const { data: profile } = await sb.from('users').select('role').eq('id', user.id).single();
+    if (!profile || profile.role !== 'admin') { showToast('Accès refusé', 'error'); setTimeout(() => window.location.href = '../landing.html', 1500); return; }
+    lucide.createIcons();
+    updateKPIs();
+    loadDisputes();
+});
+
+function updateKPIs() {
+    const disputes = mockDisputes;
+    document.getElementById('kpiTotal').textContent = disputes.length;
+    document.getElementById('kpiOpen').textContent = disputes.filter(d => d.status === 'open').length;
+    document.getElementById('kpiResolved').textContent = disputes.filter(d => d.status === 'resolved').length;
+    document.getElementById('kpiUrgent').textContent = disputes.filter(d => d.priority === 'high' && d.status !== 'resolved').length;
+    document.getElementById('openBadge').textContent = disputes.filter(d => d.status === 'open').length;
+}
+
+function loadDisputes(page = 1) {
+    currentPage = page;
+    const container = document.getElementById('disputesTable');
+    
+    try {
+        const search = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+        const statusFilter = document.getElementById('statusFilter')?.value || 'all';
+        const priorityFilter = document.getElementById('priorityFilter')?.value || 'all';
+        
+        let disputes = [...mockDisputes];
+        
+        if (statusFilter !== 'all') disputes = disputes.filter(d => d.status === statusFilter);
+        if (priorityFilter !== 'all') disputes = disputes.filter(d => d.priority === priorityFilter);
+        if (search) disputes = disputes.filter(d => d.id.toLowerCase().includes(search) || d.client_name.toLowerCase().includes(search) || d.provider_name.toLowerCase().includes(search));
+        
+        totalPages = Math.ceil(disputes.length / PAGE_SIZE);
+        const paginated = disputes.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE);
+        document.getElementById('resultsCount').textContent = `${disputes.length} litige(s)`;
+        
+        if (!paginated.length) {
+            container.innerHTML = '<div class="empty-state"><i data-lucide="check-circle" style="width:3rem;height:3rem;color:var(--primary)"></i><p>Aucun litige trouvé</p></div>';
+        } else {
+            container.innerHTML = `<table><thead><tr><th>ID</th><th>Client</th><th>Prestataire</th><th>Service</th><th>Motif</th><th>Priorité</th><th>Date</th><th>Statut</th><th>Actions</th></tr></thead><tbody>${paginated.map(d => renderDisputeRow(d)).join('')}</tbody></table>`;
+        }
+        renderPagination();
+        lucide.createIcons();
+    } catch (err) {
+        container.innerHTML = '<div class="empty-state"><i data-lucide="alert-triangle" style="width:3rem;height:3rem;color:var(--error)"></i><p>Erreur</p></div>';
+    }
+}
+
+function renderDisputeRow(d) {
+    const statusLabels = { open:'Ouvert', pending:'En attente', resolved:'Résolu', rejected:'Rejeté' };
+    const priorityLabels = { high:'Haute', medium:'Moyenne', low:'Basse' };
+    const clientInit = (d.client_name||'?')[0];
+    const providerInit = (d.provider_name||'?')[0];
+    
+    return `<tr>
+        <td><code style="font-size:.7rem;background:var(--surface);padding:2px 6px;border-radius:4px">${d.id}</code></td>
+        <td><div class="user-cell"><div class="user-avatar" style="background:var(--purple-light);color:var(--purple)">${clientInit}</div>${esc(d.client_name)}</div></td>
+        <td><div class="user-cell"><div class="user-avatar" style="background:var(--primary-dim);color:var(--primary)">${providerInit}</div>${esc(d.provider_name)}</div></td>
+        <td>${esc(d.service_title)}</td>
+        <td><span style="font-size:.75rem">${esc(d.reason)}</span></td>
+        <td><span class="priority-badge priority-${d.priority}">${priorityLabels[d.priority]}</span></td>
+        <td>${fmtDate(d.created_at)}</td>
+        <td><span class="status-badge status-${d.status}">${statusLabels[d.status]}</span></td>
+        <td><div class="action-group">
+            <button class="btn btn-outline" onclick="viewDisputeDetail('${d.id}')"><i data-lucide="eye"></i> Détail</button>
+            ${d.status === 'open' ? `<button class="btn btn-primary" onclick="resolveDispute('${d.id}')"><i data-lucide="check"></i> Résoudre</button>` : ''}
+            ${d.status === 'open' || d.status === 'pending' ? `<button class="btn btn-danger" onclick="rejectDispute('${d.id}')"><i data-lucide="x"></i> Rejeter</button>` : ''}
+        </div></td>
+    </tr>`;
+}
+
+function renderPagination() {
+    const container = document.getElementById('pagination');
+    if (totalPages <= 1) { container.innerHTML = ''; return; }
+    let html = `<button class="page-btn" onclick="loadDisputes(${currentPage-1})" ${currentPage===1?'disabled':''}><i data-lucide="chevron-left" style="width:.875rem;height:.875rem"></i></button>`;
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage-1 && i <= currentPage+1)) html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="loadDisputes(${i})">${i}</button>`;
+        else if (i === currentPage-2 || i === currentPage+2) html += '<span class="page-info">...</span>';
+    }
+    html += `<button class="page-btn" onclick="loadDisputes(${currentPage+1})" ${currentPage===totalPages?'disabled':''}><i data-lucide="chevron-right" style="width:.875rem;height:.875rem"></i></button><span class="page-info">Page ${currentPage}/${totalPages}</span>`;
+    container.innerHTML = html;
+    lucide.createIcons();
+}
+
+function viewDisputeDetail(id) {
+    const d = mockDisputes.find(x => x.id === id);
+    if (!d) return;
+    const statusLabels = { open:'Ouvert', pending:'En attente', resolved:'Résolu', rejected:'Rejeté' };
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML = `<div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header"><h3 class="modal-title"><i data-lucide="alert-triangle" style="color:var(--error)"></i> Litige ${d.id}</h3><button class="modal-close" onclick="this.closest('.modal-overlay').remove()"><i data-lucide="x"></i></button></div>
+        
+        <div class="dispute-detail-grid">
+            <div class="dispute-detail-item"><div class="dispute-detail-label">Client</div><div class="dispute-detail-value">${esc(d.client_name)}</div></div>
+            <div class="dispute-detail-item"><div class="dispute-detail-label">Prestataire</div><div class="dispute-detail-value">${esc(d.provider_name)}</div></div>
+            <div class="dispute-detail-item"><div class="dispute-detail-label">Service</div><div class="dispute-detail-value">${esc(d.service_title)}</div></div>
+            <div class="dispute-detail-item"><div class="dispute-detail-label">Commande</div><div class="dispute-detail-value"><code>${d.order_id}</code></div></div>
+            <div class="dispute-detail-item"><div class="dispute-detail-label">Motif</div><div class="dispute-detail-value">${esc(d.reason)}</div></div>
+            <div class="dispute-detail-item"><div class="dispute-detail-label">Priorité</div><div class="dispute-detail-value"><span class="priority-badge priority-${d.priority}">${d.priority}</span></div></div>
+            <div class="dispute-detail-item"><div class="dispute-detail-label">Date création</div><div class="dispute-detail-value">${fmtDate(d.created_at)}</div></div>
+            <div class="dispute-detail-item"><div class="dispute-detail-label">Statut</div><div class="dispute-detail-value"><span class="status-badge status-${d.status}">${statusLabels[d.status]}</span></div></div>
+        </div>
+        
+        ${d.messages?.length ? `<div style="font-weight:700;font-size:.85rem;margin-bottom:10px"><i data-lucide="message-circle" style="width:1rem;height:1rem;color:var(--primary);margin-right:6px"></i>Échanges</div>
+        ${d.messages.map(m => `<div class="chat-bubble ${m.author}"><div class="chat-author">${m.author==='client'?'👤 Client':m.author==='provider'?'🔧 Prestataire':'🛡️ Admin'}</div><div class="chat-message">${esc(m.text)}</div><div class="chat-time">${new Date(m.time).toLocaleString('fr-FR')}</div></div>`).join('')}` : '<p style="color:var(--text-muted);font-size:.8125rem">Aucun échange enregistré</p>'}
+        
+        <div style="display:flex;gap:8px;margin-top:20px;justify-content:flex-end;border-top:1px solid var(--border-light);padding-top:16px">
+            ${d.status === 'open' ? `<button class="btn btn-primary" onclick="resolveDispute('${d.id}');this.closest('.modal-overlay').remove()"><i data-lucide="check"></i> Résoudre</button>` : ''}
+            ${d.status === 'open' || d.status === 'pending' ? `<button class="btn btn-danger" onclick="rejectDispute('${d.id}');this.closest('.modal-overlay').remove()"><i data-lucide="x"></i> Rejeter</button>` : ''}
+            <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Fermer</button>
+        </div>
+    </div>`;
+    document.body.appendChild(overlay);
+    lucide.createIcons();
+}
+
+function resolveDispute(id) {
+    const d = mockDisputes.find(x => x.id === id);
+    if (!d) return;
+    if (!confirm(`Résoudre le litige ${id} ?`)) return;
+    d.status = 'resolved';
+    showToast(`Litige ${id} résolu avec succès`, 'success');
+    updateKPIs(); loadDisputes(currentPage);
+}
+
+function rejectDispute(id) {
+    const d = mockDisputes.find(x => x.id === id);
+    if (!d) return;
+    const reason = prompt('Motif du rejet (optionnel) :');
+    if (reason === null) return;
+    d.status = 'rejected';
+    showToast(`Litige ${id} rejeté`, 'warning');
+    updateKPIs(); loadDisputes(currentPage);
+}
+
+function filterUrgent() {
+    document.getElementById('priorityFilter').value = 'high';
+    document.getElementById('statusFilter').value = 'open';
+    loadDisputes();
+}
+
+function esc(t) { const d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
+function fmtDate(d) { return d ? new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'; }
+function showToast(msg, type) {
+    let c = document.getElementById('toastContainer'); if (!c) { c = document.createElement('div'); c.id = 'toastContainer'; c.className = 'toast-container'; document.body.appendChild(c); }
+    const icons = { success: 'check-circle', error: 'x-circle', warning: 'alert-triangle', info: 'info' };
+    const t = document.createElement('div'); t.className = `toast ${type}`;
+    t.innerHTML = `<i data-lucide="${icons[type]}" style="width:1.125rem;height:1.125rem"></i><span>${msg}</span>`;
+    c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(20px)'; t.style.transition = 'all .3s'; setTimeout(() => t.remove(), 300); }, 4000);
+}
+function toggleSidebar() { const s = document.getElementById('sidebar'); s.classList.toggle('open'); s.classList.contains('open') ? (s.style.display='flex', s.style.position='fixed', s.style.zIndex='300', s.style.width='280px', s.style.boxShadow='4px 0 24px rgba(0,0,0,.15)') : (s.style.display='none'); }
+async function logout() { await sb.auth.signOut(); window.location.href = '../landing.html'; }
+</script>
+</body>
+</html>

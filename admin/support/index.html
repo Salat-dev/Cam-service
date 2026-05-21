@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Support — Administration CamServices</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        :root {
+            --primary: #22C55E; --primary-hover: #16A34A; --primary-light: #F0FDF4; --primary-dim: rgba(34,197,94,.08);
+            --text-primary: #111827; --text-secondary: #4B5563; --text-muted: #6B7280;
+            --bg: #FFFFFF; --surface: #F9FAFB; --border: #E5E7EB; --border-light: #F3F4F6;
+            --accent: #F59E0B; --accent-light: #FFFBEB; --error: #EF4444; --error-light: #FEF2F2;
+            --blue: #3B82F6; --blue-light: #EFF6FF; --purple: #7C3AED; --purple-light: #F5F3FF;
+            --indigo: #6366F1; --pink: #EC4899; --teal: #14B8A6;
+            --shadow-xs: 0 1px 2px rgba(0,0,0,0.05); --shadow: 0 4px 20px rgba(0,0,0,.06); --shadow-lg: 0 12px 40px rgba(0,0,0,.1);
+            --radius-sm: 8px; --radius: 12px; --radius-lg: 16px; --radius-xl: 20px;
+            --sidebar-w: 240px; --bottom-nav-h: 72px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; background:var(--surface); color:var(--text-primary); display:flex; min-height:100vh; -webkit-font-smoothing:antialiased; line-height:1.5; }
+        ::selection { background:var(--primary-dim); color:var(--text-primary); }
+        ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+        @keyframes spin { to{transform:rotate(360deg)} }
+        @keyframes slideUpBottom { from{transform:translateY(100%)} to{transform:translateY(0)} }
+        @keyframes slideUpModal { from{opacity:0;transform:translateY(30px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+        @keyframes slideUpMobile { from{opacity:0;transform:translateY(60px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes toastIn { from{opacity:0;transform:translateX(40px)} to{opacity:1;transform:translateX(0)} }
+
+        /* ═══ SIDEBAR ═══ */
+        .sidebar { width:var(--sidebar-w); background:var(--bg); border-right:1px solid var(--border-light); display:flex; flex-direction:column; position:fixed; top:0; left:0; bottom:0; z-index:100; padding:20px 14px; overflow-y:auto; }
+        .sidebar-logo { font-weight:800; font-size:1rem; color:var(--text-primary); text-decoration:none; display:flex; align-items:center; gap:6px; margin-bottom:28px; padding:0 8px; }
+        .sidebar-logo span { color:var(--primary); }
+        .sidebar-nav { list-style:none; flex:1; }
+        .sidebar-nav a { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--radius-sm); font-size:.8125rem; font-weight:500; color:var(--text-secondary); text-decoration:none; transition:all .2s; margin-bottom:2px; }
+        .sidebar-nav a:hover { background:var(--surface); color:var(--text-primary); }
+        .sidebar-nav a.active { background:var(--primary-dim); color:var(--primary); font-weight:600; }
+        .sidebar-nav a i { width:1rem; height:1rem; }
+        .sidebar-nav .badge { margin-left:auto; background:var(--accent); color:#fff; font-size:.625rem; padding:2px 7px; border-radius:10px; }
+        .nav-section { padding:8px 12px 4px; font-size:.625rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); }
+        .sidebar-logout { display:flex; align-items:center; gap:8px; padding:10px 12px; color:var(--error); text-decoration:none; font-size:.8125rem; font-weight:500; border-radius:var(--radius-sm); margin-top:auto; }
+        .sidebar-logout:hover { background:var(--error-light); }
+
+        /* ═══ MAIN ═══ */
+        .main-content { flex:1; margin-left:var(--sidebar-w); padding:28px 28px 64px; max-width:100%; }
+        .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:16px; }
+        .page-title { font-weight:800; font-size:1.6rem; letter-spacing:-.02em; }
+        .page-title span { color:var(--primary); }
+        .page-subtitle { font-size:.875rem; color:var(--text-muted); margin-top:4px; }
+
+        /* ═══ KPI ═══ */
+        .kpi-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:24px; }
+        .kpi-card { background:var(--bg); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:18px; transition:all .3s; box-shadow:var(--shadow-xs); position:relative; overflow:hidden; }
+        .kpi-card:hover { border-color:var(--primary); box-shadow:var(--shadow); transform:translateY(-2px); }
+        .kpi-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+        .kpi-card.blue::before { background:var(--blue); }
+        .kpi-card.error::before { background:var(--error); }
+        .kpi-card.primary::before { background:var(--primary); }
+        .kpi-card.pink::before { background:var(--pink); }
+        .kpi-card.teal::before { background:var(--teal); }
+        .kpi-card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+        .kpi-icon { width:36px; height:36px; border-radius:var(--radius); display:flex; align-items:center; justify-content:center; }
+        .kpi-value { font-weight:800; font-size:1.4rem; letter-spacing:-.03em; line-height:1; }
+        .kpi-label { font-size:.625rem; color:var(--text-muted); margin-top:2px; font-weight:500; }
+
+        /* ═══ FILTERS ═══ */
+        .filters-bar { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
+        .search-input { padding:9px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.8125rem; outline:none; min-width:200px; flex:1; transition:all .2s; }
+        .search-input:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-dim); }
+        .filter-select { padding:9px 36px 9px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.8125rem; color:var(--text-secondary); outline:none; cursor:pointer; background:#fff; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; transition:all .2s; }
+        .filter-select:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-dim); }
+        .btn-filter { padding:9px 16px; border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.75rem; font-weight:600; cursor:pointer; border:1.5px solid var(--border); background:#fff; color:var(--text-secondary); transition:all .2s; white-space:nowrap; }
+        .btn-filter:hover { border-color:var(--primary); color:var(--primary); }
+        .btn-filter.urgent { border-color:var(--error); color:var(--error); }
+        .btn-filter.urgent:hover { background:var(--error); color:#fff; border-color:var(--error); }
+
+        /* ═══ SECTION CARD ═══ */
+        .section-card { background:var(--bg); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:0; margin-bottom:20px; box-shadow:var(--shadow-xs); overflow:hidden; }
+        .section-header { display:flex; align-items:center; justify-content:space-between; padding:20px 24px; border-bottom:1px solid var(--border-light); flex-wrap:wrap; gap:12px; }
+        .section-title { font-weight:700; font-size:1rem; display:flex; align-items:center; gap:8px; }
+        .section-title i { color:var(--primary); }
+        .results-count { font-size:.75rem; color:var(--text-muted); }
+
+        /* ═══ TABLE ═══ */
+        .table-wrapper { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+        table { width:100%; border-collapse:collapse; font-size:.78rem; min-width:900px; }
+        th { text-align:left; font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); padding:12px 14px; border-bottom:2px solid var(--border-light); background:var(--surface); white-space:nowrap; }
+        td { padding:12px 14px; border-bottom:1px solid var(--border-light); vertical-align:middle; }
+        tr:hover td { background:var(--surface); }
+        .user-cell { display:flex; align-items:center; gap:8px; }
+        .user-avatar { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.625rem; overflow:hidden; flex-shrink:0; color:#fff; }
+
+        /* ═══ STATUS & PRIORITY BADGES ═══ */
+        .status-badge { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:100px; font-size:.6875rem; font-weight:600; white-space:nowrap; }
+        .status-open { background:var(--error-light); color:var(--error); }
+        .status-pending { background:var(--accent-light); color:#D97706; }
+        .status-in_progress { background:var(--blue-light); color:#2563EB; }
+        .status-resolved { background:var(--primary-light); color:var(--primary); }
+        .status-closed { background:var(--surface); color:var(--text-muted); border:1px solid var(--border); }
+        .priority-badge { display:inline-flex; align-items:center; gap:3px; padding:3px 8px; border-radius:100px; font-size:.625rem; font-weight:700; text-transform:uppercase; }
+        .priority-low { background:var(--blue-light); color:var(--blue); }
+        .priority-medium { background:var(--accent-light); color:#D97706; }
+        .priority-high { background:var(--error-light); color:var(--error); }
+        .priority-urgent { background:#DC2626; color:#fff; animation:pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.7} }
+
+        /* ═══ BUTTONS ═══ */
+        .btn { display:inline-flex; align-items:center; gap:5px; padding:6px 12px; border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.72rem; font-weight:600; cursor:pointer; border:none; text-decoration:none; transition:all .2s; white-space:nowrap; }
+        .btn i { width:.75rem; height:.75rem; }
+        .btn-primary { background:var(--primary); color:#fff; } .btn-primary:hover { background:var(--primary-hover); }
+        .btn-outline { background:var(--bg); color:var(--text-secondary); border:1px solid var(--border); } .btn-outline:hover { border-color:var(--primary); color:var(--primary); }
+        .btn-danger { background:var(--error); color:#fff; } .action-group { display:flex; gap:4px; flex-wrap:wrap; }
+
+        /* ═══ PAGINATION ═══ */
+        .pagination { display:flex; align-items:center; justify-content:center; gap:4px; padding:20px; border-top:1px solid var(--border-light); }
+        .page-btn { padding:8px 14px; border:1px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.75rem; font-weight:500; color:var(--text-secondary); cursor:pointer; background:#fff; transition:all .2s; }
+        .page-btn:hover { border-color:var(--primary); color:var(--primary); }
+        .page-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+        .page-btn:disabled { opacity:.4; cursor:not-allowed; }
+        .page-info { font-size:.75rem; color:var(--text-muted); padding:0 8px; }
+
+        /* ═══ MODAL ═══ */
+        .modal-overlay { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,.5); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:20px; animation:fadeIn .2s; }
+        .modal-content { background:#fff; border-radius:var(--radius-xl); padding:28px; width:100%; max-width:650px; max-height:85vh; overflow-y:auto; box-shadow:var(--shadow-lg); animation:slideUpModal .35s ease; }
+        .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+        .modal-title { font-weight:700; font-size:1.1rem; display:flex; align-items:center; gap:8px; }
+        .modal-close { background:none; border:none; cursor:pointer; color:var(--text-muted); padding:6px; border-radius:var(--radius-sm); }
+        .modal-close:hover { background:var(--surface); color:var(--text-primary); }
+        .chat-bubble { padding:12px 16px; border-radius:var(--radius); margin-bottom:8px; }
+        .chat-bubble.user { background:var(--blue-light); border-left:3px solid var(--blue); }
+        .chat-bubble.admin { background:var(--primary-light); border-left:3px solid var(--primary); }
+        .chat-author { font-size:.6875rem; font-weight:600; margin-bottom:4px; display:flex; align-items:center; gap:6px; }
+        .chat-message { font-size:.8125rem; color:var(--text-secondary); line-height:1.5; }
+        .chat-time { font-size:.625rem; color:var(--text-muted); margin-top:4px; }
+        .reply-box { margin-top:16px; padding-top:16px; border-top:1px solid var(--border-light); }
+        .reply-box textarea { width:100%; padding:12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.8125rem; resize:vertical; min-height:80px; outline:none; }
+        .reply-box textarea:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-dim); }
+        .quick-responses { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+        .quick-response { padding:5px 10px; border-radius:100px; font-size:.6875rem; cursor:pointer; border:1px solid var(--border); background:var(--surface); transition:all .2s; }
+        .quick-response:hover { border-color:var(--primary); background:var(--primary-dim); color:var(--primary); }
+
+        /* ═══ BOTTOM NAV ═══ */
+        .bottom-navbar { display:none; position:fixed; bottom:0; left:0; right:0; z-index:150; background:rgba(255,255,255,.95); backdrop-filter:blur(20px); border-top:1px solid var(--border-light); padding:4px 2px; padding-bottom:max(4px,env(safe-area-inset-bottom)); box-shadow:0 -4px 20px rgba(0,0,0,.06); animation:slideUpBottom .4s ease; }
+        .bottom-nav-list { display:flex; align-items:center; justify-content:space-around; max-width:500px; margin:0 auto; }
+        .bottom-nav-link { display:flex; flex-direction:column; align-items:center; gap:2px; padding:5px 3px; text-decoration:none; color:var(--text-muted); font-size:.5625rem; font-weight:500; border-radius:10px; min-height:44px; }
+        .bottom-nav-link i { width:1.25rem; height:1.25rem; }
+        .bottom-nav-link.active { color:var(--primary); font-weight:600; }
+        .menu-toggle { display:none; position:fixed; top:12px; left:12px; z-index:101; background:#fff; border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; cursor:pointer; box-shadow:var(--shadow-xs); }
+
+        /* ═══ TOAST ═══ */
+        .toast-container { position:fixed; top:24px; right:24px; z-index:10000; display:flex; flex-direction:column; gap:10px; pointer-events:none; }
+        .toast { display:flex; align-items:center; gap:12px; padding:14px 20px; background:#fff; border:1px solid var(--border-light); border-radius:var(--radius); box-shadow:0 10px 30px rgba(0,0,0,.12); font-size:.875rem; font-weight:500; pointer-events:auto; min-width:300px; animation:toastIn .3s ease; }
+        .toast.success { border-left:4px solid var(--primary); } .toast.error { border-left:4px solid var(--error); } .toast.warning { border-left:4px solid var(--accent); }
+
+        /* ═══ RESPONSIVE ═══ */
+        @media (min-width:1024px) { .bottom-navbar { display:none !important; } .menu-toggle { display:none !important; } }
+        @media (max-width:1023px) {
+            .sidebar { display:none !important; } .bottom-navbar { display:block; }
+            .menu-toggle { display:flex; align-items:center; gap:6px; font-family:'Inter',sans-serif; font-size:.75rem; font-weight:600; }
+            .main-content { margin-left:0 !important; padding:20px 14px; padding-bottom:calc(var(--bottom-nav-h) + 20px + env(safe-area-inset-bottom)) !important; padding-top:60px; }
+            .kpi-grid { grid-template-columns:repeat(3,1fr); gap:10px; }
+            .filters-bar { flex-direction:column; } .filters-bar .search-input { width:100%; }
+        }
+        @media (max-width:767px) {
+            .main-content { padding:16px 10px; }
+            .kpi-grid { grid-template-columns:repeat(2,1fr); gap:8px; }
+            .kpi-card { padding:14px; } .kpi-value { font-size:1.15rem; }
+            .page-title { font-size:1.35rem; }
+            .modal-content { max-width:100%; border-radius:20px 20px 0 0; animation:slideUpMobile .35s ease; }
+        }
+        @media (max-width:424px) { .kpi-grid { grid-template-columns:1fr; } }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+    <a href="index.html" class="sidebar-logo">⚙️ Admin <span>CamServices</span></a>
+    <ul class="sidebar-nav">
+        <li><a href="index.html"><i data-lucide="layout-dashboard"></i> Tableau de bord</a></li>
+        <li class="nav-section"><span>Utilisateurs</span></li>
+        <li><a href="users/index.html"><i data-lucide="users"></i> Prestataires</a></li>
+        <li><a href="clients/index.html"><i data-lucide="user-check"></i> Clients</a></li>
+        <li><a href="verification/index.html"><i data-lucide="shield-check"></i> Vérification</a></li>
+        <li class="nav-section"><span>Activité</span></li>
+        <li><a href="orders/index.html"><i data-lucide="shopping-bag"></i> Commandes</a></li>
+        <li><a href="services/index.html"><i data-lucide="briefcase"></i> Services</a></li>
+        <li class="nav-section"><span>Administration</span></li>
+        <li><a href="pricing/index.html"><i data-lucide="tags"></i> Tarification</a></li>
+        <li><a href="analytics/index.html"><i data-lucide="bar-chart-3"></i> Analytics</a></li>
+        <li><a href="activities/index.html"><i data-lucide="activity"></i> Activités</a></li>
+        <li><a href="disputes/index.html"><i data-lucide="alert-triangle"></i> Litiges</a></li>
+        <li><a href="support/index.html" class="active"><i data-lucide="headphones"></i> Support <span class="badge" id="openTicketsBadge">0</span></a></li>
+        <li><a href="payments/index.html"><i data-lucide="banknote"></i> Paiements</a></li>
+        <li><a href="settings/index.html"><i data-lucide="settings"></i> Paramètres</a></li>
+    </ul>
+    <a href="../landing.html" onclick="logout();return false" class="sidebar-logout"><i data-lucide="log-out"></i> Déconnexion</a>
+</aside>
+
+<button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()"><i data-lucide="menu" style="width:1rem;height:1rem"></i> Menu</button>
+
+<main class="main-content">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Centre de <span>support</span></h1>
+            <p class="page-subtitle">Gérez les tickets d'assistance de vos utilisateurs</p>
+        </div>
+        <button class="btn-filter urgent" onclick="filterUrgent()"><i data-lucide="alert-triangle" style="width:.875rem;height:.875rem"></i> Tickets urgents</button>
+    </div>
+
+    <!-- KPI -->
+    <div class="kpi-grid" id="kpiGrid">
+        <div class="kpi-card blue"><div class="kpi-card-header"><div class="kpi-icon" style="background:var(--blue-light);color:var(--blue)"><i data-lucide="ticket"></i></div></div><div class="kpi-value" id="kpiTotal">—</div><div class="kpi-label">Total tickets</div></div>
+        <div class="kpi-card error"><div class="kpi-card-header"><div class="kpi-icon" style="background:var(--error-light);color:var(--error)"><i data-lucide="alert-circle"></i></div></div><div class="kpi-value" id="kpiOpen">—</div><div class="kpi-label">Tickets ouverts</div></div>
+        <div class="kpi-card primary"><div class="kpi-card-header"><div class="kpi-icon" style="background:var(--primary-light);color:var(--primary)"><i data-lucide="check-circle"></i></div></div><div class="kpi-value" id="kpiResolved">—</div><div class="kpi-label">Tickets résolus</div></div>
+        <div class="kpi-card pink"><div class="kpi-card-header"><div class="kpi-icon" style="background:#FDF2F8;color:var(--pink)"><i data-lucide="zap"></i></div></div><div class="kpi-value" id="kpiUrgent">—</div><div class="kpi-label">Tickets urgents</div></div>
+        <div class="kpi-card teal"><div class="kpi-card-header"><div class="kpi-icon" style="background:#F0FDFA;color:var(--teal)"><i data-lucide="clock"></i></div></div><div class="kpi-value" id="kpiAvgTime">—</div><div class="kpi-label">Temps moyen réponse</div></div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filters-bar">
+        <input type="text" class="search-input" id="searchInput" placeholder="🔍 Rechercher par ID, sujet ou utilisateur..." oninput="loadTickets()">
+        <select class="filter-select" id="statusFilter" onchange="loadTickets()">
+            <option value="all">Tous les statuts</option>
+            <option value="open">🔴 Ouverts</option>
+            <option value="pending">🟡 En attente</option>
+            <option value="in_progress">🔵 En cours</option>
+            <option value="resolved">🟢 Résolus</option>
+            <option value="closed">⚫ Fermés</option>
+        </select>
+        <select class="filter-select" id="priorityFilter" onchange="loadTickets()">
+            <option value="all">Toutes priorités</option>
+            <option value="low">🔵 Basse</option>
+            <option value="medium">🟡 Moyenne</option>
+            <option value="high">🔴 Haute</option>
+            <option value="urgent">⚡ Urgente</option>
+        </select>
+    </div>
+
+    <!-- Tableau -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3 class="section-title"><i data-lucide="list"></i> Tickets de support</h3>
+            <span class="results-count" id="resultsCount">Chargement...</span>
+        </div>
+        <div class="table-wrapper" id="ticketsTable">
+            <div class="loading-spinner"><div class="spinner"></div></div>
+        </div>
+        <div class="pagination" id="pagination"></div>
+    </div>
+</main>
+
+<nav class="bottom-navbar">
+    <div class="bottom-nav-list">
+        <a href="index.html" class="bottom-nav-link"><i data-lucide="layout-dashboard"></i><span>Accueil</span></a>
+        <a href="users/index.html" class="bottom-nav-link"><i data-lucide="users"></i><span>Users</span></a>
+        <a href="orders/index.html" class="bottom-nav-link"><i data-lucide="shopping-bag"></i><span>Cmd</span></a>
+        <a href="support/index.html" class="bottom-nav-link active"><i data-lucide="headphones"></i><span>Support</span></a>
+        <a href="analytics/index.html" class="bottom-nav-link"><i data-lucide="bar-chart-3"></i><span>Stats</span></a>
+    </div>
+</nav>
+
+<div id="modalContainer"></div>
+
+<script>
+const SUPABASE_URL = 'https://cwubxwbzzuigctvgdygv.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dWJ4d2J6enVpZ2N0dmdkeWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzI2MTgsImV4cCI6MjA5MzgwODYxOH0.0mwBNo_S5yItQQjq2at9GNRN74ooZRBJIbZGDH9L2uk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+let currentPage = 1, totalPages = 1;
+const PAGE_SIZE = 20;
+
+const statusLabels = { open:'Ouvert', pending:'En attente', in_progress:'En cours', resolved:'Résolu', closed:'Fermé' };
+const statusIcons = { open:'alert-circle', pending:'clock', in_progress:'loader', resolved:'check-circle', closed:'archive' };
+const priorityLabels = { low:'Basse', medium:'Moyenne', high:'Haute', urgent:'Urgente' };
+
+// Données mockées
+const mockTickets = [
+    { id:'TKT-001', user_name:'Jean Dupont', user_type:'client', subject:'Problème de paiement', category:'Paiement', description:'Je n\'arrive pas à payer avec Orange Money. Le paiement est refusé.', status:'open', priority:'high', created_at:'2025-05-21T08:30:00', messages:[{author:'user',text:'Bonjour, je n\'arrive pas à payer ma commande #ORD-123. Orange Money refuse le paiement.',time:'2025-05-21T08:35:00'}] },
+    { id:'TKT-002', user_name:'Marie Koné', user_type:'prestataire', subject:'Impossible de modifier mon service', category:'Service', description:'Je veux changer le prix de mon service mais l\'option est grisée.', status:'pending', priority:'medium', created_at:'2025-05-20T14:00:00', messages:[{author:'user',text:'Bonjour, je souhaite modifier le prix de mon service "Plomberie urgence" mais le bouton est grisé.',time:'2025-05-20T14:15:00'}] },
+    { id:'TKT-003', user_name:'Alice Foka', user_type:'client', subject:'Prestataire injoignable', category:'Litige', description:'Le prestataire ne répond plus après avoir été payé.', status:'open', priority:'urgent', created_at:'2025-05-21T09:00:00', messages:[{author:'user',text:'URGENT : J\'ai payé 25000 FCFA pour un service de ménage et le prestataire ne répond plus !',time:'2025-05-21T09:10:00'},{author:'admin',text:'Bonjour, nous prenons votre signalement très au sérieux. Nous contactons le prestataire immédiatement.',time:'2025-05-21T09:30:00'}] },
+    { id:'TKT-004', user_name:'Paul Tchinda', user_type:'prestataire', subject:'Vérification de compte', category:'Vérification', description:'Mes documents ont été soumis il y a 2 semaines, toujours en attente.', status:'in_progress', priority:'medium', created_at:'2025-05-18T11:00:00', messages:[{author:'user',text:'Bonjour, j\'ai soumis mes documents il y a 2 semaines et mon compte n\'est toujours pas vérifié.',time:'2025-05-18T11:20:00'},{author:'admin',text:'Bonjour Paul, nous vérifions vos documents. Vous recevrez une réponse sous 24h.',time:'2025-05-18T14:00:00'}] },
+    { id:'TKT-005', user_name:'Sophie Mbarga', user_type:'prestataire', subject:'Question sur les commissions', category:'Paiement', description:'Quel est le pourcentage de commission sur les services photo ?', status:'resolved', priority:'low', created_at:'2025-05-15T16:00:00', messages:[{author:'user',text:'Bonjour, quel est le pourcentage de commission prélevé sur les prestations de photographie ?',time:'2025-05-15T16:30:00'},{author:'admin',text:'Bonjour Sophie, la commission est de 10% sur toutes les catégories. N\'hésitez pas si vous avez d\'autres questions !',time:'2025-05-15T17:00:00'}] },
+    { id:'TKT-006', user_name:'Ibrahim Touré', user_type:'prestataire', subject:'Signaler un client', category:'Signalement', description:'Un client a laissé un faux avis sur mon profil.', status:'open', priority:'high', created_at:'2025-05-21T07:00:00', messages:[{author:'user',text:'Un client a laissé un avis diffamatoire sur mon profil. Je demande sa suppression.',time:'2025-05-21T07:15:00'}] },
+    { id:'TKT-007', user_name:'Grace Bello', user_type:'client', subject:'Remboursement', category:'Paiement', description:'Je demande le remboursement de ma commande annulée.', status:'closed', priority:'medium', created_at:'2025-05-10T10:00:00', messages:[{author:'user',text:'Bonjour, ma commande a été annulée mais je n\'ai pas été remboursée.',time:'2025-05-10T10:30:00'},{author:'admin',text:'Bonjour Grace, le remboursement a été effectué. Il apparaîtra sous 48-72h.',time:'2025-05-10T11:00:00'},{author:'user',text:'Remboursement reçu, merci !',time:'2025-05-12T09:00:00'}] },
+    { id:'TKT-008', user_name:'David Ekambi', user_type:'client', subject:'Bug application mobile', category:'Technique', description:'L\'application crash quand j\'essaie de voir mes commandes.', status:'open', priority:'medium', created_at:'2025-05-20T18:00:00', messages:[{author:'user',text:'L\'application mobile crash systématiquement quand je clique sur "Mes commandes".',time:'2025-05-20T18:15:00'}] }
+];
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { window.location.href = '../login.html'; return; }
+    const { data: profile } = await sb.from('users').select('role').eq('id', user.id).single();
+    if (!profile || profile.role !== 'admin') { showToast('Accès refusé', 'error'); setTimeout(() => window.location.href = '../landing.html', 1500); return; }
+    lucide.createIcons();
+    updateKPIs();
+    loadTickets();
+});
+
+function updateKPIs() {
+    const tickets = mockTickets;
+    document.getElementById('kpiTotal').textContent = tickets.length;
+    document.getElementById('kpiOpen').textContent = tickets.filter(t => t.status === 'open').length;
+    document.getElementById('kpiResolved').textContent = tickets.filter(t => t.status === 'resolved').length;
+    document.getElementById('kpiUrgent').textContent = tickets.filter(t => t.priority === 'urgent' && t.status !== 'closed').length;
+    document.getElementById('kpiAvgTime').textContent = '2h 30min';
+    document.getElementById('openTicketsBadge').textContent = tickets.filter(t => t.status === 'open').length;
+}
+
+function loadTickets(page = 1) {
+    currentPage = page;
+    const container = document.getElementById('ticketsTable');
+    const search = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+    const statusFilter = document.getElementById('statusFilter')?.value || 'all';
+    const priorityFilter = document.getElementById('priorityFilter')?.value || 'all';
+    
+    let tickets = [...mockTickets];
+    if (statusFilter !== 'all') tickets = tickets.filter(t => t.status === statusFilter);
+    if (priorityFilter !== 'all') tickets = tickets.filter(t => t.priority === priorityFilter);
+    if (search) tickets = tickets.filter(t => t.id.toLowerCase().includes(search) || t.user_name.toLowerCase().includes(search) || t.subject.toLowerCase().includes(search));
+    
+    totalPages = Math.ceil(tickets.length / PAGE_SIZE);
+    const paginated = tickets.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE);
+    document.getElementById('resultsCount').textContent = `${tickets.length} ticket(s)`;
+    
+    if (!paginated.length) {
+        container.innerHTML = '<div class="empty-state"><i data-lucide="check-circle" style="width:3rem;height:3rem;color:var(--primary)"></i><p>Aucun ticket trouvé</p></div>';
+    } else {
+        container.innerHTML = `<table><thead><tr><th>ID</th><th>Utilisateur</th><th>Sujet</th><th>Catégorie</th><th>Priorité</th><th>Date</th><th>Statut</th><th>Actions</th></tr></thead><tbody>${paginated.map(t => renderTicketRow(t)).join('')}</tbody></table>`;
+    }
+    renderPagination();
+    lucide.createIcons();
+}
+
+function renderTicketRow(t) {
+    const userInit = (t.user_name||'?')[0];
+    const userColor = t.user_type === 'prestataire' ? 'var(--primary)' : 'var(--purple)';
+    const userBg = t.user_type === 'prestataire' ? 'var(--primary-dim)' : 'var(--purple-light)';
+    return `<tr>
+        <td><code style="font-size:.7rem;background:var(--surface);padding:2px 6px;border-radius:4px">${t.id}</code></td>
+        <td><div class="user-cell"><div class="user-avatar" style="background:${userBg};color:${userColor}">${userInit}</div><div><strong>${esc(t.user_name)}</strong><div style="font-size:.625rem;color:var(--text-muted)">${t.user_type==='prestataire'?'🔧 Prestataire':'👤 Client'}</div></div></div></td>
+        <td><span style="font-size:.8125rem">${esc(t.subject)}</span></td>
+        <td><span style="background:var(--surface);padding:3px 8px;border-radius:4px;font-size:.72rem">${esc(t.category)}</span></td>
+        <td><span class="priority-badge priority-${t.priority}">${priorityLabels[t.priority]}</span></td>
+        <td>${fmtDate(t.created_at)}</td>
+        <td><span class="status-badge status-${t.status}"><i data-lucide="${statusIcons[t.status]}" style="width:.625rem;height:.625rem"></i> ${statusLabels[t.status]}</span></td>
+        <td><div class="action-group">
+            <button class="btn btn-outline" onclick="viewTicketDetail('${t.id}')"><i data-lucide="eye"></i></button>
+            <button class="btn btn-primary" onclick="resolveTicket('${t.id}')"><i data-lucide="check"></i></button>
+        </div></td>
+    </tr>`;
+}
+
+function renderPagination() {
+    const container = document.getElementById('pagination');
+    if (totalPages <= 1) { container.innerHTML = ''; return; }
+    let html = `<button class="page-btn" onclick="loadTickets(${currentPage-1})" ${currentPage===1?'disabled':''}><i data-lucide="chevron-left" style="width:.875rem;height:.875rem"></i></button>`;
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage-1 && i <= currentPage+1)) html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="loadTickets(${i})">${i}</button>`;
+        else if (i === currentPage-2 || i === currentPage+2) html += '<span class="page-info">...</span>';
+    }
+    html += `<button class="page-btn" onclick="loadTickets(${currentPage+1})" ${currentPage===totalPages?'disabled':''}><i data-lucide="chevron-right" style="width:.875rem;height:.875rem"></i></button><span class="page-info">Page ${currentPage}/${totalPages}</span>`;
+    container.innerHTML = html;
+    lucide.createIcons();
+}
+
+function viewTicketDetail(id) {
+    const t = mockTickets.find(x => x.id === id);
+    if (!t) return;
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML = `<div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header"><h3 class="modal-title"><i data-lucide="ticket" style="color:var(--primary)"></i> ${t.id} — ${esc(t.subject)}</h3><button class="modal-close" onclick="this.closest('.modal-overlay').remove()"><i data-lucide="x"></i></button></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:16px">
+            <div style="padding:10px;background:var(--surface);border-radius:var(--radius-sm)"><div style="font-size:.625rem;color:var(--text-muted)">Utilisateur</div><div style="font-weight:600;font-size:.8125rem">${esc(t.user_name)}</div></div>
+            <div style="padding:10px;background:var(--surface);border-radius:var(--radius-sm)"><div style="font-size:.625rem;color:var(--text-muted)">Type</div><div style="font-weight:600;font-size:.8125rem">${t.user_type==='prestataire'?'Prestataire':'Client'}</div></div>
+            <div style="padding:10px;background:var(--surface);border-radius:var(--radius-sm)"><div style="font-size:.625rem;color:var(--text-muted)">Statut</div><span class="status-badge status-${t.status}">${statusLabels[t.status]}</span></div>
+            <div style="padding:10px;background:var(--surface);border-radius:var(--radius-sm)"><div style="font-size:.625rem;color:var(--text-muted)">Priorité</div><span class="priority-badge priority-${t.priority}">${priorityLabels[t.priority]}</span></div>
+        </div>
+        <div style="font-weight:700;font-size:.85rem;margin-bottom:10px"><i data-lucide="message-circle" style="width:1rem;height:1rem;color:var(--primary);margin-right:6px"></i>Échanges</div>
+        ${t.messages.map(m => `<div class="chat-bubble ${m.author}"><div class="chat-author">${m.author==='user'?'👤 '+esc(t.user_name):'🛡️ Admin'}<span style="font-size:.625rem;color:var(--text-muted);font-weight:400">· ${new Date(m.time).toLocaleString('fr-FR')}</span></div><div class="chat-message">${esc(m.text)}</div></div>`).join('')}
+        <div class="reply-box">
+            <div style="font-weight:600;font-size:.75rem;margin-bottom:8px">Réponses rapides</div>
+            <div class="quick-responses">
+                <span class="quick-response" onclick="document.getElementById('replyText').value='Bonjour, nous avons bien reçu votre demande. Nous vous répondons dans les plus brefs délais.'">Accusé réception</span>
+                <span class="quick-response" onclick="document.getElementById('replyText').value='Votre demande a été traitée avec succès. N\'hésitez pas à nous contacter si vous avez d\'autres questions.'">Résolution</span>
+                <span class="quick-response" onclick="document.getElementById('replyText').value='Nous vous remercions de votre patience. Notre équipe technique travaille sur votre problème.'">En attente</span>
+            </div>
+            <textarea id="replyText" placeholder="Rédigez votre réponse..."></textarea>
+            <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end">
+                <button class="btn btn-outline" onclick="changeTicketStatus('${t.id}','resolved');this.closest('.modal-overlay').remove()"><i data-lucide="check"></i> Résoudre</button>
+                <button class="btn btn-outline" onclick="changeTicketStatus('${t.id}','closed');this.closest('.modal-overlay').remove()"><i data-lucide="archive"></i> Fermer</button>
+                <button class="btn btn-primary" onclick="sendReply('${t.id}');this.closest('.modal-overlay').remove()"><i data-lucide="send"></i> Envoyer</button>
+            </div>
+        </div>
+    </div>`;
+    document.body.appendChild(overlay);
+    lucide.createIcons();
+}
+
+function changeTicketStatus(id, newStatus) {
+    const t = mockTickets.find(x => x.id === id);
+    if (t) t.status = newStatus;
+    showToast(`Ticket ${id} ${newStatus === 'resolved' ? 'résolu' : 'fermé'}`, 'success');
+    updateKPIs(); loadTickets(currentPage);
+}
+
+function sendReply(id) {
+    const text = document.getElementById('replyText')?.value?.trim();
+    if (!text) { showToast('Veuillez écrire un message', 'warning'); return; }
+    const t = mockTickets.find(x => x.id === id);
+    if (t) { t.messages.push({ author:'admin', text, time:new Date().toISOString() }); t.status = 'in_progress'; }
+    showToast('Réponse envoyée avec succès', 'success');
+    updateKPIs(); loadTickets(currentPage);
+}
+
+function resolveTicket(id) { changeTicketStatus(id, 'resolved'); }
+function filterUrgent() {
+    document.getElementById('priorityFilter').value = 'urgent';
+    document.getElementById('statusFilter').value = 'open';
+    loadTickets();
+}
+
+function esc(t) { const d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
+function fmtDate(d) { return d ? new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'; }
+function showToast(msg, type) {
+    let c = document.getElementById('toastContainer'); if (!c) { c = document.createElement('div'); c.id = 'toastContainer'; c.className = 'toast-container'; document.body.appendChild(c); }
+    const icons = { success: 'check-circle', error: 'x-circle', warning: 'alert-triangle', info: 'info' };
+    const t = document.createElement('div'); t.className = `toast ${type}`;
+    t.innerHTML = `<i data-lucide="${icons[type]}" style="width:1.125rem;height:1.125rem"></i><span>${msg}</span>`;
+    c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(20px)'; t.style.transition = 'all .3s'; setTimeout(() => t.remove(), 300); }, 4000);
+}
+function toggleSidebar() { const s = document.getElementById('sidebar'); s.classList.toggle('open'); s.classList.contains('open') ? (s.style.display='flex', s.style.position='fixed', s.style.zIndex='300', s.style.width='280px', s.style.boxShadow='4px 0 24px rgba(0,0,0,.15)') : (s.style.display='none'); }
+async function logout() { await sb.auth.signOut(); window.location.href = '../landing.html'; }
+</script>
+</body>
+</html>

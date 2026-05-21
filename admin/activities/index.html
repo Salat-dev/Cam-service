@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Activités — Administration CamServices</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        :root {
+            --primary: #22C55E; --primary-hover: #16A34A; --primary-light: #F0FDF4; --primary-dim: rgba(34,197,94,.08);
+            --text-primary: #111827; --text-secondary: #4B5563; --text-muted: #6B7280;
+            --bg: #FFFFFF; --surface: #F9FAFB; --border: #E5E7EB; --border-light: #F3F4F6;
+            --accent: #F59E0B; --accent-light: #FFFBEB; --error: #EF4444; --error-light: #FEF2F2;
+            --blue: #3B82F6; --blue-light: #EFF6FF; --purple: #7C3AED; --purple-light: #F5F3FF;
+            --warning: #F59E0B; --warning-light: #FFF7ED;
+            --shadow-xs: 0 1px 2px rgba(0,0,0,0.05); --shadow: 0 4px 20px rgba(0,0,0,.06); --shadow-lg: 0 12px 40px rgba(0,0,0,.1);
+            --radius-sm: 8px; --radius: 12px; --radius-lg: 16px; --radius-xl: 20px;
+            --sidebar-w: 240px; --bottom-nav-h: 72px;
+        }
+        
+        * { margin:0; padding:0; box-sizing:border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--surface); color: var(--text-primary);
+            display: flex; min-height: 100vh;
+            -webkit-font-smoothing: antialiased; line-height: 1.5;
+        }
+        
+        ::selection { background: var(--primary-dim); color: var(--text-primary); }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        
+        @keyframes fadeUp { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+        @keyframes spin { to { transform:rotate(360deg) } }
+        @keyframes slideUpBottom { from { transform:translateY(100%) } to { transform:translateY(0) } }
+        @keyframes slideUpModal { from { opacity:0; transform:translateY(30px) scale(.97) } to { opacity:1; transform:translateY(0) scale(1) } }
+        @keyframes slideUpMobile { from { opacity:0; transform:translateY(60px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes toastIn { from { opacity:0; transform:translateX(40px) } to { opacity:1; transform:translateX(0) } }
+        @keyframes pulse { 0%,100%{ opacity:1 } 50%{ opacity:.5 } }
+
+        /* ═══ SIDEBAR ═══ */
+        .sidebar { width:var(--sidebar-w); background:var(--bg); border-right:1px solid var(--border-light); display:flex; flex-direction:column; position:fixed; top:0; left:0; bottom:0; z-index:100; padding:20px 14px; overflow-y:auto; }
+        .sidebar-logo { font-weight:800; font-size:1rem; color:var(--text-primary); text-decoration:none; display:flex; align-items:center; gap:6px; margin-bottom:28px; padding:0 8px; }
+        .sidebar-logo span { color:var(--primary); }
+        .sidebar-nav { list-style:none; flex:1; }
+        .sidebar-nav a { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--radius-sm); font-size:.8125rem; font-weight:500; color:var(--text-secondary); text-decoration:none; transition:all .2s; margin-bottom:2px; }
+        .sidebar-nav a:hover { background:var(--surface); color:var(--text-primary); }
+        .sidebar-nav a.active { background:var(--primary-dim); color:var(--primary); font-weight:600; }
+        .sidebar-nav a i { width:1rem; height:1rem; }
+        .sidebar-nav .badge { margin-left:auto; background:var(--accent); color:#fff; font-size:.625rem; padding:2px 7px; border-radius:10px; }
+        .nav-section { padding:8px 12px 4px; font-size:.625rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); }
+        .sidebar-logout { display:flex; align-items:center; gap:8px; padding:10px 12px; color:var(--error); text-decoration:none; font-size:.8125rem; font-weight:500; border-radius:var(--radius-sm); margin-top:auto; }
+        .sidebar-logout:hover { background:var(--error-light); }
+
+        /* ═══ MAIN CONTENT ═══ */
+        .main-content { flex:1; margin-left:var(--sidebar-w); padding:28px 28px 64px; max-width:100%; }
+        .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:16px; }
+        .page-title { font-weight:800; font-size:1.6rem; letter-spacing:-.02em; }
+        .page-title span { color:var(--primary); }
+        .page-subtitle { font-size:.875rem; color:var(--text-muted); margin-top:4px; }
+
+        /* ═══ STATS GRID ═══ */
+        .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:28px; }
+        .stat-card { background:var(--bg); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:20px; transition:all .3s; box-shadow:var(--shadow-xs); }
+        .stat-card:hover { border-color:var(--primary); box-shadow:var(--shadow); transform:translateY(-2px); }
+        .stat-card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+        .stat-icon { width:42px; height:42px; border-radius:var(--radius); display:flex; align-items:center; justify-content:center; }
+        .stat-icon.primary { background:var(--primary-dim); color:var(--primary); }
+        .stat-icon.accent { background:var(--accent-light); color:var(--accent); }
+        .stat-icon.blue { background:var(--blue-light); color:var(--blue); }
+        .stat-icon.error { background:var(--error-light); color:var(--error); }
+        .stat-value { font-weight:800; font-size:1.75rem; letter-spacing:-.03em; line-height:1; }
+        .stat-label { font-size:.75rem; color:var(--text-muted); margin-top:4px; font-weight:500; }
+        .stat-trend { font-size:.6875rem; font-weight:600; margin-top:6px; display:flex; align-items:center; gap:4px; }
+        .stat-trend.up { color:var(--primary); }
+        .stat-trend.down { color:var(--error); }
+        .stat-trend.warning { color:var(--accent); }
+
+        /* ═══ FILTERS BAR ═══ */
+        .filters-bar { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
+        .search-input { padding:9px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.8125rem; outline:none; min-width:200px; flex:1; transition:all .2s; }
+        .search-input:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-dim); }
+        .filter-select { padding:9px 36px 9px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.8125rem; color:var(--text-secondary); outline:none; cursor:pointer; background:#fff; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; transition:all .2s; }
+        .filter-select:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-dim); }
+        .btn-filter { padding:9px 16px; border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.75rem; font-weight:600; cursor:pointer; border:1.5px solid var(--border); background:#fff; color:var(--text-secondary); transition:all .2s; white-space:nowrap; }
+        .btn-filter:hover { border-color:var(--primary); color:var(--primary); }
+        .btn-filter.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+        .btn-filter.suspicious { border-color:var(--error); color:var(--error); }
+        .btn-filter.suspicious:hover { background:var(--error); color:#fff; border-color:var(--error); }
+
+        /* ═══ ACTIVITY TIMELINE ═══ */
+        .section-card { background:var(--bg); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:0; margin-bottom:20px; box-shadow:var(--shadow-xs); overflow:hidden; }
+        .section-header { display:flex; align-items:center; justify-content:space-between; padding:20px 24px; border-bottom:1px solid var(--border-light); flex-wrap:wrap; gap:12px; }
+        .section-title { font-weight:700; font-size:1rem; display:flex; align-items:center; gap:8px; }
+        .section-title i { color:var(--primary); }
+        .results-count { font-size:.75rem; color:var(--text-muted); }
+
+        .timeline { padding:0; }
+        .timeline-item { display:flex; gap:14px; padding:16px 24px; border-bottom:1px solid var(--border-light); transition:background .2s; cursor:pointer; }
+        .timeline-item:hover { background:var(--surface); }
+        .timeline-item:last-child { border-bottom:none; }
+        .timeline-dot { width:10px; height:10px; border-radius:50%; margin-top:6px; flex-shrink:0; }
+        .timeline-dot.normal { background:var(--primary); }
+        .timeline-dot.warning { background:var(--accent); }
+        .timeline-dot.suspicious { background:var(--error); animation:pulse 2s infinite; }
+        .timeline-content { flex:1; min-width:0; }
+        .timeline-header { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:4px; }
+        .timeline-user { font-weight:600; font-size:.875rem; display:flex; align-items:center; gap:6px; }
+        .timeline-user-avatar { width:24px; height:24px; border-radius:50%; background:var(--primary-dim); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:.625rem; font-weight:700; flex-shrink:0; }
+        .timeline-type { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:100px; font-size:.6875rem; font-weight:600; white-space:nowrap; }
+        .timeline-type.login { background:#EFF6FF; color:#2563EB; }
+        .timeline-type.order { background:#F5F3FF; color:#6D28D9; }
+        .timeline-type.payment { background:#F0FDF4; color:#059669; }
+        .timeline-type.update_profile { background:#FFFBEB; color:#D97706; }
+        .timeline-type.service_update { background:#E0E7FF; color:#4F46E5; }
+        .timeline-type.suspicious { background:#FEF2F2; color:#DC2626; }
+        .timeline-type.other { background:#F9FAFB; color:#6B7280; }
+        .timeline-description { font-size:.8125rem; color:var(--text-secondary); line-height:1.5; }
+        .timeline-meta { display:flex; align-items:center; gap:12px; margin-top:6px; flex-wrap:wrap; }
+        .timeline-date { font-size:.6875rem; color:var(--text-muted); display:flex; align-items:center; gap:4px; }
+        .timeline-status { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:100px; font-size:.625rem; font-weight:600; }
+        .timeline-status.normal { background:var(--primary-light); color:var(--primary); }
+        .timeline-status.warning { background:var(--warning-light); color:var(--accent); }
+        .timeline-status.suspicious { background:var(--error-light); color:var(--error); }
+
+        /* ═══ PAGINATION ═══ */
+        .pagination { display:flex; align-items:center; justify-content:center; gap:4px; padding:20px; border-top:1px solid var(--border-light); }
+        .page-btn { padding:8px 14px; border:1px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.75rem; font-weight:500; color:var(--text-secondary); cursor:pointer; background:#fff; transition:all .2s; }
+        .page-btn:hover { border-color:var(--primary); color:var(--primary); }
+        .page-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+        .page-btn:disabled { opacity:.4; cursor:not-allowed; }
+        .page-info { font-size:.75rem; color:var(--text-muted); padding:0 8px; }
+
+        /* ═══ MODAL ═══ */
+        .modal-overlay { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,.5); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:20px; animation:fadeIn .2s; }
+        .modal-content { background:#fff; border-radius:var(--radius-xl); padding:28px; width:100%; max-width:560px; max-height:85vh; overflow-y:auto; box-shadow:var(--shadow-lg); animation:slideUpModal .35s ease; }
+        .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+        .modal-title { font-weight:700; font-size:1.1rem; display:flex; align-items:center; gap:8px; }
+        .modal-close { background:none; border:none; cursor:pointer; color:var(--text-muted); padding:6px; border-radius:var(--radius-sm); }
+        .modal-close:hover { background:var(--surface); color:var(--text-primary); }
+        .detail-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border-light); font-size:.8125rem; }
+        .detail-row:last-child { border-bottom:none; }
+        .detail-label { color:var(--text-muted); font-weight:500; }
+        .detail-value { color:var(--text-primary); font-weight:600; text-align:right; }
+
+        /* ═══ TOAST ═══ */
+        .toast-container { position:fixed; top:24px; right:24px; z-index:10000; display:flex; flex-direction:column; gap:10px; pointer-events:none; }
+        .toast { display:flex; align-items:center; gap:12px; padding:14px 20px; background:#fff; border:1px solid var(--border-light); border-radius:var(--radius); box-shadow:0 10px 30px rgba(0,0,0,.12); font-size:.875rem; font-weight:500; pointer-events:auto; min-width:300px; animation:toastIn .3s ease; }
+        .toast.success { border-left:4px solid var(--primary); }
+        .toast.error { border-left:4px solid var(--error); }
+        .toast.warning { border-left:4px solid var(--accent); }
+        .toast.info { border-left:4px solid var(--blue); }
+
+        /* ═══ BOTTOM NAV ═══ */
+        .bottom-navbar { display:none; position:fixed; bottom:0; left:0; right:0; z-index:150; background:rgba(255,255,255,.95); backdrop-filter:blur(20px); border-top:1px solid var(--border-light); padding:4px 2px; padding-bottom:max(4px,env(safe-area-inset-bottom)); box-shadow:0 -4px 20px rgba(0,0,0,.06); animation:slideUpBottom .4s ease; }
+        .bottom-nav-list { display:flex; align-items:center; justify-content:space-around; max-width:500px; margin:0 auto; }
+        .bottom-nav-link { display:flex; flex-direction:column; align-items:center; gap:2px; padding:5px 3px; text-decoration:none; color:var(--text-muted); font-size:.5625rem; font-weight:500; border-radius:10px; min-height:44px; }
+        .bottom-nav-link i { width:1.25rem; height:1.25rem; }
+        .bottom-nav-link.active { color:var(--primary); font-weight:600; }
+        .menu-toggle { display:none; position:fixed; top:12px; left:12px; z-index:101; background:#fff; border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; cursor:pointer; box-shadow:var(--shadow-xs); }
+
+        /* ═══ LOADING ═══ */
+        .loading-spinner { text-align:center; padding:48px; }
+        .spinner { width:28px; height:28px; border:3px solid var(--border-light); border-top-color:var(--primary); border-radius:50%; margin:0 auto 12px; animation:spin .7s linear infinite; }
+        .empty-state { text-align:center; padding:48px 20px; color:var(--text-muted); }
+        .empty-state i { display:block; margin:0 auto 12px; color:var(--border); }
+
+        /* ═══ RESPONSIVE ═══ */
+        @media (min-width:1024px) { .bottom-navbar { display:none !important; } .menu-toggle { display:none !important; } }
+        
+        @media (max-width:1023px) {
+            .sidebar { display:none !important; }
+            .bottom-navbar { display:block; }
+            .menu-toggle { display:flex; align-items:center; gap:6px; font-family:'Inter',sans-serif; font-size:.75rem; font-weight:600; }
+            .main-content { margin-left:0 !important; padding:20px 14px; padding-bottom:calc(var(--bottom-nav-h) + 20px + env(safe-area-inset-bottom)) !important; padding-top:60px; }
+            .stats-grid { grid-template-columns:repeat(2,1fr); gap:10px; }
+            .filters-bar { flex-direction:column; }
+            .filters-bar .search-input { width:100%; }
+            .filters-bar > div { display:flex; gap:8px; flex-wrap:wrap; }
+            .timeline-item { padding:14px 16px; }
+        }
+        
+        @media (max-width:767px) {
+            .main-content { padding:16px 10px; padding-bottom:calc(var(--bottom-nav-h) + 16px + env(safe-area-inset-bottom)) !important; }
+            .stats-grid { grid-template-columns:1fr; gap:8px; }
+            .stat-card { padding:16px; }
+            .stat-value { font-size:1.4rem; }
+            .page-title { font-size:1.35rem; }
+            .timeline-item { padding:12px; gap:10px; }
+            .timeline-header { flex-direction:column; align-items:flex-start; }
+            .modal-content { max-width:100%; border-radius:20px 20px 0 0; animation:slideUpMobile .35s ease; }
+        }
+        
+        @media (max-width:424px) {
+            .main-content { padding:12px 6px; }
+            .page-title { font-size:1.2rem; }
+            .timeline-item { padding:10px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar" id="sidebar">
+    <a href="index.html" class="sidebar-logo">⚙️ Admin <span>CamServices</span></a>
+    <ul class="sidebar-nav">
+        <li><a href="index.html"><i data-lucide="layout-dashboard"></i> Tableau de bord</a></li>
+        <li class="nav-section"><span>Utilisateurs</span></li>
+        <li><a href="users/index.html"><i data-lucide="users"></i> Prestataires</a></li>
+        <li><a href="clients/index.html"><i data-lucide="user-check"></i> Clients</a></li>
+        <li><a href="verification/index.html"><i data-lucide="shield-check"></i> Vérification <span class="badge" id="pendingBadge">0</span></a></li>
+        <li class="nav-section"><span>Activité</span></li>
+        <li><a href="orders/index.html"><i data-lucide="shopping-bag"></i> Commandes</a></li>
+        <li><a href="services/index.html"><i data-lucide="briefcase"></i> Services</a></li>
+        <li><a href="activities/index.html" class="active"><i data-lucide="activity"></i> Activités</a></li>
+        <li class="nav-section"><span>Administration</span></li>
+        <li><a href="analytics/index.html"><i data-lucide="bar-chart-3"></i> Statistiques</a></li>
+        <li><a href="disputes/index.html"><i data-lucide="alert-triangle"></i> Litiges</a></li>
+        <li><a href="payments/index.html"><i data-lucide="banknote"></i> Paiements</a></li>
+        <li><a href="settings/index.html"><i data-lucide="settings"></i> Paramètres</a></li>
+    </ul>
+    <a href="../landing.html" onclick="logout();return false" class="sidebar-logout"><i data-lucide="log-out"></i> Déconnexion</a>
+</aside>
+
+<!-- ═══ MENU MOBILE ═══ -->
+<button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()"><i data-lucide="menu" style="width:1rem;height:1rem"></i> Menu</button>
+
+<!-- ═══ MAIN CONTENT ═══ -->
+<main class="main-content">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Activités des <span>prestataires</span></h1>
+            <p class="page-subtitle">Surveillez l'activité en temps réel et détectez les comportements suspects</p>
+        </div>
+        <button class="btn-filter suspicious" onclick="filterSuspicious()">
+            <i data-lucide="alert-triangle" style="width:.875rem;height:.875rem"></i> Activités suspectes
+        </button>
+    </div>
+
+    <!-- KPI -->
+    <div class="stats-grid" id="kpiGrid">
+        <div class="stat-card"><div class="stat-card-header"><div class="stat-icon primary"><i data-lucide="activity"></i></div></div><div class="stat-value" id="kpiTotal">—</div><div class="stat-label">Total activités</div></div>
+        <div class="stat-card"><div class="stat-card-header"><div class="stat-icon blue"><i data-lucide="calendar-check"></i></div></div><div class="stat-value" id="kpiToday">—</div><div class="stat-label">Aujourd'hui</div></div>
+        <div class="stat-card"><div class="stat-card-header"><div class="stat-icon accent"><i data-lucide="users"></i></div></div><div class="stat-value" id="kpiActive">—</div><div class="stat-label">Prestataires actifs</div></div>
+        <div class="stat-card"><div class="stat-card-header"><div class="stat-icon error"><i data-lucide="alert-triangle"></i></div></div><div class="stat-value" id="kpiSuspicious">—</div><div class="stat-label">Activités suspectes</div></div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filters-bar">
+        <input type="text" class="search-input" id="searchInput" placeholder="🔍 Rechercher par nom de prestataire..." oninput="loadActivities()">
+        <div>
+            <select class="filter-select" id="typeFilter" onchange="loadActivities()">
+                <option value="all">Tous les types</option>
+                <option value="login">Connexion</option>
+                <option value="order">Commande</option>
+                <option value="payment">Paiement</option>
+                <option value="update_profile">Mise à jour profil</option>
+                <option value="service_update">Mise à jour service</option>
+                <option value="suspicious">Suspect</option>
+                <option value="other">Autre</option>
+            </select>
+            <select class="filter-select" id="statusFilter" onchange="loadActivities()">
+                <option value="all">Tous les statuts</option>
+                <option value="normal">✅ Normal</option>
+                <option value="warning">⚠️ Warning</option>
+                <option value="suspicious">🚨 Suspect</option>
+            </select>
+            <select class="filter-select" id="periodFilter" onchange="loadActivities()">
+                <option value="all">Toute la période</option>
+                <option value="today">Aujourd'hui</option>
+                <option value="7">7 derniers jours</option>
+                <option value="30">30 derniers jours</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3 class="section-title"><i data-lucide="list"></i> Historique des activités</h3>
+            <span class="results-count" id="resultsCount">Chargement...</span>
+        </div>
+        <div class="timeline" id="timelineContainer">
+            <div class="loading-spinner"><div class="spinner"></div><p>Chargement des activités...</p></div>
+        </div>
+        <div class="pagination" id="pagination"></div>
+    </div>
+</main>
+
+<!-- ═══ BOTTOM NAVBAR ═══ -->
+<nav class="bottom-navbar">
+    <div class="bottom-nav-list">
+        <a href="index.html" class="bottom-nav-link"><i data-lucide="layout-dashboard"></i><span>Accueil</span></a>
+        <a href="users/index.html" class="bottom-nav-link"><i data-lucide="users"></i><span>Users</span></a>
+        <a href="orders/index.html" class="bottom-nav-link"><i data-lucide="shopping-bag"></i><span>Cmd</span></a>
+        <a href="verification/index.html" class="bottom-nav-link"><i data-lucide="shield-check"></i><span>Vérif</span></a>
+        <a href="activities/index.html" class="bottom-nav-link active"><i data-lucide="activity"></i><span>Activité</span></a>
+    </div>
+</nav>
+
+<!-- ═══ MODAL CONTAINER ═══ -->
+<div id="modalContainer"></div>
+
+<script>
+// ═══════════════════════════════════════════
+// SUPABASE CONFIG
+// ═══════════════════════════════════════════
+const SUPABASE_URL = 'https://cwubxwbzzuigctvgdygv.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dWJ4d2J6enVpZ2N0dmdkeWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzI2MTgsImV4cCI6MjA5MzgwODYxOH0.0mwBNo_S5yItQQjq2at9GNRN74ooZRBJIbZGDH9L2uk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let currentPage = 1;
+let totalPages = 1;
+const PAGE_SIZE = 20;
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', async () => {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { window.location.href = '../login.html'; return; }
+    const { data: profile } = await sb.from('users').select('role').eq('id', user.id).single();
+    if (!profile || profile.role !== 'admin') { showToast('Accès refusé', 'error'); setTimeout(() => window.location.href = '../landing.html', 1500); return; }
+    
+    lucide.createIcons();
+    await loadKPIs();
+    await loadActivities();
+});
+
+// ═══════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════
+function showToast(message, type = 'info') {
+    let container = document.getElementById('toastContainer');
+    if (!container) { container = document.createElement('div'); container.id = 'toastContainer'; container.className = 'toast-container'; document.body.appendChild(container); }
+    const icons = { success: 'check-circle', error: 'x-circle', warning: 'alert-triangle', info: 'info' };
+    const toast = document.createElement('div'); toast.className = `toast ${type}`;
+    toast.innerHTML = `<i data-lucide="${icons[type]}" style="width:1.125rem;height:1.125rem"></i><span>${message}</span><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:#6B7280;padding:4px">✕</button>`;
+    container.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(20px)'; toast.style.transition = 'all .3s'; setTimeout(() => toast.remove(), 300); }, 4000);
+}
+
+// ═══════════════════════════════════════════
+// KPI
+// ═══════════════════════════════════════════
+async function loadKPIs() {
+    try {
+        // Total activités
+        const { count: total } = await sb.from('provider_activities').select('*', { count: 'exact', head: true });
+        
+        // Aujourd'hui
+        const today = new Date(); today.setHours(0,0,0,0);
+        const { count: todayCount } = await sb.from('provider_activities').select('*', { count: 'exact', head: true }).gte('created_at', today.toISOString());
+        
+        // Prestataires actifs (ce mois)
+        const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
+        const { data: activeUsers } = await sb.from('provider_activities').select('user_id').gte('created_at', monthStart.toISOString());
+        const uniqueUsers = new Set((activeUsers || []).map(a => a.user_id));
+        
+        // Suspectes
+        const { count: suspicious } = await sb.from('provider_activities').select('*', { count: 'exact', head: true }).eq('activity_type', 'suspicious');
+        
+        document.getElementById('kpiTotal').textContent = total || 0;
+        document.getElementById('kpiToday').textContent = todayCount || 0;
+        document.getElementById('kpiActive').textContent = uniqueUsers.size || 0;
+        document.getElementById('kpiSuspicious').textContent = suspicious || 0;
+    } catch (err) {
+        console.error('Erreur KPI:', err);
+    }
+}
+
+// ═══════════════════════════════════════════
+// CHARGER LES ACTIVITÉS
+// ═══════════════════════════════════════════
+async function loadActivities(page = 1) {
+    currentPage = page;
+    const container = document.getElementById('timelineContainer');
+    container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+    
+    try {
+        const search = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+        const typeFilter = document.getElementById('typeFilter')?.value || 'all';
+        const statusFilter = document.getElementById('statusFilter')?.value || 'all';
+        const periodFilter = document.getElementById('periodFilter')?.value || 'all';
+        
+        let query = sb.from('provider_activities')
+            .select('*, user:user_id(full_name, email, profile_photo_url)', { count: 'exact' })
+            .order('created_at', { ascending: false });
+        
+        // Filtre type
+        if (typeFilter !== 'all') query = query.eq('activity_type', typeFilter);
+        
+        // Filtre période
+        if (periodFilter === 'today') {
+            const today = new Date(); today.setHours(0,0,0,0);
+            query = query.gte('created_at', today.toISOString());
+        } else if (periodFilter === '7') {
+            const d = new Date(Date.now() - 7*24*60*60*1000);
+            query = query.gte('created_at', d.toISOString());
+        } else if (periodFilter === '30') {
+            const d = new Date(Date.now() - 30*24*60*60*1000);
+            query = query.gte('created_at', d.toISOString());
+        }
+        
+        const { data, count, error } = await query.range((page-1)*PAGE_SIZE, page*PAGE_SIZE-1);
+        
+        if (error) throw error;
+        
+        let activities = data || [];
+        
+        // Filtre nom (côté client)
+        if (search) {
+            activities = activities.filter(a => 
+                (a.user?.full_name || '').toLowerCase().includes(search)
+            );
+        }
+        
+        // Filtre statut
+        if (statusFilter !== 'all') {
+            activities = activities.filter(a => (a.activity_type === 'suspicious' ? 'suspicious' : 'normal') === statusFilter || (a.activity_type === 'warning' ? 'warning' : null) === statusFilter);
+        }
+        
+        totalPages = Math.ceil((count || 0) / PAGE_SIZE);
+        document.getElementById('resultsCount').textContent = `${count || 0} activité(s) trouvée(s)`;
+        
+        if (!activities.length) {
+            container.innerHTML = `<div class="empty-state"><i data-lucide="inbox" style="width:3rem;height:3rem"></i><p>Aucune activité trouvée</p></div>`;
+        } else {
+            container.innerHTML = activities.map(a => renderActivityItem(a)).join('');
+        }
+        
+        renderPagination();
+        lucide.createIcons();
+        
+    } catch (err) {
+        console.error('Erreur chargement:', err);
+        container.innerHTML = `<div class="empty-state"><i data-lucide="alert-triangle" style="width:3rem;height:3rem;color:var(--error)"></i><p>Erreur: ${err.message}</p></div>`;
+    }
+}
+
+// ═══════════════════════════════════════════
+// RENDU D'UNE ACTIVITÉ
+// ═══════════════════════════════════════════
+function renderActivityItem(a) {
+    const user = a.user || {};
+    const initials = (user.full_name || '?')[0].toUpperCase();
+    const statusClass = a.activity_type === 'suspicious' ? 'suspicious' : 'normal';
+    const dotClass = a.activity_type === 'suspicious' ? 'suspicious' : 'normal';
+    const typeClass = a.activity_type || 'other';
+    
+    const typeLabels = {
+        login: 'Connexion', order: 'Commande', payment: 'Paiement',
+        update_profile: 'MàJ Profil', service_update: 'MàJ Service',
+        suspicious: 'Suspect', warning: 'Attention', other: 'Autre'
+    };
+    
+    const typeIcons = {
+        login: 'log-in', order: 'shopping-bag', payment: 'banknote',
+        update_profile: 'user-cog', service_update: 'briefcase',
+        suspicious: 'alert-triangle', warning: 'alert-circle', other: 'info'
+    };
+    
+    const date = new Date(a.created_at);
+    const timeAgo = formatTimeAgo(date);
+    
+    return `
+    <div class="timeline-item" onclick="viewActivityDetail('${a.id}')">
+        <div class="timeline-dot ${dotClass}"></div>
+        <div class="timeline-content">
+            <div class="timeline-header">
+                <div class="timeline-user">
+                    <div class="timeline-user-avatar">${user.profile_photo_url ? `<img src="${user.profile_photo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : initials}</div>
+                    <span>${esc(user.full_name || 'Inconnu')}</span>
+                </div>
+                <span class="timeline-type ${typeClass}">
+                    <i data-lucide="${typeIcons[typeClass] || 'info'}" style="width:.75rem;height:.75rem"></i>
+                    ${typeLabels[typeClass] || 'Autre'}
+                </span>
+            </div>
+            <div class="timeline-description">${esc(a.description || a.title || 'Aucune description')}</div>
+            <div class="timeline-meta">
+                <span class="timeline-date"><i data-lucide="clock" style="width:.75rem;height:.75rem"></i> ${timeAgo}</span>
+                ${a.organization ? `<span class="timeline-date"><i data-lucide="building-2" style="width:.75rem;height:.75rem"></i> ${esc(a.organization)}</span>` : ''}
+                <span class="timeline-status ${statusClass}">${statusClass === 'suspicious' ? '🚨 Suspect' : '✅ Normal'}</span>
+            </div>
+        </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════
+// DÉTAIL D'UNE ACTIVITÉ
+// ═══════════════════════════════════════════
+function viewActivityDetail(id) {
+    const activities = document.querySelectorAll('.timeline-item');
+    // Récupérer depuis Supabase
+    sb.from('provider_activities').select('*, user:user_id(full_name, email, phone, city)').eq('id', id).single().then(({ data: a, error }) => {
+        if (error || !a) { showToast('Activité introuvable', 'error'); return; }
+        
+        const user = a.user || {};
+        const typeLabels = { login:'Connexion', order:'Commande', payment:'Paiement', update_profile:'MàJ Profil', service_update:'MàJ Service', suspicious:'Suspect', other:'Autre' };
+        
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+        overlay.innerHTML = `
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 class="modal-title"><i data-lucide="activity" style="color:var(--primary)"></i> Détail de l'activité</h3>
+                <button class="modal-close" onclick="this.closest('.modal-overlay').remove()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="detail-row"><span class="detail-label">Prestataire</span><span class="detail-value">${esc(user.full_name || 'Inconnu')}</span></div>
+            <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${esc(user.email || '—')}</span></div>
+            <div class="detail-row"><span class="detail-label">Téléphone</span><span class="detail-value">${esc(user.phone || '—')}</span></div>
+            <div class="detail-row"><span class="detail-label">Ville</span><span class="detail-value">${esc(user.city || '—')}</span></div>
+            <div class="detail-row"><span class="detail-label">Type</span><span class="detail-value">${typeLabels[a.activity_type] || 'Autre'}</span></div>
+            <div class="detail-row"><span class="detail-label">Titre</span><span class="detail-value">${esc(a.title)}</span></div>
+            ${a.description ? `<div class="detail-row"><span class="detail-label">Description</span><span class="detail-value">${esc(a.description)}</span></div>` : ''}
+            ${a.organization ? `<div class="detail-row"><span class="detail-label">Organisation</span><span class="detail-value">${esc(a.organization)}</span></div>` : ''}
+            <div class="detail-row"><span class="detail-label">Date début</span><span class="detail-value">${a.date_start ? new Date(a.date_start).toLocaleDateString('fr-FR') : '—'}</span></div>
+            <div class="detail-row"><span class="detail-label">Date fin</span><span class="detail-value">${a.date_end ? new Date(a.date_end).toLocaleDateString('fr-FR') : '—'}</span></div>
+            <div class="detail-row"><span class="detail-label">Créé le</span><span class="detail-value">${new Date(a.created_at).toLocaleString('fr-FR')}</span></div>
+            <div class="detail-row"><span class="detail-label">Statut</span><span class="detail-value">${a.is_verified ? '✅ Vérifié' : '⏳ Non vérifié'}</span></div>
+            ${a.document_url ? `<div class="detail-row"><span class="detail-label">Document</span><span class="detail-value"><a href="${a.document_url}" target="_blank" style="color:var(--blue)">Voir le document</a></span></div>` : ''}
+        </div>`;
+        
+        document.body.appendChild(overlay);
+        lucide.createIcons();
+    });
+}
+
+// ═══════════════════════════════════════════
+// PAGINATION
+// ═══════════════════════════════════════════
+function renderPagination() {
+    const container = document.getElementById('pagination');
+    if (totalPages <= 1) { container.innerHTML = ''; return; }
+    
+    let html = '';
+    html += `<button class="page-btn" onclick="loadActivities(${currentPage-1})" ${currentPage===1?'disabled':''}><i data-lucide="chevron-left" style="width:.875rem;height:.875rem"></i></button>`;
+    
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage-1 && i <= currentPage+1)) {
+            html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="loadActivities(${i})">${i}</button>`;
+        } else if (i === currentPage-2 || i === currentPage+2) {
+            html += '<span class="page-info">...</span>';
+        }
+    }
+    
+    html += `<button class="page-btn" onclick="loadActivities(${currentPage+1})" ${currentPage===totalPages?'disabled':''}><i data-lucide="chevron-right" style="width:.875rem;height:.875rem"></i></button>`;
+    html += `<span class="page-info">Page ${currentPage}/${totalPages}</span>`;
+    
+    container.innerHTML = html;
+    lucide.createIcons();
+}
+
+// ═══════════════════════════════════════════
+// FILTRES RAPIDES
+// ═══════════════════════════════════════════
+function filterSuspicious() {
+    document.getElementById('typeFilter').value = 'suspicious';
+    document.getElementById('statusFilter').value = 'all';
+    loadActivities();
+}
+
+// ═══════════════════════════════════════════
+// UTILITAIRES
+// ═══════════════════════════════════════════
+function esc(t) { const d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
+
+function formatTimeAgo(date) {
+    const diff = Date.now() - date.getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "À l'instant";
+    if (mins < 60) return `Il y a ${mins} min`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `Il y a ${hrs}h`;
+    const days = Math.floor(hrs / 24);
+    if (days < 7) return `Il y a ${days}j`;
+    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    sidebar.classList.toggle('open');
+    if (sidebar.classList.contains('open')) {
+        sidebar.style.display = 'flex'; sidebar.style.position = 'fixed'; sidebar.style.zIndex = '300';
+        sidebar.style.width = '280px'; sidebar.style.boxShadow = '4px 0 24px rgba(0,0,0,.15)';
+    } else { sidebar.style.display = 'none'; }
+}
+
+async function logout() { await sb.auth.signOut(); window.location.href = '../landing.html'; }
+</script>
+</body>
+</html>
