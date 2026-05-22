@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Utilisateurs — Administration CamServices</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        :root {
+            --primary: #22C55E; --primary-hover: #16A34A; --primary-light: #F0FDF4; --primary-dim: rgba(34,197,94,.08);
+            --text-primary: #111827; --text-secondary: #4B5563; --text-muted: #6B7280;
+            --bg: #FFFFFF; --surface: #F9FAFB; --border: #E5E7EB; --border-light: #F3F4F6;
+            --accent: #F59E0B; --accent-light: #FFFBEB; --error: #EF4444; --error-light: #FEF2F2;
+            --blue: #3B82F6; --blue-light: #EFF6FF; --purple: #7C3AED; --purple-light: #F5F3FF;
+            --indigo: #6366F1; --teal: #14B8A6;
+            --shadow-xs: 0 1px 2px rgba(0,0,0,0.05); --shadow: 0 4px 20px rgba(0,0,0,.06); --shadow-lg: 0 12px 40px rgba(0,0,0,.1);
+            --radius-sm: 8px; --radius: 12px; --radius-lg: 16px; --radius-xl: 20px;
+            --sidebar-w: 240px; --bottom-nav-h: 72px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; background:var(--surface); color:var(--text-primary); display:flex; min-height:100vh; -webkit-font-smoothing:antialiased; line-height:1.5; }
+        ::selection { background:var(--primary-dim); color:var(--text-primary); }
+        ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+        @keyframes spin { to{transform:rotate(360deg)} }
+        @keyframes slideUpBottom { from{transform:translateY(100%)} to{transform:translateY(0)} }
+        @keyframes slideUpModal { from{opacity:0;transform:translateY(30px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+        @keyframes slideUpMobile { from{opacity:0;transform:translateY(60px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes toastIn { from{opacity:0;transform:translateX(40px)} to{opacity:1;transform:translateX(0)} }
+
+        .sidebar { width:var(--sidebar-w); background:var(--bg); border-right:1px solid var(--border-light); display:flex; flex-direction:column; position:fixed; top:0; left:0; bottom:0; z-index:100; padding:20px 14px; overflow-y:auto; }
+        .sidebar-logo { font-weight:800; font-size:1rem; color:var(--text-primary); text-decoration:none; display:flex; align-items:center; gap:6px; margin-bottom:28px; padding:0 8px; }
+        .sidebar-logo span { color:var(--primary); }
+        .sidebar-nav { list-style:none; flex:1; }
+        .sidebar-nav a { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--radius-sm); font-size:.8125rem; font-weight:500; color:var(--text-secondary); text-decoration:none; transition:all .2s; margin-bottom:2px; }
+        .sidebar-nav a:hover { background:var(--surface); color:var(--text-primary); }
+        .sidebar-nav a.active { background:var(--primary-dim); color:var(--primary); font-weight:600; }
+        .sidebar-nav a i { width:1rem; height:1rem; }
+        .sidebar-nav .badge { margin-left:auto; background:var(--accent); color:#fff; font-size:.625rem; padding:2px 7px; border-radius:10px; }
+        .nav-section { padding:8px 12px 4px; font-size:.625rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); }
+        .sidebar-logout { display:flex; align-items:center; gap:8px; padding:10px 12px; color:var(--error); text-decoration:none; font-size:.8125rem; font-weight:500; border-radius:var(--radius-sm); margin-top:auto; }
+        .sidebar-logout:hover { background:var(--error-light); }
+
+        .main-content { flex:1; margin-left:var(--sidebar-w); padding:28px 28px 64px; max-width:100%; }
+        .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:16px; }
+        .page-title { font-weight:800; font-size:1.6rem; letter-spacing:-.02em; }
+        .page-title span { color:var(--primary); }
+        .page-subtitle { font-size:.875rem; color:var(--text-muted); margin-top:4px; }
+        .page-actions { display:flex; gap:8px; flex-wrap:wrap; }
+
+        .kpi-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:24px; }
+        .kpi-card { background:var(--bg); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:20px; transition:all .3s; box-shadow:var(--shadow-xs); position:relative; overflow:hidden; }
+        .kpi-card:hover { border-color:var(--primary); box-shadow:var(--shadow); transform:translateY(-2px); }
+        .kpi-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+        .kpi-card.blue::before { background:var(--blue); }
+        .kpi-card.primary::before { background:var(--primary); }
+        .kpi-card.purple::before { background:var(--purple); }
+        .kpi-card.error::before { background:var(--error); }
+        .kpi-card.teal::before { background:var(--teal); }
+        .kpi-card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+        .kpi-icon { width:38px; height:38px; border-radius:var(--radius); display:flex; align-items:center; justify-content:center; }
+        .kpi-icon.blue { background:var(--blue-light); color:var(--blue); }
+        .kpi-icon.primary { background:var(--primary-dim); color:var(--primary); }
+        .kpi-icon.purple { background:var(--purple-light); color:var(--purple); }
+        .kpi-icon.error { background:var(--error-light); color:var(--error); }
+        .kpi-icon.teal { background:#F0FDFA; color:var(--teal); }
+        .kpi-value { font-weight:800; font-size:1.5rem; letter-spacing:-.03em; line-height:1; }
+        .kpi-label { font-size:.6875rem; color:var(--text-muted); margin-top:3px; font-weight:500; }
+        .kpi-change { font-size:.625rem; font-weight:600; margin-top:4px; display:flex; align-items:center; gap:3px; }
+        .kpi-change.up { color:var(--primary); } .kpi-change.down { color:var(--error); }
+
+        .filters-bar { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
+        .search-input { padding:9px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.8125rem; outline:none; min-width:200px; flex:1; transition:all .2s; }
+        .search-input:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-dim); }
+        .filter-select { padding:9px 36px 9px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.8125rem; color:var(--text-secondary); outline:none; cursor:pointer; background:#fff; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; transition:all .2s; }
+        .filter-select:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-dim); }
+
+        .section-card { background:var(--bg); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:0; margin-bottom:20px; box-shadow:var(--shadow-xs); overflow:hidden; }
+        .section-header { display:flex; align-items:center; justify-content:space-between; padding:20px 24px; border-bottom:1px solid var(--border-light); flex-wrap:wrap; gap:12px; }
+        .section-title { font-weight:700; font-size:1rem; display:flex; align-items:center; gap:8px; }
+        .section-title i { color:var(--primary); }
+        .results-count { font-size:.75rem; color:var(--text-muted); }
+        .table-wrapper { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+        table { width:100%; border-collapse:collapse; font-size:.78rem; min-width:1100px; }
+        th { text-align:left; font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); padding:12px 14px; border-bottom:2px solid var(--border-light); background:var(--surface); white-space:nowrap; }
+        td { padding:12px 14px; border-bottom:1px solid var(--border-light); vertical-align:middle; }
+        tr:hover td { background:var(--surface); }
+        .user-cell { display:flex; align-items:center; gap:10px; }
+        .user-avatar { width:36px; height:36px; border-radius:50%; background:var(--text-primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.75rem; overflow:hidden; flex-shrink:0; }
+        .user-avatar img { width:100%; height:100%; object-fit:cover; }
+
+        .status-badge { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:100px; font-size:.6875rem; font-weight:600; white-space:nowrap; }
+        .status-active { background:var(--primary-light); color:var(--primary); }
+        .status-pending { background:var(--accent-light); color:#D97706; }
+        .status-suspended { background:#FFF7ED; color:#EA580C; }
+        .status-banned { background:var(--error-light); color:var(--error); }
+        .status-inactive { background:var(--surface); color:var(--text-muted); border:1px solid var(--border); }
+        .role-badge { display:inline-flex; align-items:center; gap:3px; padding:3px 8px; border-radius:100px; font-size:.65rem; font-weight:600; }
+        .role-prestataire { background:var(--primary-dim); color:var(--primary); }
+        .role-client { background:var(--purple-light); color:var(--purple); }
+        .role-admin { background:var(--error-light); color:var(--error); }
+        .verified-dot { width:8px; height:8px; border-radius:50%; background:var(--primary); display:inline-block; margin-left:4px; }
+
+        .btn { display:inline-flex; align-items:center; gap:5px; padding:6px 12px; border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.72rem; font-weight:600; cursor:pointer; border:none; text-decoration:none; transition:all .2s; white-space:nowrap; }
+        .btn i { width:.75rem; height:.75rem; }
+        .btn-primary { background:var(--primary); color:#fff; } .btn-primary:hover { background:var(--primary-hover); }
+        .btn-outline { background:var(--bg); color:var(--text-secondary); border:1px solid var(--border); } .btn-outline:hover { border-color:var(--primary); color:var(--primary); }
+        .btn-danger { background:var(--error); color:#fff; } .btn-danger:hover { background:#DC2626; }
+        .btn-warning { background:var(--accent); color:#fff; } .btn-warning:hover { background:#D97706; }
+        .btn-sm { padding:4px 10px; font-size:.68rem; }
+        .action-group { display:flex; gap:4px; flex-wrap:wrap; }
+
+        .pagination { display:flex; align-items:center; justify-content:center; gap:4px; padding:20px; border-top:1px solid var(--border-light); }
+        .page-btn { padding:8px 14px; border:1px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:.75rem; font-weight:500; color:var(--text-secondary); cursor:pointer; background:#fff; transition:all .2s; }
+        .page-btn:hover { border-color:var(--primary); color:var(--primary); }
+        .page-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+        .page-btn:disabled { opacity:.4; cursor:not-allowed; }
+        .page-info { font-size:.75rem; color:var(--text-muted); padding:0 8px; }
+
+        .modal-overlay { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,.5); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:20px; animation:fadeIn .2s; }
+        .modal-content { background:#fff; border-radius:var(--radius-xl); padding:28px; width:100%; max-width:750px; max-height:85vh; overflow-y:auto; box-shadow:var(--shadow-lg); animation:slideUpModal .35s ease; }
+        .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+        .modal-title { font-weight:700; font-size:1.1rem; display:flex; align-items:center; gap:8px; }
+        .modal-close { background:none; border:none; cursor:pointer; color:var(--text-muted); padding:6px; border-radius:var(--radius-sm); }
+        .modal-close:hover { background:var(--surface); color:var(--text-primary); }
+        .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+        .detail-item { padding:10px 12px; background:var(--surface); border-radius:var(--radius-sm); }
+        .detail-label { font-size:.625rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:2px; }
+        .detail-value { font-size:.8125rem; font-weight:600; }
+        .tabs { display:flex; gap:2px; border-bottom:1px solid var(--border-light); margin-bottom:16px; overflow-x:auto; }
+        .tab { padding:9px 16px; font-size:.78rem; font-weight:500; color:var(--text-muted); cursor:pointer; border-bottom:2px solid transparent; background:none; border:none; font-family:'Inter',sans-serif; white-space:nowrap; transition:all .2s; }
+        .tab:hover { color:var(--text-primary); }
+        .tab.active { color:var(--primary); border-bottom-color:var(--primary); font-weight:600; }
+
+        .bottom-navbar { display:none; position:fixed; bottom:0; left:0; right:0; z-index:150; background:rgba(255,255,255,.95); backdrop-filter:blur(20px); border-top:1px solid var(--border-light); padding:4px 2px; padding-bottom:max(4px,env(safe-area-inset-bottom)); box-shadow:0 -4px 20px rgba(0,0,0,.06); animation:slideUpBottom .4s ease; }
+        .bottom-nav-list { display:flex; align-items:center; justify-content:space-around; max-width:500px; margin:0 auto; }
+        .bottom-nav-link { display:flex; flex-direction:column; align-items:center; gap:2px; padding:5px 3px; text-decoration:none; color:var(--text-muted); font-size:.5625rem; font-weight:500; border-radius:10px; min-height:44px; }
+        .bottom-nav-link i { width:1.25rem; height:1.25rem; }
+        .bottom-nav-link.active { color:var(--primary); font-weight:600; }
+        .menu-toggle { display:none; position:fixed; top:12px; left:12px; z-index:101; background:#fff; border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; cursor:pointer; box-shadow:var(--shadow-xs); }
+
+        .loading-spinner { text-align:center; padding:48px; }
+        .spinner { width:28px; height:28px; border:3px solid var(--border-light); border-top-color:var(--primary); border-radius:50%; margin:0 auto 12px; animation:spin .7s linear infinite; }
+        .empty-state { text-align:center; padding:48px 20px; color:var(--text-muted); }
+        .empty-state i { display:block; margin:0 auto 12px; color:var(--border); }
+
+        .toast-container { position:fixed; top:24px; right:24px; z-index:10000; display:flex; flex-direction:column; gap:10px; pointer-events:none; }
+        .toast { display:flex; align-items:center; gap:12px; padding:14px 20px; background:#fff; border:1px solid var(--border-light); border-radius:var(--radius); box-shadow:0 10px 30px rgba(0,0,0,.12); font-size:.875rem; font-weight:500; pointer-events:auto; min-width:300px; animation:toastIn .3s ease; }
+        .toast.success { border-left:4px solid var(--primary); } .toast.error { border-left:4px solid var(--error); } .toast.warning { border-left:4px solid var(--accent); }
+
+        @media (min-width:1024px) { .bottom-navbar { display:none !important; } .menu-toggle { display:none !important; } }
+        @media (max-width:1023px) {
+            .sidebar { display:none !important; } .bottom-navbar { display:block; }
+            .menu-toggle { display:flex; align-items:center; gap:6px; font-family:'Inter',sans-serif; font-size:.75rem; font-weight:600; }
+            .main-content { margin-left:0 !important; padding:20px 14px; padding-bottom:calc(var(--bottom-nav-h) + 20px + env(safe-area-inset-bottom)) !important; padding-top:60px; }
+            .kpi-grid { grid-template-columns:repeat(3,1fr); gap:10px; }
+            .filters-bar { flex-direction:column; } .filters-bar .search-input { width:100%; }
+            .detail-grid { grid-template-columns:1fr; }
+        }
+        @media (max-width:767px) {
+            .main-content { padding:16px 10px; padding-bottom:calc(var(--bottom-nav-h) + 16px + env(safe-area-inset-bottom)) !important; }
+            .kpi-grid { grid-template-columns:repeat(2,1fr); gap:8px; }
+            .kpi-card { padding:14px; } .kpi-value { font-size:1.25rem; } .page-title { font-size:1.35rem; }
+            .modal-content { max-width:100%; border-radius:20px 20px 0 0; animation:slideUpMobile .35s ease; }
+        }
+        @media (max-width:424px) { .kpi-grid { grid-template-columns:1fr; } .page-title { font-size:1.2rem; } }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+    <a href="index.html" class="sidebar-logo">⚙️ Admin <span>CamServices</span></a>
+    <ul class="sidebar-nav">
+        <li><a href="index.html"><i data-lucide="layout-dashboard"></i> Tableau de bord</a></li>
+        <li class="nav-section"><span>Utilisateurs</span></li>
+        <li><a href="users/index.html" class="active"><i data-lucide="users"></i> Prestataires <span class="badge" id="providersBadge">0</span></a></li>
+        <li><a href="clients/index.html"><i data-lucide="user-check"></i> Clients <span class="badge" id="clientsBadge">0</span></a></li>
+        <li><a href="verification/index.html"><i data-lucide="shield-check"></i> Vérification <span class="badge" id="pendingBadge">0</span></a></li>
+        <li class="nav-section"><span>Activité</span></li>
+        <li><a href="orders/index.html"><i data-lucide="shopping-bag"></i> Commandes</a></li>
+        <li><a href="services/index.html"><i data-lucide="briefcase"></i> Services</a></li>
+        <li class="nav-section"><span>Administration</span></li>
+        <li><a href="analytics/index.html"><i data-lucide="bar-chart-3"></i> Analytics</a></li>
+        <li><a href="activities/index.html"><i data-lucide="activity"></i> Activités</a></li>
+        <li><a href="disputes/index.html"><i data-lucide="alert-triangle"></i> Litiges</a></li>
+        <li><a href="payments/index.html"><i data-lucide="banknote"></i> Paiements</a></li>
+        <li><a href="settings/index.html"><i data-lucide="settings"></i> Paramètres</a></li>
+    </ul>
+    <a href="../landing.html" onclick="logout();return false" class="sidebar-logout"><i data-lucide="log-out"></i> Déconnexion</a>
+</aside>
+
+<button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()"><i data-lucide="menu" style="width:1rem;height:1rem"></i> Menu</button>
+
+<main class="main-content">
+    <div class="page-header">
+        <div><h1 class="page-title">Gestion des <span>utilisateurs</span></h1><p class="page-subtitle">Gérez tous les prestataires et clients de la plateforme</p></div>
+        <div class="page-actions">
+            <button class="btn btn-outline" onclick="exportUsers()"><i data-lucide="download"></i> Exporter</button>
+            <button class="btn btn-primary" onclick="addUser()"><i data-lucide="user-plus"></i> Ajouter</button>
+        </div>
+    </div>
+
+    <!-- KPI -->
+    <div class="kpi-grid" id="kpiGrid">
+        <div class="kpi-card blue"><div class="kpi-card-header"><div class="kpi-icon blue"><i data-lucide="users"></i></div></div><div class="kpi-value" id="kpiTotal">—</div><div class="kpi-label">Total utilisateurs</div><div class="kpi-change up"><i data-lucide="trending-up" style="width:.75rem;height:.75rem"></i> +12 cette semaine</div></div>
+        <div class="kpi-card primary"><div class="kpi-card-header"><div class="kpi-icon primary"><i data-lucide="briefcase"></i></div></div><div class="kpi-value" id="kpiProviders">—</div><div class="kpi-label">Prestataires actifs</div></div>
+        <div class="kpi-card purple"><div class="kpi-card-header"><div class="kpi-icon purple"><i data-lucide="user-check"></i></div></div><div class="kpi-value" id="kpiClients">—</div><div class="kpi-label">Clients actifs</div></div>
+        <div class="kpi-card error"><div class="kpi-card-header"><div class="kpi-icon error"><i data-lucide="pause-circle"></i></div></div><div class="kpi-value" id="kpiSuspended">—</div><div class="kpi-label">Comptes suspendus</div></div>
+        <div class="kpi-card teal"><div class="kpi-card-header"><div class="kpi-icon teal"><i data-lucide="user-plus"></i></div></div><div class="kpi-value" id="kpiNew">—</div><div class="kpi-label">Nouveaux (7 jours)</div></div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filters-bar">
+        <input type="text" class="search-input" id="searchInput" placeholder="🔍 Rechercher par nom, email ou téléphone..." oninput="loadUsers()">
+        <select class="filter-select" id="roleFilter" onchange="loadUsers()"><option value="all">Tous les rôles</option><option value="prestataire">Prestataires</option><option value="client">Clients</option><option value="admin">Admins</option></select>
+        <select class="filter-select" id="statusFilter" onchange="loadUsers()"><option value="all">Tous les statuts</option><option value="active">✅ Actif</option><option value="pending">🟡 En attente</option><option value="suspended">🟠 Suspendu</option><option value="banned">🔴 Banni</option><option value="inactive">⚪ Inactif</option></select>
+        <select class="filter-select" id="cityFilter" onchange="loadUsers()"><option value="all">Toutes les villes</option></select>
+    </div>
+
+    <!-- Tableau -->
+    <div class="section-card">
+        <div class="section-header"><h3 class="section-title"><i data-lucide="list"></i> Liste des utilisateurs</h3><span class="results-count" id="resultsCount">Chargement...</span></div>
+        <div class="table-wrapper" id="usersTable"><div class="loading-spinner"><div class="spinner"></div><p>Chargement...</p></div></div>
+        <div class="pagination" id="pagination"></div>
+    </div>
+</main>
+
+<nav class="bottom-navbar">
+    <div class="bottom-nav-list">
+        <a href="index.html" class="bottom-nav-link"><i data-lucide="layout-dashboard"></i><span>Accueil</span></a>
+        <a href="users/index.html" class="bottom-nav-link active"><i data-lucide="users"></i><span>Users</span></a>
+        <a href="orders/index.html" class="bottom-nav-link"><i data-lucide="shopping-bag"></i><span>Cmd</span></a>
+        <a href="verification/index.html" class="bottom-nav-link"><i data-lucide="shield-check"></i><span>Vérif</span></a>
+        <a href="analytics/index.html" class="bottom-nav-link"><i data-lucide="bar-chart-3"></i><span>Stats</span></a>
+    </div>
+</nav>
+
+<div id="modalContainer"></div>
+
+<script>
+const SUPABASE_URL = 'https://cwubxwbzzuigctvgdygv.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dWJ4d2J6enVpZ2N0dmdkeWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMzI2MTgsImV4cCI6MjA5MzgwODYxOH0.0mwBNo_S5yItQQjq2at9GNRN74ooZRBJIbZGDH9L2uk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+let currentPage = 1, totalPages = 1;
+const PAGE_SIZE = 25;
+
+const mockUsers = [
+    { id:'u1', full_name:'Marie Koné', email:'marie.kone@email.cm', phone:'+237 691234567', role:'prestataire', category:'Plomberie', city:'Yaoundé', is_verified:true, status:'active', services_count:8, orders_completed:156, created_at:'2025-01-15' },
+    { id:'u2', full_name:'Paul Tchinda', email:'paul.tchinda@email.cm', phone:'+237 692345678', role:'prestataire', category:'Cours particuliers', city:'Douala', is_verified:true, status:'active', services_count:3, orders_completed:89, created_at:'2025-02-20' },
+    { id:'u3', full_name:'Sophie Mbarga', email:'sophie.mbarga@email.cm', phone:'+237 693456789', role:'prestataire', category:'Photographie', city:'Yaoundé', is_verified:true, status:'active', services_count:5, orders_completed:234, created_at:'2024-11-10' },
+    { id:'u4', full_name:'Ibrahim Touré', email:'ibrahim.toure@email.cm', phone:'+237 694567890', role:'prestataire', category:'Transport', city:'Bafoussam', is_verified:false, status:'pending', services_count:2, orders_completed:12, created_at:'2025-05-01' },
+    { id:'u5', full_name:'Christine Eto\'o', email:'christine.etoo@email.cm', phone:'+237 695678901', role:'prestataire', category:'Beauté', city:'Douala', is_verified:true, status:'suspended', services_count:6, orders_completed:189, created_at:'2024-08-05' },
+    { id:'u6', full_name:'Michel Fotso', email:'michel.fotso@email.cm', phone:'+237 696789012', role:'prestataire', category:'Électricité', city:'Yaoundé', is_verified:false, status:'inactive', services_count:4, orders_completed:12, created_at:'2025-03-18' },
+    { id:'u7', full_name:'Jean Dupont', email:'jean.dupont@email.cm', phone:'+237 697890123', role:'client', category:'—', city:'Douala', is_verified:false, status:'active', services_count:0, orders_completed:8, created_at:'2025-04-10' },
+    { id:'u8', full_name:'Alice Foka', email:'alice.foka@email.cm', phone:'+237 698901234', role:'client', category:'—', city:'Yaoundé', is_verified:false, status:'active', services_count:0, orders_completed:15, created_at:'2024-12-01' },
+    { id:'u9', full_name:'Admin Principal', email:'admin@camservices.cm', phone:'+237 699012345', role:'admin', category:'—', city:'Yaoundé', is_verified:true, status:'active', services_count:0, orders_completed:0, created_at:'2024-01-01' },
+    { id:'u10', full_name:'David Ekambi', email:'david.ekambi@email.cm', phone:'+237 690123456', role:'prestataire', category:'Coiffure', city:'Bamenda', is_verified:false, status:'banned', services_count:1, orders_completed:3, created_at:'2025-02-14' }
+];
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { window.location.href = '../login.html'; return; }
+    const { data: profile } = await sb.from('users').select('role').eq('id', user.id).single();
+    if (!profile || profile.role !== 'admin') { showToast('Accès refusé', 'error'); setTimeout(() => window.location.href = '../landing.html', 1500); return; }
+    lucide.createIcons();
+    populateCityFilter();
+    updateKPIs();
+    loadUsers();
+});
+
+function populateCityFilter() {
+    const cities = [...new Set(mockUsers.map(u => u.city))];
+    const select = document.getElementById('cityFilter');
+    cities.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; select.appendChild(o); });
+}
+
+function updateKPIs() {
+    const u = mockUsers;
+    const weekAgo = new Date(Date.now() - 7*24*60*60*1000);
+    document.getElementById('kpiTotal').textContent = u.length;
+    document.getElementById('kpiProviders').textContent = u.filter(x => x.role === 'prestataire' && x.status === 'active').length;
+    document.getElementById('kpiClients').textContent = u.filter(x => x.role === 'client' && x.status === 'active').length;
+    document.getElementById('kpiSuspended').textContent = u.filter(x => x.status === 'suspended' || x.status === 'banned').length;
+    document.getElementById('kpiNew').textContent = u.filter(x => new Date(x.created_at) >= weekAgo).length;
+    document.getElementById('providersBadge').textContent = u.filter(x => x.role === 'prestataire').length;
+    document.getElementById('clientsBadge').textContent = u.filter(x => x.role === 'client').length;
+}
+
+function loadUsers(page = 1) {
+    currentPage = page;
+    const search = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+    const roleFilter = document.getElementById('roleFilter')?.value || 'all';
+    const statusFilter = document.getElementById('statusFilter')?.value || 'all';
+    const cityFilter = document.getElementById('cityFilter')?.value || 'all';
+    
+    let users = [...mockUsers];
+    if (roleFilter !== 'all') users = users.filter(u => u.role === roleFilter);
+    if (statusFilter !== 'all') users = users.filter(u => u.status === statusFilter);
+    if (cityFilter !== 'all') users = users.filter(u => u.city === cityFilter);
+    if (search) users = users.filter(u => u.full_name.toLowerCase().includes(search) || u.email.toLowerCase().includes(search) || u.phone.includes(search));
+    
+    totalPages = Math.ceil(users.length / PAGE_SIZE);
+    const paginated = users.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE);
+    document.getElementById('resultsCount').textContent = `${users.length} utilisateur(s)`;
+    
+    const statusLabels = { active:'Actif', pending:'En attente', suspended:'Suspendu', banned:'Banni', inactive:'Inactif' };
+    const roleLabels = { prestataire:'Prestataire', client:'Client', admin:'Admin' };
+    
+    document.getElementById('usersTable').innerHTML = paginated.length ? 
+    `<table><thead><tr><th>Utilisateur</th><th>Contact</th><th>Rôle</th><th>Catégorie</th><th>Ville</th><th>Services</th><th>Inscription</th><th>Statut</th><th>Actions</th></tr></thead><tbody>${paginated.map(u => `
+        <tr>
+            <td><div class="user-cell"><div class="user-avatar">${u.full_name[0]}</div><div><strong>${esc(u.full_name)}</strong>${u.is_verified ? '<span class="verified-dot" title="Vérifié"></span>' : ''}</div></div></td>
+            <td><div style="font-size:.75rem">${esc(u.email)}</div><div style="font-size:.65rem;color:var(--text-muted)">${esc(u.phone)}</div></td>
+            <td><span class="role-badge role-${u.role}">${roleLabels[u.role]}</span></td>
+            <td>${u.category !== '—' ? esc(u.category) : '<span style="color:var(--text-muted)">—</span>'}</td>
+            <td>${esc(u.city)}</td>
+            <td style="text-align:center"><span style="font-weight:600">${u.services_count}</span></td>
+            <td>${fmtDate(u.created_at)}</td>
+            <td><span class="status-badge status-${u.status}">${statusLabels[u.status]}</span></td>
+            <td><div class="action-group">
+                <button class="btn btn-outline btn-sm" onclick="viewUserProfile('${u.id}')"><i data-lucide="eye"></i></button>
+                ${u.status !== 'banned' ? `<button class="btn btn-danger btn-sm" onclick="banUser('${u.id}')"><i data-lucide="ban"></i></button>` : `<button class="btn btn-primary btn-sm" onclick="unbanUser('${u.id}')"><i data-lucide="unlock"></i></button>`}
+                ${u.status === 'active' ? `<button class="btn btn-warning btn-sm" onclick="suspendUser('${u.id}')"><i data-lucide="pause-circle"></i></button>` : ''}
+            </div></td>
+        </tr>`).join('')}</tbody></table>` : '<div class="empty-state"><i data-lucide="users" style="width:3rem;height:3rem"></i><p>Aucun utilisateur trouvé</p></div>';
+    
+    renderPagination();
+    lucide.createIcons();
+}
+
+function renderPagination() {
+    const container = document.getElementById('pagination');
+    if (totalPages <= 1) { container.innerHTML = ''; return; }
+    let html = `<button class="page-btn" onclick="loadUsers(${currentPage-1})" ${currentPage===1?'disabled':''}><i data-lucide="chevron-left" style="width:.875rem;height:.875rem"></i></button>`;
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage-1 && i <= currentPage+1)) html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="loadUsers(${i})">${i}</button>`;
+        else if (i === currentPage-2 || i === currentPage+2) html += '<span class="page-info">...</span>';
+    }
+    html += `<button class="page-btn" onclick="loadUsers(${currentPage+1})" ${currentPage===totalPages?'disabled':''}><i data-lucide="chevron-right" style="width:.875rem;height:.875rem"></i></button><span class="page-info">Page ${currentPage}/${totalPages}</span>`;
+    container.innerHTML = html;
+    lucide.createIcons();
+}
+
+function viewUserProfile(id) {
+    const u = mockUsers.find(x => x.id === id); if (!u) return;
+    const statusLabels = { active:'Actif', pending:'En attente', suspended:'Suspendu', banned:'Banni', inactive:'Inactif' };
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML = `<div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header"><h3 class="modal-title"><i data-lucide="user" style="color:var(--primary)"></i> Profil utilisateur</h3><button class="modal-close" onclick="this.closest('.modal-overlay').remove()"><i data-lucide="x"></i></button></div>
+        <div style="display:flex;gap:14px;align-items:center;margin-bottom:20px">
+            <div class="user-avatar" style="width:56px;height:56px;font-size:1.2rem">${u.full_name[0]}</div>
+            <div><div style="font-weight:700;font-size:1.1rem">${esc(u.full_name)}${u.is_verified?' <span class="verified-dot" style="width:10px;height:10px"></span>':''}</div><div style="font-size:.8125rem;color:var(--text-muted)">${esc(u.email)} · ${esc(u.phone)}</div></div>
+        </div>
+        <div class="detail-grid">
+            <div class="detail-item"><div class="detail-label">Rôle</div><div class="detail-value"><span class="role-badge role-${u.role}">${u.role}</span></div></div>
+            <div class="detail-item"><div class="detail-label">Catégorie</div><div class="detail-value">${u.category !== '—' ? u.category : '—'}</div></div>
+            <div class="detail-item"><div class="detail-label">Ville</div><div class="detail-value">${esc(u.city)}</div></div>
+            <div class="detail-item"><div class="detail-label">Statut</div><div class="detail-value"><span class="status-badge status-${u.status}">${statusLabels[u.status]}</span></div></div>
+            <div class="detail-item"><div class="detail-label">Services</div><div class="detail-value">${u.services_count}</div></div>
+            <div class="detail-item"><div class="detail-label">Commandes complétées</div><div class="detail-value">${u.orders_completed}</div></div>
+            <div class="detail-item"><div class="detail-label">Inscription</div><div class="detail-value">${fmtDate(u.created_at)}</div></div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border-light);padding-top:16px">
+            ${u.status !== 'banned' ? `<button class="btn btn-danger" onclick="banUser('${u.id}');this.closest('.modal-overlay').remove()"><i data-lucide="ban"></i> Bannir</button>` : `<button class="btn btn-primary" onclick="unbanUser('${u.id}');this.closest('.modal-overlay').remove()"><i data-lucide="unlock"></i> Débloquer</button>`}
+            ${u.status === 'active' ? `<button class="btn btn-warning" onclick="suspendUser('${u.id}');this.closest('.modal-overlay').remove()"><i data-lucide="pause-circle"></i> Suspendre</button>` : ''}
+        </div>
+    </div>`;
+    document.body.appendChild(overlay);
+    lucide.createIcons();
+}
+
+function banUser(id) { const u = mockUsers.find(x => x.id === id); if (u) { u.status = 'banned'; showToast('Utilisateur banni', 'warning'); } updateKPIs(); loadUsers(currentPage); }
+function unbanUser(id) { const u = mockUsers.find(x => x.id === id); if (u) { u.status = 'active'; showToast('Utilisateur débloqué', 'success'); } updateKPIs(); loadUsers(currentPage); }
+function suspendUser(id) { const u = mockUsers.find(x => x.id === id); if (u) { u.status = 'suspended'; showToast('Utilisateur suspendu', 'warning'); } updateKPIs(); loadUsers(currentPage); }
+function exportUsers() { showToast('Export en cours...', 'info'); }
+function addUser() { showToast('Fonctionnalité à venir', 'info'); }
+
+function esc(t) { const d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
+function fmtDate(d) { return d ? new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'; }
+function showToast(msg, type) {
+    let c = document.getElementById('toastContainer'); if (!c) { c = document.createElement('div'); c.id = 'toastContainer'; c.className = 'toast-container'; document.body.appendChild(c); }
+    const icons = { success: 'check-circle', error: 'x-circle', warning: 'alert-triangle', info: 'info' };
+    const t = document.createElement('div'); t.className = `toast ${type}`;
+    t.innerHTML = `<i data-lucide="${icons[type]}" style="width:1.125rem;height:1.125rem"></i><span>${msg}</span>`;
+    c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(20px)'; t.style.transition = 'all .3s'; setTimeout(() => t.remove(), 300); }, 4000);
+}
+function toggleSidebar() { const s = document.getElementById('sidebar'); s.classList.toggle('open'); s.classList.contains('open') ? (s.style.display='flex', s.style.position='fixed', s.style.zIndex='300', s.style.width='280px', s.style.boxShadow='4px 0 24px rgba(0,0,0,.15)') : (s.style.display='none'); }
+async function logout() { await sb.auth.signOut(); window.location.href = '../landing.html'; }
+</script>
+</body>
+</html>
