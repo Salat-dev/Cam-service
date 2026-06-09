@@ -7,7 +7,7 @@
     <meta name="description" content="La première marketplace de services professionnels au Cameroun. Prestataires vérifiés, paiement sécurisé, intervention rapide.">
     <meta name="theme-color" content="#22C55E">
     <link rel="icon" type="image/x-icon" href="/asset/icons/favicon.svg">
-    <link rel="manifest" href="manifest.json">
+<link rel="manifest" href="/manifest.json">
    
 <!-- Theme Color -->
 <meta name="theme-color" content="#22C55E">
@@ -1397,6 +1397,17 @@
             <a href="services.html">Services</a>
             <a href="#about">À propos</a>
             <a href="/register.html">Devenir prestataire</a>
+            <!-- Bouton personnalisé dans votre page -->
+<button onclick="pwaInstall.install()" class="btn btn-primary">
+    <i data-lucide="download"></i> Installer l'application
+</button>
+
+<!-- Vérifier si l'app est déjà installée -->
+<script>
+    if (pwaInstall.isInstalled()) {
+        console.log('Déjà installée !');
+    }
+</script>
             <a href="/login.html" class="btn btn-primary btn-sm">
                 <i data-lucide="log-in"></i> Connexion
             </a>
@@ -1885,6 +1896,6 @@ function renderTestimonials() {
 function escapeHtml(t) { var d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
 function formatPrice(p) { return new Intl.NumberFormat('fr-FR', { style:'currency', currency:'XAF', maximumFractionDigits:0 }).format(p || 0); }
 </script>
-
+<script src="/js/pwa-install.js"></script>
 </body>
 </html>
