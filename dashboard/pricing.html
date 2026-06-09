@@ -175,7 +175,7 @@
 
 <aside class="sidebar" id="sidebar">
     <a href="index.html" class="sidebar-logo">
-                <img src="../asset/logo.svg" alt="travailici" style="height: 52px;">    </a>
+                <img src="/asset/logo.svg" alt="travailici" style="height: 52px;">    </a>
     <div class="sidebar-user">
         <div class="sidebar-avatar" id="sidebarAvatar"></div>
         <div class="sidebar-user-info">
@@ -185,19 +185,19 @@
         </div>
     </div>
     <ul class="sidebar-nav">
-        <li><a href="../dashboard/index.html"><i data-lucide="layout-dashboard"></i> Vue d'ensemble</a></li>
-        <li><a href="../dashboard/services.html"><i data-lucide="briefcase"></i> Mes services <span class="badge" id="serviceBadge">0</span></a></li>
-        <li><a href="../dashboard/orders.html"><i data-lucide="shopping-bag"></i> Commandes <span class="badge" id="orderBadge">0</span></a></li>
-        <li><a href="../dashboard/pricing.html" class="active"><i data-lucide="tags"></i> Grille tarifaire</a></li>
-        <li><a href="../dashboard/portfolio.html"><i data-lucide="image"></i> Portfolio</a></li>
-        <li><a href="../dashboard/activities.html"><i data-lucide="award"></i> Activités</a></li>
+        <li><a href="/dashboard/index.html"><i data-lucide="layout-dashboard"></i> Vue d'ensemble</a></li>
+        <li><a href="/dashboard/services.html"><i data-lucide="briefcase"></i> Mes services <span class="badge" id="serviceBadge">0</span></a></li>
+        <li><a href="/dashboard/orders.html"><i data-lucide="shopping-bag"></i> Commandes <span class="badge" id="orderBadge">0</span></a></li>
+        <li><a href="/dashboard/pricing.html" class="active"><i data-lucide="tags"></i> Grille tarifaire</a></li>
+        <li><a href="/dashboard/portfolio.html"><i data-lucide="image"></i> Portfolio</a></li>
+        <li><a href="/dashboard/activities.html"><i data-lucide="award"></i> Activités</a></li>
     </ul>
     <hr class="sidebar-divider">
     <ul class="sidebar-nav">
-        <li><a href="../dashboard/profile.html"><i data-lucide="user-circle"></i> Mon profil</a></li>
-        <li><a href="../dashboard/analytics.html"><i data-lucide="bar-chart-3"></i> Statistiques</a></li>
+        <li><a href="/dashboard/profile.html"><i data-lucide="user-circle"></i> Mon profil</a></li>
+        <li><a href="/dashboard/analytics.html"><i data-lucide="bar-chart-3"></i> Statistiques</a></li>
     </ul>
-    <div class="sidebar-footer"><a href="../landing.html" onclick="logout();return false"><i data-lucide="log-out"></i> Déconnexion</a></div>
+    <div class="sidebar-footer"><a href="/index.html" onclick="logout();return false"><i data-lucide="log-out"></i> Déconnexion</a></div>
 </aside>
 
 <main class="main-content">
@@ -230,7 +230,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 let currentUser=null, pricingItems=[], services=[], viewMode='table';
 
 function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); }
-async function logout(){ await sb.auth.signOut(); window.location.href='../landing.html'; }
+async function logout(){ await sb.auth.signOut(); window.location.href='/index.html'; }
 function formatPrice(p){ return new Intl.NumberFormat('fr-FR').format(p||0)+' FCFA'; }
 function esc(t){ const d=document.createElement('div'); d.textContent=t||''; return d.innerHTML; }
 
@@ -257,7 +257,7 @@ function confirmAction(msg){
 
 async function initDashboard(){
     const {data:{user}}=await sb.auth.getUser();
-    if(!user){ window.location.href='../login.html'; return; }
+    if(!user){ window.location.href='/login.html'; return; }
     currentUser=user;
     const {data:profile}=await sb.from('users').select('*').eq('id',user.id).maybeSingle();
     const u=profile||{full_name:user.email?.split('@')[0],role:'prestataire',is_verified:false};

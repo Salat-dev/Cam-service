@@ -4,10 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inscription Client — travailici</title>
+    <link rel="manifest" href="manifest.json">
+   
+<!-- Theme Color -->
+<meta name="theme-color" content="#22C55E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="travailici">
+
+<!-- Apple Touch Icon -->
+<link rel="apple-touch-icon" href="/asset/icons/icon-128x128.png.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/asset/icons/icon-152x152.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/asset/icons/icon-180x180.png">
+
+<!-- PWA Registration -->
+<script src="/js/pwa-register.js" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Allison&family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+        <link rel="icon" type="image/x-icon" href="/asset/icons/favicon.svg">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-        <link rel="stylesheet" href="../css/global.css">
+        <link rel="stylesheet" href="/css/global.css">
    <style>
     :root {
         /* Couleurs principales - Charte Modern SaaS */
@@ -550,8 +566,8 @@
 <div class="auth-container">
     <div class="auth-card">
         <div class="auth-header">
-            <a href="landing.html" class="auth-logo">
-                <img src="../asset/logo.svg" alt="travailici" style="height: 62px;">
+            <a href="index.html" class="auth-logo">
+                <img src="/asset/logo.svg" alt="travailici" style="height: 62px;">
             </a>
             <h1>Créez votre compte client</h1>
             <p>Trouvez et réservez des services en quelques clics</p>
@@ -612,7 +628,47 @@
         </div>
     </div>
 </div>
-<script src="../js/global.js"></script>
+<!-- ═══ PWA ═══ -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1A1714">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CamServices">
+<link rel="apple-touch-icon" href="/asset/icons/icon-192x192.png.png">
+<link rel="apple-touch-startup-image" href="/asset/screenshots/splash.png">
+
+<!-- Service Worker -->
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('✅ SW enregistré:', reg.scope))
+                .catch(err => console.warn('⚠️ SW erreur:', err));
+        });
+    }
+</script>
+
+<!-- Installation PWA prompt -->
+<script>
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        // Afficher ton bouton "Installer l'application"
+        const installBtn = document.getElementById('installPwaBtn');
+        if (installBtn) {
+            installBtn.style.display = 'flex';
+            installBtn.addEventListener('click', () => {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((result) => {
+                    console.log('PWA install:', result.outcome);
+                    deferredPrompt = null;
+                });
+            });
+        }
+    });
+</script>
+<script src="/js/global.js"></script>
 
 <script>
      var SUPABASE_URL  = 'https://cwubxwbzzuigctvgdygv.supabase.co';

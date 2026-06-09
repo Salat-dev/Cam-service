@@ -15,28 +15,28 @@
         navItems: [
             {
                 id: 'nav-overview',
-                href: '../dashboard/index.html',
+                href: '/dashboard/index.html',
                 icon: 'layout-dashboard',
                 label: 'Accueil',
                 badgeId: null
             },
             {
                 id: 'nav-services',
-                href: '../dashboard/services.html',
+                href: '/dashboard/services.html',
                 icon: 'briefcase',
                 label: 'Services',
                 badgeId: 'serviceBadge'
             },
             {
                 id: 'nav-orders',
-                href: '../dashboard/orders.html',
+                href: '/dashboard/orders.html',
                 icon: 'shopping-bag',
                 label: 'Commandes',
                 badgeId: 'orderBadge'
             },
             {
                 id: 'nav-pricing',
-                href: '../dashboard/pricing.html',
+                href: '/dashboard/pricing.html',
                 icon: 'tags',
                 label: 'Tarifs',
                 badgeId: null
@@ -201,10 +201,10 @@
         closeMoreMenu();
 
         const moreItems = [
-            { href: '../dashboard/portfolio.html', icon: 'image', label: 'Portfolio' },
-            { href: '../dashboard/activities.html', icon: 'award', label: 'Activités' },
-            { href: '../dashboard/profile.html', icon: 'user-circle', label: 'Profil' },
-            { href: '../dashboard/analytics.html', icon: 'bar-chart-3', label: 'Statistiques' }
+            { href: '/dashboard/portfolio.html', icon: 'image', label: 'Portfolio' },
+            { href: '/dashboard/activities.html', icon: 'award', label: 'Activités' },
+            { href: '/dashboard/profile.html', icon: 'user-circle', label: 'Profil' },
+            { href: '/dashboard/analytics.html', icon: 'bar-chart-3', label: 'Statistiques' }
         ];
 
         const menu = document.createElement('div');

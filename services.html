@@ -7,6 +7,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
         <link rel="icon" type="image/x-icon" href="../asset/icons/favicon.svg">
+        <link rel="manifest" href="manifest.json">
+   
+<!-- Theme Color -->
+<meta name="theme-color" content="#22C55E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="travailici">
+
+<!-- Apple Touch Icon -->
+<link rel="apple-touch-icon" href="/asset/icons/icon-128x128.png.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/asset/icons/icon-152x152.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/asset/icons/icon-180x180.png">
+
+<!-- PWA Registration -->
+<script src="/js/pwa-register.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
@@ -855,7 +870,7 @@
 <!-- ═══ NAVBAR ═══ -->
 <nav class="navbar">
     <div class="navbar-inner">
-        <a href="landing.html" class="nav-logo">
+        <a href="index.html" class="nav-logo">
             <img src="../asset/logo.svg" alt="travailici" style="height:52px;">
         </a>
         <button class="menu-toggle" id="menuToggle" onclick="toggleMenu()">
@@ -863,7 +878,7 @@
         </button>
         <div class="nav-links" id="navLinks">
             <a href="services.html" class="active">Services</a>
-            <a href="landing.html">Accueil</a>
+            <a href="index.html">Accueil</a>
             <a href="./cart.html">
                 <i data-lucide="shopping-cart"></i> Panier 
                 <span id="cartCountNav" class="cart-count" style="display:none">0</span>
@@ -932,7 +947,7 @@
 <footer class="footer">
     <div class="footer-inner">
         <div class="footer-logo">
-            <a href="landing.html">
+            <a href="index.html">
                 <img src="../asset/logo.svg" alt="travailici" style="height: 48px;">
             </a>
         </div>

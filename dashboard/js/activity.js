@@ -37,7 +37,7 @@ const COLORS = {
 // ─── B. AUTH + SIDEBAR ───────────────────────────────────────
 async function initDashboard() {
     const { data: { user: authUser } } = await sb.auth.getUser();
-    if (!authUser) { window.location.href = '../login.html'; return; }
+    if (!authUser) { window.location.href = '/login.html'; return; }
 
     const { data: profile } = await sb.from('users').select('*').eq('id', authUser.id).maybeSingle();
 
@@ -94,7 +94,7 @@ function toggleSidebar() {
 
 async function logout() {
     await sb.auth.signOut();
-    window.location.href = '../landing.html';
+    window.location.href = '/index.html';
 }
 
 // ─── C. REQUÊTE SUPABASE — provider_activities ───────────────

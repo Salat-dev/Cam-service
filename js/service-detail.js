@@ -148,7 +148,7 @@ function renderServiceDetail() {
 
     // ═══ BREADCRUMB ═══
     html += '<div class="breadcrumb-bar">';
-    html += '<div class="breadcrumb"><a href="landing.html">Accueil</a> <span>/</span> <a href="services.html">Services</a> <span>/</span> <span>' + escapeHtml(s.title) + '</span></div>';
+    html += '<div class="breadcrumb"><a href="index.html">Accueil</a> <span>/</span> <a href="services.html">Services</a> <span>/</span> <span>' + escapeHtml(s.title) + '</span></div>';
     html += '</div>';
 
     // ═══ HERO ═══

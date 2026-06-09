@@ -19,7 +19,7 @@ let currentFilter  = 'all';
 // ─────────────────────────────────────────────────────────────
 async function initDashboard() {
     const { data: { user: authUser } } = await sb.auth.getUser();
-    if (!authUser) { window.location.href = '../login.html'; return; }
+    if (!authUser) { window.location.href = '/login.html'; return; }
 
     const { data: profile } = await sb
         .from('users')
@@ -78,7 +78,7 @@ function toggleSidebar() {
 
 async function logout() {
     await sb.auth.signOut();
-    window.location.href = '../landing.html';
+    window.location.href = '/index.html';
 }
 
 // ─────────────────────────────────────────────────────────────

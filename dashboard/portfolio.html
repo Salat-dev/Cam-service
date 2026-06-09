@@ -924,7 +924,7 @@
 <!-- ═══ SIDEBAR ═══ -->
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
-            <img src="../asset/logo.svg" alt="travailici" style="height:52px;">
+            <img src="/asset/logo.svg" alt="travailici" style="height:52px;">
 
 
     </div>
@@ -940,23 +940,23 @@
     </div>
     
     <ul class="sidebar-nav">
-        <li><a href="../dashboard/index.html"><i data-lucide="layout-dashboard"></i> Vue d'ensemble</a></li>
-        <li><a href="../dashboard/services.html"><i data-lucide="briefcase"></i> Mes services <span class="badge" id="serviceBadge">0</span></a></li>
-        <li><a href="../dashboard/orders.html"><i data-lucide="shopping-bag"></i> Commandes <span class="badge" id="orderBadge">0</span></a></li>
-        <li><a href="../dashboard/pricing.html"><i data-lucide="tags"></i> Grille tarifaire</a></li>
-        <li><a href="../dashboard/portfolio.html" class="active"><i data-lucide="image"></i> Portfolio</a></li>
-        <li><a href="../dashboard/activities.html"><i data-lucide="award"></i> Activités</a></li>
+        <li><a href="/dashboard/index.html"><i data-lucide="layout-dashboard"></i> Vue d'ensemble</a></li>
+        <li><a href="/dashboard/services.html"><i data-lucide="briefcase"></i> Mes services <span class="badge" id="serviceBadge">0</span></a></li>
+        <li><a href="/dashboard/orders.html"><i data-lucide="shopping-bag"></i> Commandes <span class="badge" id="orderBadge">0</span></a></li>
+        <li><a href="/dashboard/pricing.html"><i data-lucide="tags"></i> Grille tarifaire</a></li>
+        <li><a href="/dashboard/portfolio.html" class="active"><i data-lucide="image"></i> Portfolio</a></li>
+        <li><a href="/dashboard/activities.html"><i data-lucide="award"></i> Activités</a></li>
     </ul>
     
     <hr class="sidebar-divider">
     
     <ul class="sidebar-nav">
-        <li><a href="../dashboard/profile.html"><i data-lucide="user-circle"></i> Mon profil</a></li>
-        <li><a href="../dashboard/analytics.html"><i data-lucide="bar-chart-3"></i> Statistiques</a></li>
+        <li><a href="/dashboard/profile.html"><i data-lucide="user-circle"></i> Mon profil</a></li>
+        <li><a href="/dashboard/analytics.html"><i data-lucide="bar-chart-3"></i> Statistiques</a></li>
     </ul>
     
     <div class="sidebar-footer">
-        <a href="../landing.html" onclick="logout();return false"><i data-lucide="log-out"></i> Déconnexion</a>
+        <a href="/index.html" onclick="logout();return false"><i data-lucide="log-out"></i> Déconnexion</a>
     </div>
 </aside>
 
@@ -1025,7 +1025,7 @@ let currentFilter = 'all';
 // ═══ INIT ═══
 async function initDashboard() {
     const { data: { user: authUser } } = await sb.auth.getUser();
-    if (!authUser) { window.location.href = '../login.html'; return; }
+    if (!authUser) { window.location.href = '/login.html'; return; }
 
     const { data: profile } = await sb.from('users').select('*').eq('id', authUser.id).maybeSingle();
     currentUser = profile || {
@@ -1060,7 +1060,7 @@ function toggleSidebar() {
 
 async function logout() {
     await sb.auth.signOut();
-    window.location.href = '../landing.html';
+    window.location.href = '/index.html';
 }
 
 // ═══ DATA ═══

@@ -50,7 +50,7 @@ async function initDashboard() {
 /* Redirige vers login sans laisser de retour arrière possible */
 function _redirectToLogin() {
     document.documentElement.style.visibility = 'hidden';
-    window.location.replace('../login.html');
+    window.location.replace('/login.html');
 }
 
 /* Charge le profil depuis la table providers */
@@ -151,7 +151,7 @@ function toggleSidebar() {
 // ─────────────────────────────────────────────────────────────────
 async function logout() {
     await supabase.auth.signOut();
-    window.location.replace('../landing.html');
+    window.location.replace('/index.html');
 }
 
 // ─────────────────────────────────────────────────────────────────

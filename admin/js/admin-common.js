@@ -5,9 +5,9 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 // Vérifier l'accès admin
 async function checkAdminAccess() {
     const { data: { user } } = await sb.auth.getUser();
-    if (!user) { window.location.href = '../login.html'; return false; }
+    if (!user) { window.location.href = '/login.html'; return false; }
     const { data: profile } = await sb.from('users').select('role').eq('id', user.id).single();
-    if (!profile || profile.role !== 'admin') { showToast('Accès refusé', 'error'); setTimeout(() => window.location.href = '../landing.html', 1500); return false; }
+    if (!profile || profile.role !== 'admin') { showToast('Accès refusé', 'error'); setTimeout(() => window.location.href = '/index.html', 1500); return false; }
     return true;
 }
 
@@ -34,7 +34,7 @@ function esc(t) { const d = document.createElement('div'); d.textContent = t || 
 function fmt(p) { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(p || 0); }
 function fmtDate(d) { return d ? new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'; }
 
-async function logout() { await sb.auth.signOut(); window.location.href = '../landing.html'; }
+async function logout() { await sb.auth.signOut(); window.location.href = '/index.html'; }
 
 // Initialisation
 document.addEventListener('DOMContentLoaded', () => {

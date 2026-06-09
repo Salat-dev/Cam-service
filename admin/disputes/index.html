@@ -218,7 +218,7 @@
         <li><a href="payments/index.html"><i data-lucide="banknote"></i> Paiements</a></li>
         <li><a href="settings/index.html"><i data-lucide="settings"></i> Paramètres</a></li>
     </ul>
-    <a href="../landing.html" onclick="logout();return false" class="sidebar-logout"><i data-lucide="log-out"></i> Déconnexion</a>
+    <a href="/index.html" onclick="logout();return false" class="sidebar-logout"><i data-lucide="log-out"></i> Déconnexion</a>
 </aside>
 
 <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()"><i data-lucide="menu" style="width:1rem;height:1rem"></i> Menu</button>
@@ -306,9 +306,9 @@ const mockDisputes = [
 
 document.addEventListener('DOMContentLoaded', async () => {
     const { data: { user } } = await sb.auth.getUser();
-    if (!user) { window.location.href = '../login.html'; return; }
+    if (!user) { window.location.href = '/login.html'; return; }
     const { data: profile } = await sb.from('users').select('role').eq('id', user.id).single();
-    if (!profile || profile.role !== 'admin') { showToast('Accès refusé', 'error'); setTimeout(() => window.location.href = '../landing.html', 1500); return; }
+    if (!profile || profile.role !== 'admin') { showToast('Accès refusé', 'error'); setTimeout(() => window.location.href = '/index.html', 1500); return; }
     lucide.createIcons();
     updateKPIs();
     loadDisputes();
@@ -460,7 +460,7 @@ function showToast(msg, type) {
     c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(20px)'; t.style.transition = 'all .3s'; setTimeout(() => t.remove(), 300); }, 4000);
 }
 function toggleSidebar() { const s = document.getElementById('sidebar'); s.classList.toggle('open'); s.classList.contains('open') ? (s.style.display='flex', s.style.position='fixed', s.style.zIndex='300', s.style.width='280px', s.style.boxShadow='4px 0 24px rgba(0,0,0,.15)') : (s.style.display='none'); }
-async function logout() { await sb.auth.signOut(); window.location.href = '../landing.html'; }
+async function logout() { await sb.auth.signOut(); window.location.href = '/index.html'; }
 </script>
 </body>
 </html>

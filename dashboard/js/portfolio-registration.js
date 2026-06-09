@@ -16,7 +16,7 @@ var uploadedMediaUrl = null;
 
 async function checkAuth() {
     var { data } = await sb.auth.getSession();
-    if (!data.session) { window.location.href = '../login.html'; return; }
+    if (!data.session) { window.location.href = '/login.html'; return; }
     var { data: profile } = await sb.from('users').select('*').eq('id', data.session.user.id).single();
     currentUser = profile || { id: data.session.user.id };
 }
@@ -117,7 +117,7 @@ function saveDraft() {
     var data = getFormData();
     localStorage.setItem('portfolio_draft', JSON.stringify(data));
     showAlert('✅ Brouillon enregistré !', 'success');
-    setTimeout(function() { window.location.href = '../dashboard/portfolio.html'; }, 1500);
+    setTimeout(function() { window.location.href = '/dashboard/portfolio.html'; }, 1500);
 }
 
 function loadDraft() {
@@ -166,7 +166,7 @@ function showExitModal() {
                 <div class="exit-modal-actions">
                     <button class="btn btn-primary" onclick="closeExitModal();document.getElementById('nextBtn').click()"><i data-lucide="arrow-right" style="width:1rem;height:1rem"></i> Continuer</button>
                     <button class="btn btn-save-draft" onclick="saveDraft();closeExitModal()"><i data-lucide="save" style="width:1rem;height:1rem"></i> Enregistrer le brouillon</button>
-                    <button class="btn btn-ghost" onclick="closeExitModal();window.location.href='../dashboard/portfolio.html'"><i data-lucide="trash-2" style="width:1rem;height:1rem"></i> Quitter sans enregistrer</button>
+                    <button class="btn btn-ghost" onclick="closeExitModal();window.location.href='/dashboard/portfolio.html'"><i data-lucide="trash-2" style="width:1rem;height:1rem"></i> Quitter sans enregistrer</button>
                 </div>
             </div>
         </div>`;
@@ -206,7 +206,7 @@ async function handleSubmit(e) {
 
         localStorage.removeItem('portfolio_draft');
         showAlert('✅ Réalisation publiée ! Redirection...', 'success');
-        setTimeout(function() { window.location.href = '../dashboard/portfolio.html'; }, 1500);
+        setTimeout(function() { window.location.href = '/dashboard/portfolio.html'; }, 1500);
     } catch (err) {
         console.error('❌', err);
         showAlert('Erreur : ' + err.message, 'error');

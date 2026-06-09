@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (profile?.role === 'prestataire' || profile?.role === 'admin') {
                 window.location.href = 'dashboard/index.html';
             } else {
-                window.location.href = 'landing.html';
+                window.location.href = 'index.html';
             }
         } catch (error) {
             console.error('Erreur récupération rôle:', error);

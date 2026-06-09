@@ -249,7 +249,7 @@
 <!-- ═══ SIDEBAR (Desktop) ═══ -->
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
-                <img src="../asset/logo.svg" alt="travailici" style="height: 52px;">    </div>
+                <img src="/asset/logo.svg" alt="travailici" style="height: 52px;">    </div>
     <div class="sidebar-user">
         <div class="sidebar-avatar" id="sidebarAvatar"></div>
         <div class="sidebar-user-info">
@@ -259,19 +259,19 @@
         </div>
     </div>
     <ul class="sidebar-nav">
-        <li><a href="../dashboard/index.html"><i data-lucide="layout-dashboard"></i> Vue d'ensemble</a></li>
-        <li><a href="../dashboard/services.html"><i data-lucide="briefcase"></i> Mes services <span class="badge" id="serviceBadge">0</span></a></li>
-        <li><a href="../dashboard/orders.html"><i data-lucide="shopping-bag"></i> Commandes <span class="badge" id="orderBadge">0</span></a></li>
-        <li><a href="../dashboard/pricing.html"><i data-lucide="tags"></i> Grille tarifaire</a></li>
-        <li><a href="../dashboard/portfolio.html"><i data-lucide="image"></i> Portfolio</a></li>
-        <li><a href="../dashboard/activities.html"><i data-lucide="award"></i> Activités</a></li>
+        <li><a href="/dashboard/index.html"><i data-lucide="layout-dashboard"></i> Vue d'ensemble</a></li>
+        <li><a href="/dashboard/services.html"><i data-lucide="briefcase"></i> Mes services <span class="badge" id="serviceBadge">0</span></a></li>
+        <li><a href="/dashboard/orders.html"><i data-lucide="shopping-bag"></i> Commandes <span class="badge" id="orderBadge">0</span></a></li>
+        <li><a href="/dashboard/pricing.html"><i data-lucide="tags"></i> Grille tarifaire</a></li>
+        <li><a href="/dashboard/portfolio.html"><i data-lucide="image"></i> Portfolio</a></li>
+        <li><a href="/dashboard/activities.html"><i data-lucide="award"></i> Activités</a></li>
     </ul>
     <hr class="sidebar-divider">
     <ul class="sidebar-nav">
-        <li><a href="../dashboard/profile.html" class="active"><i data-lucide="user-circle"></i> Mon profil</a></li>
-        <li><a href="../dashboard/analytics.html"><i data-lucide="bar-chart-3"></i> Statistiques</a></li>
+        <li><a href="/dashboard/profile.html" class="active"><i data-lucide="user-circle"></i> Mon profil</a></li>
+        <li><a href="/dashboard/analytics.html"><i data-lucide="bar-chart-3"></i> Statistiques</a></li>
     </ul>
-    <div class="sidebar-footer"><a href="../landing.html" onclick="logout();return false"><i data-lucide="log-out"></i> Déconnexion</a></div>
+    <div class="sidebar-footer"><a href="/index.html" onclick="logout();return false"><i data-lucide="log-out"></i> Déconnexion</a></div>
 </aside>
 
 <!-- ═══ MAIN ═══ -->
@@ -363,24 +363,24 @@
 <nav class="bottom-navbar" id="bottomNavbar" aria-label="Navigation principale">
     <div class="bottom-nav-list">
         <div class="bottom-nav-item">
-            <a href="../dashboard/index.html" class="bottom-nav-link" data-nav-id="nav-overview" aria-label="Accueil">
+            <a href="/dashboard/index.html" class="bottom-nav-link" data-nav-id="nav-overview" aria-label="Accueil">
                 <i data-lucide="layout-dashboard"></i><span>Accueil</span>
             </a>
         </div>
         <div class="bottom-nav-item">
-            <a href="../dashboard/services.html" class="bottom-nav-link" data-nav-id="nav-services" aria-label="Services">
+            <a href="/dashboard/services.html" class="bottom-nav-link" data-nav-id="nav-services" aria-label="Services">
                 <i data-lucide="briefcase"></i><span>Services</span>
                 <span class="bottom-nav-badge" id="bottom-serviceBadge" style="display:none">0</span>
             </a>
         </div>
         <div class="bottom-nav-item">
-            <a href="../dashboard/orders.html" class="bottom-nav-link" data-nav-id="nav-orders" aria-label="Commandes">
+            <a href="/dashboard/orders.html" class="bottom-nav-link" data-nav-id="nav-orders" aria-label="Commandes">
                 <i data-lucide="shopping-bag"></i><span>Commandes</span>
                 <span class="bottom-nav-badge" id="bottom-orderBadge" style="display:none">0</span>
             </a>
         </div>
         <div class="bottom-nav-item">
-            <a href="../dashboard/pricing.html" class="bottom-nav-link" data-nav-id="nav-pricing" aria-label="Tarifs">
+            <a href="/dashboard/pricing.html" class="bottom-nav-link" data-nav-id="nav-pricing" aria-label="Tarifs">
                 <i data-lucide="tags"></i><span>Tarifs</span>
             </a>
         </div>
@@ -540,10 +540,10 @@ function openMoreMenu() {
     menu.className = 'more-menu-dropdown';
     menu.id = 'moreMenuDropdown';
     menu.innerHTML = [
-        { href: '../dashboard/portfolio.html', icon: 'image', label: 'Portfolio' },
-        { href: '../dashboard/activities.html', icon: 'award', label: 'Activités' },
-        { href: '../dashboard/profile.html', icon: 'user-circle', label: 'Profil' },
-        { href: '../dashboard/analytics.html', icon: 'bar-chart-3', label: 'Statistiques' }
+        { href: '/dashboard/portfolio.html', icon: 'image', label: 'Portfolio' },
+        { href: '/dashboard/activities.html', icon: 'award', label: 'Activités' },
+        { href: '/dashboard/profile.html', icon: 'user-circle', label: 'Profil' },
+        { href: '/dashboard/analytics.html', icon: 'bar-chart-3', label: 'Statistiques' }
     ].map(i => `<a href="${i.href}"><i data-lucide="${i.icon}"></i> ${i.label}</a>`).join('');
     document.body.appendChild(menu);
     lucide.createIcons();
@@ -581,7 +581,7 @@ detectCurrentPage();
 // ─── E. INITIALISATION ───────────────────────────────────────
 async function initDashboard() {
     const { data: { user: authUser } } = await sb.auth.getUser();
-    if (!authUser) { window.location.href = '../login.html'; return; }
+    if (!authUser) { window.location.href = '/login.html'; return; }
 
     const { data: profile } = await sb.from('users').select('*').eq('id', authUser.id).maybeSingle();
 
@@ -622,7 +622,7 @@ function updateSidebarUI() {
 
 async function logout() {
     await sb.auth.signOut();
-    window.location.href = '../landing.html';
+    window.location.href = '/index.html';
 }
 
 // ─── F. UTILITAIRES ──────────────────────────────────────────
@@ -1359,7 +1359,7 @@ function previewProfile() {
         showToast('Profil non disponible.', 'error');
         return;
     }
-    window.open(`../profile.html?id=${currentUser.id}`, '_blank');
+    window.open(`/profile.html?id=${currentUser.id}`, '_blank');
 }
 
 // ─── N. MODAL UTILITIES ──────────────────────────────────────

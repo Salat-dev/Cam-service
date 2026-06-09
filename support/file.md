@@ -1,7 +1,7 @@
-            <img src="../asset/logo.svg" alt="travailici" style="height:52px;">
+            <img src="/asset/logo.svg" alt="travailici" style="height:52px;">
 
 
-                <img src="../asset/logo.svg" alt="travailici" style="height: 48px;">
+                <img src="/asset/logo.svg" alt="travailici" style="height: 48px;">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
 
@@ -24,7 +24,7 @@ let currentFilter = 'all';
 // ─── B. AUTH + SIDEBAR ───────────────────────────────────────
 async function initDashboard() {
     const { data: { user: authUser } } = await sb.auth.getUser();
-    if (!authUser) { window.location.href = '../login.html'; return; }
+    if (!authUser) { window.location.href = '/login.html'; return; }
 
     const { data: profile } = await sb.from('users').select('*').eq('id', authUser.id).maybeSingle();
 
@@ -66,7 +66,7 @@ function setActiveNav(page) {
     if (el) el.classList.add('active');
 }
 function toggleSidebar() { const s = document.getElementById('sidebar'); if (s) s.classList.toggle('open'); }
-async function logout() { await sb.auth.signOut(); window.location.href = '../landing.html'; }
+async function logout() { await sb.auth.signOut(); window.location.href = '/index.html'; }
 
 // ─── C. REQUÊTE SUPABASE — provider_activities ───────────────
 async function getActivities() {

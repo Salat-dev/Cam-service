@@ -844,7 +844,7 @@
 <!-- ═══ SIDEBAR (Desktop) ═══ -->
 <aside class="sidebar" id="sidebar">
     <a href="#" class="sidebar-logo">
-            <img src="../asset/logo.svg" alt="travailici" style="height:52px;">
+            <img src="/asset/logo.svg" alt="travailici" style="height:52px;">
     </a>
     <ul class="sidebar-nav" id="sidebarNav">
         <li><a href="#" class="active" data-tab="dashboard"><i data-lucide="layout-dashboard"></i> Tableau de bord</a></li>
@@ -858,7 +858,7 @@
         <li><a href="#" data-tab="analytics"><i data-lucide="bar-chart-3"></i> Analytics</a></li>
         <li><a href="#" data-tab="support"><i data-lucide="headphones"></i> Support</a></li>
     </ul>
-    <a href="../landing.html" onclick="logout()" class="sidebar-logout"><i data-lucide="log-out" style="width:1rem;height:1rem"></i> Déconnexion</a>
+    <a href="/index.html" onclick="logout()" class="sidebar-logout"><i data-lucide="log-out" style="width:1rem;height:1rem"></i> Déconnexion</a>
 </aside>
 
 <button class="menu-toggle" id="menuToggle" onclick="toggleAdminMenu()" style="display:none">
@@ -904,9 +904,9 @@ init();
 
 async function init() {
     const { data: { user } } = await sb.auth.getUser();
-    if (!user) { window.location.href = '../login.html'; return; }
+    if (!user) { window.location.href = '/login.html'; return; }
     const { data: profile } = await sb.from('users').select('role').eq('id', user.id).single();
-    if (!profile || profile.role !== 'admin') { showToast('Accès refusé', 'error'); setTimeout(() => window.location.href = '../landing.html', 1500); return; }
+    if (!profile || profile.role !== 'admin') { showToast('Accès refusé', 'error'); setTimeout(() => window.location.href = '/index.html', 1500); return; }
     
     document.querySelectorAll('#sidebarNav a').forEach(a => a.addEventListener('click', function(e) { e.preventDefault(); setActiveTab(this.dataset.tab); }));
     document.querySelectorAll('.bottom-nav-link').forEach(link => link.addEventListener('click', function(e) { e.preventDefault(); const tab = this.dataset.tab; if (tab === 'more') { toggleMoreMenu(); return; } setActiveTab(tab); }));
@@ -988,7 +988,7 @@ function openMoreMenu() {
 function closeMoreMenu() { const m = document.getElementById('moreMenuDropdown'); if (m) m.remove(); moreMenuOpen = false; document.removeEventListener('click', closeMoreMenuOnClickOutside); }
 function closeMoreMenuOnClickOutside(e) { const m = document.getElementById('moreMenuDropdown'), t = document.getElementById('moreMenuTrigger'); if (m && !m.contains(e.target) && e.target !== t) closeMoreMenu(); }
 
-async function logout() { await sb.auth.signOut(); window.location.href = '../landing.html'; }
+async function logout() { await sb.auth.signOut(); window.location.href = '/index.html'; }
 function esc(t) { const d=document.createElement('div'); d.textContent=t||''; return d.innerHTML; }
 function fmt(p) { return new Intl.NumberFormat('fr-FR',{style:'currency',currency:'XAF',maximumFractionDigits:0}).format(p||0); }
 function fmtDate(d) { return d?new Date(d).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'—'; }

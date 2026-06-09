@@ -16,7 +16,7 @@ Plomberie • Électricité • Design • Photographie • Beauté • Bâtimen
 
 ## 📸 Aperçu
 
-| Landing Page | Services | Détail Service |
+| index Page | Services | Détail Service |
 |:---:|:---:|:---:|
 | Hero dynamique, stats live, catégories | Grille 4 colonnes, recherche, filtres | Profil prestataire, portfolio, tarifs |
 
@@ -64,8 +64,8 @@ Plomberie • Électricité • Design • Photographie • Beauté • Bâtimen
 ```
 travailici/
 │
-├── index.html                  # Point d'entrée → redirige vers landing
-├── landing.html                # Page d'accueil dynamique (stats, catégories, services populaires)
+├── index.html                  # Point d'entrée → redirige vers index
+├── index.html                # Page d'accueil dynamique (stats, catégories, services populaires)
 ├── services.html               # Liste publique de tous les services (grille 4×3 + voir plus)
 ├── service-detail.html         # Détail service + profil prestataire complet
 ├── login.html                  # Connexion
@@ -277,7 +277,7 @@ WHERE email = 'votre-email@example.com';
 - ✅ Page service-detail enrichie (portfolio, tarifs, activités, stats du prestataire)
 - ✅ Modal de connexion inline (auth sans quitter la page)
 - ✅ Panier drawer latéral avec auth obligatoire
-- ✅ Landing page dynamique (stats live, catégories, services populaires, compteurs animés)
+- ✅ index page dynamique (stats live, catégories, services populaires, compteurs animés)
 - ✅ Page services publique (grille 4×3, voir plus, recherche, tri, filtres)
 - ✅ PWA manifest + icônes multi-tailles + favicon
 - ✅ Configuration Vercel avec URLs propres et cache

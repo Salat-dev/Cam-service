@@ -52,7 +52,7 @@
   function redirectToLogin () {
     /* Détermine le chemin relatif selon la profondeur de la page */
     const depth   = location.pathname.split('/').filter(Boolean).length;
-    const base    = depth > 1 ? '../'.repeat(depth - 1) : './';
+    const base    = depth > 1 ? '/'.repeat(depth - 1) : './';
     const target  = base + 'login.html';
     console.warn('[auth-guard] Redirection →', target);
     window.location.replace(target);

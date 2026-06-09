@@ -652,8 +652,8 @@
 <!-- ═══ NAVBAR ═══ -->
 <nav class="navbar">
     <div class="navbar-inner">
-        <a href="landing.html" class="nav-logo">
-            <img src="../asset/logo.svg" alt="travailici" style="height:52px;">
+        <a href="index.html" class="nav-logo">
+            <img src="/asset/logo.svg" alt="travailici" style="height:52px;">
 
 
         </a>
@@ -661,10 +661,10 @@
             <span></span><span></span><span></span>
         </button>
         <div class="nav-links" id="navLinks">
-            <a href="../marketplace/landing.html">Accueil</a>
-            <a href="../marketplace/services.html">Services</a>
+            <a href="/marketplace/index.html">Accueil</a>
+            <a href="/marketplace/services.html">Services</a>
             <a href="contact.html">Contact</a>
-            <a href="../dashboard/index.html" class="btn-nav">Dashboard</a>
+            <a href="/dashboard/index.html" class="btn-nav">Dashboard</a>
         </div>
     </div>
 </nav>
@@ -728,16 +728,16 @@
     // ═══════════════ FAQ DATA ═══════════════
     var faqData = [
         // Compte & Inscription
-        { q: "Comment créer un compte prestataire ?", a: "Allez sur la page <a href='../register.html'>Inscription</a> et remplissez le formulaire en 4 étapes : informations personnelles, adresse, profil professionnel et vérification (optionnelle). Une fois votre email confirmé, vous pourrez vous connecter.", cat: "compte" },
-        { q: "Comment créer un compte client ?", a: "Allez sur la page <a href='../login-client.html'>Connexion client</a> et cliquez sur <strong>\"S'inscrire gratuitement\"</strong>. Remplissez votre nom, téléphone, email et mot de passe. Vous pouvez aussi vous connecter avec Google.", cat: "compte" },
+        { q: "Comment créer un compte prestataire ?", a: "Allez sur la page <a href='/register.html'>Inscription</a> et remplissez le formulaire en 4 étapes : informations personnelles, adresse, profil professionnel et vérification (optionnelle). Une fois votre email confirmé, vous pourrez vous connecter.", cat: "compte" },
+        { q: "Comment créer un compte client ?", a: "Allez sur la page <a href='/login-client.html'>Connexion client</a> et cliquez sur <strong>\"S'inscrire gratuitement\"</strong>. Remplissez votre nom, téléphone, email et mot de passe. Vous pouvez aussi vous connecter avec Google.", cat: "compte" },
         { q: "J'ai oublié mon mot de passe. Que faire ?", a: "Sur la page de connexion, cliquez sur <strong>\"Mot de passe oublié ?\"</strong>. Vous recevrez un email avec un lien pour réinitialiser votre mot de passe. Vérifiez vos spams si vous ne le voyez pas.", cat: "compte" },
         { q: "Comment obtenir le badge vérifié ?", a: "Lors de l'inscription (ou depuis votre profil), téléversez une pièce d'identité (CNI, passeport ou permis). Notre équipe examine votre document sous 24-48h. Une fois approuvé, le badge <span style='background:var(--primary);color:white;padding:2px 8px;border-radius:100px;font-size:0.6875rem;font-weight:600'>✓ Vérifié</span> apparaît sur votre profil.", cat: "compte" },
-        { q: "Puis-je modifier mon nom d'utilisateur ?", a: "Oui, depuis votre <a href='../dashboard/profile.html'>Dashboard > Mon profil</a>, vous pouvez modifier votre nom complet, téléphone, ville et bio. Le nom d'utilisateur est modifiable une seule fois.", cat: "compte" },
+        { q: "Puis-je modifier mon nom d'utilisateur ?", a: "Oui, depuis votre <a href='/dashboard/profile.html'>Dashboard > Mon profil</a>, vous pouvez modifier votre nom complet, téléphone, ville et bio. Le nom d'utilisateur est modifiable une seule fois.", cat: "compte" },
 
         // Services & Prestations
-        { q: "Comment créer un service ?", a: "Depuis votre <a href='../dashboard/services.html'>Dashboard > Mes services</a>, cliquez sur <strong>\"Nouveau service\"</strong>. Remplissez le titre, la catégorie, le type de prix, le prix et la description. Ajoutez une image et définissez vos jours/horaires de travail.", cat: "services" },
+        { q: "Comment créer un service ?", a: "Depuis votre <a href='/dashboard/services.html'>Dashboard > Mes services</a>, cliquez sur <strong>\"Nouveau service\"</strong>. Remplissez le titre, la catégorie, le type de prix, le prix et la description. Ajoutez une image et définissez vos jours/horaires de travail.", cat: "services" },
         { q: "Quels types de prix puis-je définir ?", a: "Vous avez 4 options : <strong>Prix fixe</strong> (forfait), <strong>Taux horaire</strong> (à l'heure), <strong>Taux journalier</strong> (à la journée) et <strong>Par projet</strong>. Choisissez celui qui correspond le mieux à votre activité.", cat: "services" },
-        { q: "Comment ajouter des photos à mon portfolio ?", a: "Depuis <a href='../dashboard/portfolio.html'>Dashboard > Portfolio</a>, cliquez sur <strong>\"Ajouter une réalisation\"</strong>. Vous pouvez coller une URL d'image ou uploader un fichier. Ajoutez un titre, une description et des tags.", cat: "services" },
+        { q: "Comment ajouter des photos à mon portfolio ?", a: "Depuis <a href='/dashboard/portfolio.html'>Dashboard > Portfolio</a>, cliquez sur <strong>\"Ajouter une réalisation\"</strong>. Vous pouvez coller une URL d'image ou uploader un fichier. Ajoutez un titre, une description et des tags.", cat: "services" },
         { q: "Comment définir mes jours et heures de travail ?", a: "Lors de la création ou modification d'un service, sélectionnez vos jours (Lun-Dim) en cliquant dessus, puis définissez vos heures de début et de fin. Ces informations seront visibles sur votre page de détail.", cat: "services" },
         { q: "Puis-je désactiver temporairement un service ?", a: "Oui, dans <strong>Mes services</strong>, cliquez sur l'icône <i data-lucide='eye-off' style='width:.8rem;height:.8rem;vertical-align:middle'></i> pour désactiver un service. Il n'apparaîtra plus dans les recherches. Cliquez à nouveau pour le réactiver.", cat: "services" },
 

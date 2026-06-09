@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hors ligne — travailici</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #22C55E; --primary-hover: #16A34A;
+            --text-primary: #111827; --text-secondary: #4B5563;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family:'Inter',-apple-system,sans-serif;
+            background: #F0FDF4; color: var(--text-primary);
+            display:flex; align-items:center; justify-content:center;
+            min-height:100vh; text-align:center; padding:24px;
+            -webkit-font-smoothing:antialiased;
+        }
+        .offline-container { max-width:400px; animation:fadeUp .5s ease; }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        .offline-icon {
+            width:80px; height:80px; background:#fff; border-radius:50%;
+            display:flex; align-items:center; justify-content:center;
+            margin:0 auto 24px; font-size:2.5rem; box-shadow:0 4px 20px rgba(0,0,0,.06);
+        }
+        h1 { font-weight:800; font-size:1.5rem; margin-bottom:8px; }
+        p { color:var(--text-secondary); font-size:.9375rem; line-height:1.6; margin-bottom:24px; }
+        .btn {
+            display:inline-flex; align-items:center; gap:8px;
+            padding:12px 24px; background:var(--primary); color:#fff;
+            border:none; border-radius:8px; font-family:'Inter',sans-serif;
+            font-weight:600; font-size:.875rem; cursor:pointer;
+            text-decoration:none; transition:all .2s;
+        }
+        .btn:hover { background:var(--primary-hover); }
+        .logo { font-weight:800; font-size:1.2rem; margin-bottom:32px; }
+        .logo span { color:var(--primary); }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="logo">travail<span>ici</span></div>
+        <div class="offline-icon">📡</div>
+        <h1>Vous êtes hors ligne</h1>
+        <p>Vérifiez votre connexion internet et réessayez. Certaines pages précédemment visitées restent accessibles.</p>
+        <button class="btn" onclick="window.location.reload()">
+            🔄 Réessayer
+        </button>
+    </div>
+</body>
+</html>

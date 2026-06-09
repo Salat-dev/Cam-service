@@ -23,7 +23,7 @@ var isUploading = false;
 
 async function checkAuth() {
     var { data } = await sb.auth.getSession();
-    if (!data.session) { window.location.href = '../login.html'; return; }
+    if (!data.session) { window.location.href = '/login.html'; return; }
     var { data: profile } = await sb.from('users').select('*').eq('id', data.session.user.id).single();
     currentUser = profile || { id: data.session.user.id };
 }
@@ -247,7 +247,7 @@ function saveDraft() {
     localStorage.setItem('service_draft', JSON.stringify(data));
     showAlert('✅ Brouillon enregistré ! Vous pourrez le reprendre plus tard.', 'success');
     setTimeout(function() {
-        window.location.href = '../dashboard/services.html';
+        window.location.href = '/dashboard/services.html';
     }, 1500);
 }
 
@@ -306,7 +306,7 @@ function showExitModal() {
                     <button class="btn btn-save-draft" onclick="saveDraft();closeExitModal()">
                         <i data-lucide="save" style="width:1rem;height:1rem"></i> Enregistrer le brouillon
                     </button>
-                    <button class="btn btn-ghost" onclick="closeExitModal();window.location.href='../dashboard/services.html'">
+                    <button class="btn btn-ghost" onclick="closeExitModal();window.location.href='/dashboard/services.html'">
                         <i data-lucide="trash-2" style="width:1rem;height:1rem"></i> Quitter sans enregistrer
                     </button>
                 </div>
@@ -387,7 +387,7 @@ async function handleSubmit(e) {
         localStorage.removeItem('service_draft');
         showAlert('✅ Service publié avec succès ! Redirection...', 'success');
         setTimeout(function() {
-            window.location.href = '../dashboard/services.html';
+            window.location.href = '/dashboard/services.html';
         }, 1500);
 
     } catch (err) {
